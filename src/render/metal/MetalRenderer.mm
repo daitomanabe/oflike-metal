@@ -1,7 +1,8 @@
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
 
-#include "Renderer2D.hpp"
+#include "MetalRenderer.h"
+#include "../DrawList.h"
 
 namespace oflike {
 
@@ -12,7 +13,6 @@ struct Uniforms {
 };
 
 // 8x8 bitmap font data (ASCII 32-127 printable characters)
-// Classic CP437-style font embedded as bit patterns
 static const uint8_t kFontData8x8[96][8] = {
   // Space (32)
   {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
@@ -208,13 +208,16 @@ static const uint8_t kFontData8x8[96][8] = {
   {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
 };
 
-struct Renderer2D::Impl {
+struct MetalRenderer::Impl {
   __strong id<MTLDevice> device = nil;
   __strong id<MTLCommandQueue> queue = nil;
   __strong id<MTLRenderPipelineState> pipeline = nil;
   __strong id<MTLRenderPipelineState> textPipeline = nil;
+  __strong id<MTLRenderPipelineState> texturePipeline = nil;
   __strong id<MTLBuffer> vertexBuffer = nil;
-  __strong id<MTLBuffer> textVertexBuffer = nil;  // Separate buffer for text
+  __strong id<MTLBuffer> textVertexBuffer = nil;
+  __strong id<MTLBuffer> lineVertexBuffer = nil;
+  __strong id<MTLBuffer> textureVertexBuffer = nil;
   __strong id<MTLBuffer> uniformBuffer = nil;
   __strong id<MTLTexture> fontTexture = nil;
   __strong id<MTLSamplerState> sampler = nil;
@@ -225,59 +228,59 @@ struct Renderer2D::Impl {
   Color4f clear{0.f, 0.f, 0.f, 1.f};
   int viewportW = 1;
   int viewportH = 1;
+  float contentScale = 1.0f;
 
   static constexpr size_t kMaxVertices = 65536;
 
-  bool createFontTexture() {
-    // Create 128x128 texture (16x16 cells, 8x8 pixels each)
-    MTLTextureDescriptor* desc = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatR8Unorm
-                                                                                    width:128
-                                                                                   height:128
-                                                                                mipmapped:NO];
-    desc.usage = MTLTextureUsageShaderRead;
-    desc.storageMode = MTLStorageModeShared;
+  bool createFontTexture();
+  bool createPipeline();
+};
 
-    fontTexture = [device newTextureWithDescriptor:desc];
-    if (!fontTexture) return false;
+bool MetalRenderer::Impl::createFontTexture() {
+  MTLTextureDescriptor* desc = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatR8Unorm
+                                                                                  width:128
+                                                                                 height:128
+                                                                              mipmapped:NO];
+  desc.usage = MTLTextureUsageShaderRead;
+  desc.storageMode = MTLStorageModeShared;
 
-    // Generate texture data
-    uint8_t texData[128 * 128] = {0};
+  fontTexture = [device newTextureWithDescriptor:desc];
+  if (!fontTexture) return false;
 
-    // Fill in printable ASCII characters (32-127)
-    for (int charIdx = 0; charIdx < 96; charIdx++) {
-      int ascii = charIdx + 32;
-      int cellX = ascii % 16;
-      int cellY = ascii / 16;
+  uint8_t texData[128 * 128] = {0};
 
-      for (int row = 0; row < 8; row++) {
-        uint8_t bits = kFontData8x8[charIdx][row];
-        for (int col = 0; col < 8; col++) {
-          int px = cellX * 8 + col;
-          int py = cellY * 8 + row;
-          texData[py * 128 + px] = (bits & (0x80 >> col)) ? 255 : 0;
-        }
+  for (int charIdx = 0; charIdx < 96; charIdx++) {
+    int ascii = charIdx + 32;
+    int cellX = ascii % 16;
+    int cellY = ascii / 16;
+
+    for (int row = 0; row < 8; row++) {
+      uint8_t bits = kFontData8x8[charIdx][row];
+      for (int col = 0; col < 8; col++) {
+        int px = cellX * 8 + col;
+        int py = cellY * 8 + row;
+        texData[py * 128 + px] = (bits & (0x80 >> col)) ? 255 : 0;
       }
     }
-
-    MTLRegion region = MTLRegionMake2D(0, 0, 128, 128);
-    [fontTexture replaceRegion:region mipmapLevel:0 withBytes:texData bytesPerRow:128];
-
-    // Create sampler
-    MTLSamplerDescriptor* samplerDesc = [[MTLSamplerDescriptor alloc] init];
-    samplerDesc.minFilter = MTLSamplerMinMagFilterNearest;
-    samplerDesc.magFilter = MTLSamplerMinMagFilterNearest;
-    samplerDesc.sAddressMode = MTLSamplerAddressModeClampToEdge;
-    samplerDesc.tAddressMode = MTLSamplerAddressModeClampToEdge;
-    sampler = [device newSamplerStateWithDescriptor:samplerDesc];
-
-    return sampler != nil;
   }
 
-  bool createPipeline() {
-    if (!device) return false;
+  MTLRegion region = MTLRegionMake2D(0, 0, 128, 128);
+  [fontTexture replaceRegion:region mipmapLevel:0 withBytes:texData bytesPerRow:128];
 
-    // Shader source for solid color (no texture)
-    NSString* solidShaderSource = @R"(
+  MTLSamplerDescriptor* samplerDesc = [[MTLSamplerDescriptor alloc] init];
+  samplerDesc.minFilter = MTLSamplerMinMagFilterNearest;
+  samplerDesc.magFilter = MTLSamplerMinMagFilterNearest;
+  samplerDesc.sAddressMode = MTLSamplerAddressModeClampToEdge;
+  samplerDesc.tAddressMode = MTLSamplerAddressModeClampToEdge;
+  sampler = [device newSamplerStateWithDescriptor:samplerDesc];
+
+  return sampler != nil;
+}
+
+bool MetalRenderer::Impl::createPipeline() {
+  if (!device) return false;
+
+  NSString* solidShaderSource = @R"(
 #include <metal_stdlib>
 using namespace metal;
 
@@ -314,8 +317,7 @@ fragment float4 fs_basic2d(VSOut in [[stage_in]]) {
 }
 )";
 
-    // Shader source for textured (font) rendering
-    NSString* textShaderSource = @R"(
+  NSString* textShaderSource = @R"(
 #include <metal_stdlib>
 using namespace metal;
 
@@ -355,112 +357,149 @@ fragment float4 fs_text(VSOut in [[stage_in]],
 }
 )";
 
-    NSError* error = nil;
+  NSString* textureShaderSource = @R"(
+#include <metal_stdlib>
+using namespace metal;
 
-    // Compile solid shader
-    id<MTLLibrary> solidLib = [device newLibraryWithSource:solidShaderSource options:nil error:&error];
-    if (!solidLib) {
-      NSLog(@"Solid shader compile error: %@", error.localizedDescription);
-      return false;
-    }
-
-    // Compile text shader
-    id<MTLLibrary> textLib = [device newLibraryWithSource:textShaderSource options:nil error:&error];
-    if (!textLib) {
-      NSLog(@"Text shader compile error: %@", error.localizedDescription);
-      return false;
-    }
-
-    id<MTLFunction> vs = [solidLib newFunctionWithName:@"vs_basic2d"];
-    id<MTLFunction> fs = [solidLib newFunctionWithName:@"fs_basic2d"];
-    id<MTLFunction> vsText = [textLib newFunctionWithName:@"vs_text"];
-    id<MTLFunction> fsText = [textLib newFunctionWithName:@"fs_text"];
-
-    if (!vs || !fs || !vsText || !fsText) {
-      NSLog(@"Failed to find shader functions");
-      return false;
-    }
-
-    // Vertex descriptor matching Vertex2D layout
-    MTLVertexDescriptor* vd = [[MTLVertexDescriptor alloc] init];
-
-    // position: float2 at offset 0
-    vd.attributes[0].format = MTLVertexFormatFloat2;
-    vd.attributes[0].offset = 0;
-    vd.attributes[0].bufferIndex = 0;
-
-    // uv: float2 at offset 8
-    vd.attributes[1].format = MTLVertexFormatFloat2;
-    vd.attributes[1].offset = sizeof(float) * 2;
-    vd.attributes[1].bufferIndex = 0;
-
-    // color: float4 at offset 16
-    vd.attributes[2].format = MTLVertexFormatFloat4;
-    vd.attributes[2].offset = sizeof(float) * 4;
-    vd.attributes[2].bufferIndex = 0;
-
-    // Stride: x, y, u, v, r, g, b, a = 8 floats
-    vd.layouts[0].stride = sizeof(float) * 8;
-    vd.layouts[0].stepFunction = MTLVertexStepFunctionPerVertex;
-
-    // Solid pipeline
-    MTLRenderPipelineDescriptor* desc = [[MTLRenderPipelineDescriptor alloc] init];
-    desc.vertexFunction = vs;
-    desc.fragmentFunction = fs;
-    desc.vertexDescriptor = vd;
-    desc.colorAttachments[0].pixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
-
-    // Enable alpha blending
-    desc.colorAttachments[0].blendingEnabled = YES;
-    desc.colorAttachments[0].sourceRGBBlendFactor = MTLBlendFactorSourceAlpha;
-    desc.colorAttachments[0].destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
-    desc.colorAttachments[0].rgbBlendOperation = MTLBlendOperationAdd;
-    desc.colorAttachments[0].sourceAlphaBlendFactor = MTLBlendFactorOne;
-    desc.colorAttachments[0].destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
-    desc.colorAttachments[0].alphaBlendOperation = MTLBlendOperationAdd;
-
-    pipeline = [device newRenderPipelineStateWithDescriptor:desc error:&error];
-    if (!pipeline) {
-      NSLog(@"Solid pipeline creation error: %@", error.localizedDescription);
-      return false;
-    }
-
-    // Text pipeline
-    desc.vertexFunction = vsText;
-    desc.fragmentFunction = fsText;
-
-    textPipeline = [device newRenderPipelineStateWithDescriptor:desc error:&error];
-    if (!textPipeline) {
-      NSLog(@"Text pipeline creation error: %@", error.localizedDescription);
-      return false;
-    }
-
-    // Allocate vertex buffer with max capacity
-    vertexBuffer = [device newBufferWithLength:kMaxVertices * sizeof(float) * 8
-                                       options:MTLResourceStorageModeShared];
-
-    // Allocate separate text vertex buffer
-    textVertexBuffer = [device newBufferWithLength:kMaxVertices * sizeof(float) * 8
-                                           options:MTLResourceStorageModeShared];
-
-    // Allocate uniform buffer
-    uniformBuffer = [device newBufferWithLength:sizeof(Uniforms)
-                                        options:MTLResourceStorageModeShared];
-
-    // Create font texture
-    if (!createFontTexture()) {
-      NSLog(@"Failed to create font texture");
-      return false;
-    }
-
-    return true;
-  }
+struct VertexIn {
+  float2 position [[attribute(0)]];
+  float2 uv       [[attribute(1)]];
+  float4 color    [[attribute(2)]];
 };
 
-Renderer2D::Renderer2D() : impl_(std::make_unique<Impl>()) {}
-Renderer2D::~Renderer2D() = default;
+struct VSOut {
+  float4 position [[position]];
+  float2 uv;
+  float4 color;
+};
 
-bool Renderer2D::attachToView(void* mtkView) {
+struct Uniforms {
+  float2 viewportSize;
+};
+
+vertex VSOut vs_texture(VertexIn in [[stage_in]],
+                        constant Uniforms& u [[buffer(1)]]) {
+  VSOut o;
+  float2 ndc = float2((in.position.x / u.viewportSize.x) * 2.0 - 1.0,
+                      (in.position.y / u.viewportSize.y) * 2.0 - 1.0);
+  ndc.y = -ndc.y;
+  o.position = float4(ndc, 0.0, 1.0);
+  o.uv = in.uv;
+  o.color = in.color;
+  return o;
+}
+
+fragment float4 fs_texture(VSOut in [[stage_in]],
+                           texture2d<float> tex [[texture(0)]],
+                           sampler samp [[sampler(0)]]) {
+  float4 texColor = tex.sample(samp, in.uv);
+  return texColor * in.color;
+}
+)";
+
+  NSError* error = nil;
+
+  id<MTLLibrary> solidLib = [device newLibraryWithSource:solidShaderSource options:nil error:&error];
+  if (!solidLib) {
+    NSLog(@"Solid shader compile error: %@", error.localizedDescription);
+    return false;
+  }
+
+  id<MTLLibrary> textLib = [device newLibraryWithSource:textShaderSource options:nil error:&error];
+  if (!textLib) {
+    NSLog(@"Text shader compile error: %@", error.localizedDescription);
+    return false;
+  }
+
+  id<MTLLibrary> textureLib = [device newLibraryWithSource:textureShaderSource options:nil error:&error];
+  if (!textureLib) {
+    NSLog(@"Texture shader compile error: %@", error.localizedDescription);
+    return false;
+  }
+
+  id<MTLFunction> vs = [solidLib newFunctionWithName:@"vs_basic2d"];
+  id<MTLFunction> fs = [solidLib newFunctionWithName:@"fs_basic2d"];
+  id<MTLFunction> vsText = [textLib newFunctionWithName:@"vs_text"];
+  id<MTLFunction> fsText = [textLib newFunctionWithName:@"fs_text"];
+  id<MTLFunction> vsTexture = [textureLib newFunctionWithName:@"vs_texture"];
+  id<MTLFunction> fsTexture = [textureLib newFunctionWithName:@"fs_texture"];
+
+  if (!vs || !fs || !vsText || !fsText || !vsTexture || !fsTexture) {
+    NSLog(@"Failed to find shader functions");
+    return false;
+  }
+
+  MTLVertexDescriptor* vd = [[MTLVertexDescriptor alloc] init];
+  vd.attributes[0].format = MTLVertexFormatFloat2;
+  vd.attributes[0].offset = 0;
+  vd.attributes[0].bufferIndex = 0;
+  vd.attributes[1].format = MTLVertexFormatFloat2;
+  vd.attributes[1].offset = sizeof(float) * 2;
+  vd.attributes[1].bufferIndex = 0;
+  vd.attributes[2].format = MTLVertexFormatFloat4;
+  vd.attributes[2].offset = sizeof(float) * 4;
+  vd.attributes[2].bufferIndex = 0;
+  vd.layouts[0].stride = sizeof(float) * 8;
+  vd.layouts[0].stepFunction = MTLVertexStepFunctionPerVertex;
+
+  MTLRenderPipelineDescriptor* desc = [[MTLRenderPipelineDescriptor alloc] init];
+  desc.vertexFunction = vs;
+  desc.fragmentFunction = fs;
+  desc.vertexDescriptor = vd;
+  desc.colorAttachments[0].pixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
+  desc.colorAttachments[0].blendingEnabled = YES;
+  desc.colorAttachments[0].sourceRGBBlendFactor = MTLBlendFactorSourceAlpha;
+  desc.colorAttachments[0].destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+  desc.colorAttachments[0].rgbBlendOperation = MTLBlendOperationAdd;
+  desc.colorAttachments[0].sourceAlphaBlendFactor = MTLBlendFactorOne;
+  desc.colorAttachments[0].destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+  desc.colorAttachments[0].alphaBlendOperation = MTLBlendOperationAdd;
+
+  pipeline = [device newRenderPipelineStateWithDescriptor:desc error:&error];
+  if (!pipeline) {
+    NSLog(@"Solid pipeline creation error: %@", error.localizedDescription);
+    return false;
+  }
+
+  desc.vertexFunction = vsText;
+  desc.fragmentFunction = fsText;
+  textPipeline = [device newRenderPipelineStateWithDescriptor:desc error:&error];
+  if (!textPipeline) {
+    NSLog(@"Text pipeline creation error: %@", error.localizedDescription);
+    return false;
+  }
+
+  desc.vertexFunction = vsTexture;
+  desc.fragmentFunction = fsTexture;
+  texturePipeline = [device newRenderPipelineStateWithDescriptor:desc error:&error];
+  if (!texturePipeline) {
+    NSLog(@"Texture pipeline creation error: %@", error.localizedDescription);
+    return false;
+  }
+
+  vertexBuffer = [device newBufferWithLength:kMaxVertices * sizeof(float) * 8
+                                     options:MTLResourceStorageModeShared];
+  textVertexBuffer = [device newBufferWithLength:kMaxVertices * sizeof(float) * 8
+                                         options:MTLResourceStorageModeShared];
+  lineVertexBuffer = [device newBufferWithLength:kMaxVertices * sizeof(float) * 8
+                                         options:MTLResourceStorageModeShared];
+  textureVertexBuffer = [device newBufferWithLength:kMaxVertices * sizeof(float) * 8
+                                            options:MTLResourceStorageModeShared];
+  uniformBuffer = [device newBufferWithLength:sizeof(Uniforms)
+                                      options:MTLResourceStorageModeShared];
+
+  if (!createFontTexture()) {
+    NSLog(@"Failed to create font texture");
+    return false;
+  }
+
+  return true;
+}
+
+MetalRenderer::MetalRenderer() : impl_(std::make_unique<Impl>()) {}
+MetalRenderer::~MetalRenderer() = default;
+
+bool MetalRenderer::attachToView(void* mtkView) {
   auto* view = (__bridge MTKView*)mtkView;
   if (!view) return false;
 
@@ -476,17 +515,17 @@ bool Renderer2D::attachToView(void* mtkView) {
   return impl_->createPipeline();
 }
 
-void Renderer2D::setClearColor(Color4f c) {
+void MetalRenderer::setClearColor(Color4f c) {
   impl_->clear = c;
 }
 
-void Renderer2D::beginFrame(void* renderPassDescriptor, void* drawable, int pixelW, int pixelH, float contentScale) {
+void MetalRenderer::beginFrame(void* renderPassDescriptor, void* drawable, int pixelW, int pixelH, float contentScale) {
   auto* pass = (__bridge MTLRenderPassDescriptor*)renderPassDescriptor;
   impl_->drawable = (__bridge id<CAMetalDrawable>)drawable;
   impl_->viewportW = pixelW;
   impl_->viewportH = pixelH;
+  impl_->contentScale = contentScale;
 
-  // Apply clear color to the first color attachment.
   pass.colorAttachments[0].clearColor = MTLClearColorMake(impl_->clear.r, impl_->clear.g, impl_->clear.b, impl_->clear.a);
   pass.colorAttachments[0].loadAction = MTLLoadActionClear;
   pass.colorAttachments[0].storeAction = MTLStoreActionStore;
@@ -494,12 +533,9 @@ void Renderer2D::beginFrame(void* renderPassDescriptor, void* drawable, int pixe
   impl_->cmd = [impl_->queue commandBuffer];
   impl_->enc = [impl_->cmd renderCommandEncoderWithDescriptor:pass];
 
-  // Set viewport in pixels
   MTLViewport vp = {0, 0, (double)pixelW, (double)pixelH, 0.0, 1.0};
   [impl_->enc setViewport:vp];
 
-  // Update and set uniforms with POINT size (not pixel size)
-  // This allows users to draw in point coordinates
   if (impl_->uniformBuffer) {
     auto* uniforms = (Uniforms*)[impl_->uniformBuffer contents];
     float scale = contentScale > 0 ? contentScale : 1.0f;
@@ -509,12 +545,12 @@ void Renderer2D::beginFrame(void* renderPassDescriptor, void* drawable, int pixe
   }
 }
 
-void Renderer2D::draw(const DrawList2D& list) {
+void MetalRenderer::draw(const DrawList& list) {
   if (!impl_->enc || !impl_->vertexBuffer) {
     return;
   }
 
-  // Draw solid rectangles
+  // Draw solid shapes
   if (!list.empty() && impl_->pipeline) {
     const auto& verts = list.vertices();
     size_t vertexCount = verts.size();
@@ -522,17 +558,31 @@ void Renderer2D::draw(const DrawList2D& list) {
       vertexCount = Impl::kMaxVertices;
     }
 
-    // Upload vertex data
     size_t byteSize = vertexCount * sizeof(Vertex2D);
     memcpy([impl_->vertexBuffer contents], verts.data(), byteSize);
 
-    // Set solid pipeline and draw
     [impl_->enc setRenderPipelineState:impl_->pipeline];
     [impl_->enc setVertexBuffer:impl_->vertexBuffer offset:0 atIndex:0];
     [impl_->enc drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:vertexCount];
   }
 
-  // Draw text (using separate buffer to avoid overwriting solid vertices)
+  // Draw lines
+  if (!list.lineEmpty() && impl_->pipeline && impl_->lineVertexBuffer) {
+    const auto& lineVerts = list.lineVertices();
+    size_t lineVertexCount = lineVerts.size();
+    if (lineVertexCount > Impl::kMaxVertices) {
+      lineVertexCount = Impl::kMaxVertices;
+    }
+
+    size_t lineByteSize = lineVertexCount * sizeof(Vertex2D);
+    memcpy([impl_->lineVertexBuffer contents], lineVerts.data(), lineByteSize);
+
+    [impl_->enc setRenderPipelineState:impl_->pipeline];
+    [impl_->enc setVertexBuffer:impl_->lineVertexBuffer offset:0 atIndex:0];
+    [impl_->enc drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:lineVertexCount];
+  }
+
+  // Draw text
   if (!list.textEmpty() && impl_->textPipeline && impl_->fontTexture && impl_->sampler && impl_->textVertexBuffer) {
     const auto& textVerts = list.textVertices();
     size_t textVertexCount = textVerts.size();
@@ -540,11 +590,9 @@ void Renderer2D::draw(const DrawList2D& list) {
       textVertexCount = Impl::kMaxVertices;
     }
 
-    // Upload text vertex data to separate buffer
     size_t textByteSize = textVertexCount * sizeof(Vertex2D);
     memcpy([impl_->textVertexBuffer contents], textVerts.data(), textByteSize);
 
-    // Set text pipeline and draw
     [impl_->enc setRenderPipelineState:impl_->textPipeline];
     [impl_->enc setVertexBuffer:impl_->textVertexBuffer offset:0 atIndex:0];
     [impl_->enc setFragmentTexture:impl_->fontTexture atIndex:0];
@@ -553,7 +601,7 @@ void Renderer2D::draw(const DrawList2D& list) {
   }
 }
 
-void Renderer2D::endFrame() {
+void MetalRenderer::endFrame() {
   if (impl_->enc) {
     [impl_->enc endEncoding];
     impl_->enc = nil;
@@ -566,6 +614,44 @@ void Renderer2D::endFrame() {
 
   impl_->cmd = nil;
   impl_->drawable = nil;
+}
+
+void* MetalRenderer::getDevice() const {
+  return (__bridge void*)impl_->device;
+}
+
+float MetalRenderer::getContentScale() const {
+  return impl_->contentScale;
+}
+
+void MetalRenderer::drawTexture(void* texture, void* samplerState, float x, float y, float w, float h) {
+  if (!impl_->enc || !impl_->texturePipeline || !impl_->textureVertexBuffer || !texture) {
+    return;
+  }
+
+  id<MTLTexture> tex = (__bridge id<MTLTexture>)texture;
+  id<MTLSamplerState> samp = (__bridge id<MTLSamplerState>)samplerState;
+  if (!samp) samp = impl_->sampler;
+
+  Vertex2D verts[6];
+  float x0 = x, y0 = y;
+  float x1 = x + w, y1 = y + h;
+  float r = 1.f, g = 1.f, b = 1.f, a = 1.f;
+
+  verts[0] = {x0, y0, 0.f, 0.f, r, g, b, a};
+  verts[1] = {x1, y0, 1.f, 0.f, r, g, b, a};
+  verts[2] = {x1, y1, 1.f, 1.f, r, g, b, a};
+  verts[3] = {x0, y0, 0.f, 0.f, r, g, b, a};
+  verts[4] = {x1, y1, 1.f, 1.f, r, g, b, a};
+  verts[5] = {x0, y1, 0.f, 1.f, r, g, b, a};
+
+  memcpy([impl_->textureVertexBuffer contents], verts, sizeof(verts));
+
+  [impl_->enc setRenderPipelineState:impl_->texturePipeline];
+  [impl_->enc setVertexBuffer:impl_->textureVertexBuffer offset:0 atIndex:0];
+  [impl_->enc setFragmentTexture:tex atIndex:0];
+  [impl_->enc setFragmentSamplerState:samp atIndex:0];
+  [impl_->enc drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:6];
 }
 
 } // namespace oflike

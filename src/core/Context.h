@@ -1,13 +1,12 @@
 #pragma once
 
 #include <cassert>
-#include "../core/Engine.hpp"
+#include "Engine.h"
 
 namespace oflike {
 
-// Header-only global engine context.
-// This keeps the user-facing API close to openFrameworks (global-style functions),
-// while letting the platform layer own the concrete Engine instance.
+// Global engine context.
+// This enables openFrameworks-style global function APIs.
 inline Engine* gEngine = nullptr;
 
 inline void setEngine(Engine* e) {

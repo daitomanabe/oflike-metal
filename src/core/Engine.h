@@ -1,10 +1,11 @@
 #pragma once
 
 #include <memory>
+#include <set>
 
-#include "AppBase.hpp"
-#include "../render/DrawList2D.hpp"
-#include "../render/Renderer2D.hpp"
+#include "AppBase.h"
+#include "../render/DrawList.h"
+#include "../render/metal/MetalRenderer.h"
 
 namespace oflike {
 
@@ -26,9 +27,6 @@ public:
   void setClearColor(Color4f c) { renderer_.setClearColor(c); }
 
   // The platform layer calls tick() once per frame.
-  // - dtSeconds: time since last frame
-  // - renderPassDescriptor: MTKView.currentRenderPassDescriptor
-  // - drawable: MTKView.currentDrawable
   void tick(double dtSeconds, void* renderPassDescriptor, void* drawable) {
     if (!app_) return;
 
@@ -36,7 +34,6 @@ public:
     elapsed_ += dtSeconds;
     frameNum_++;
 
-    // Update frame rate (exponential moving average)
     if (dtSeconds > 0) {
       float instantFps = 1.0f / static_cast<float>(dtSeconds);
       frameRate_ = frameRate_ * 0.9f + instantFps * 0.1f;
@@ -47,7 +44,6 @@ public:
       didSetup_ = true;
     }
 
-    // Record draw commands
     drawList_.reset();
 
     app_->update();
@@ -61,7 +57,6 @@ public:
   double elapsedTimeSeconds() const { return elapsed_; }
   double lastFrameTimeSeconds() const { return lastDt_; }
 
-  // Window size in points (not pixels)
   int getWindowWidth() const {
     return contentScale_ > 0 ? static_cast<int>(pixelW_ / contentScale_) : pixelW_;
   }
@@ -70,15 +65,50 @@ public:
     return contentScale_ > 0 ? static_cast<int>(pixelH_ / contentScale_) : pixelH_;
   }
 
-  // Pixel dimensions (for Retina displays)
   int getPixelWidth() const { return pixelW_; }
   int getPixelHeight() const { return pixelH_; }
 
   float getFrameRate() const { return frameRate_; }
   int getFrameNum() const { return frameNum_; }
 
-  DrawList2D& drawList() { return drawList_; }
-  Renderer2D& renderer() { return renderer_; }
+  // Mouse state
+  void setMousePosition(int x, int y) { mouseX_ = x; mouseY_ = y; }
+  void setMousePressed(int button, bool pressed) {
+    if (button >= 0 && button < 3) mousePressed_[button] = pressed;
+  }
+  int getMouseX() const { return mouseX_; }
+  int getMouseY() const { return mouseY_; }
+  bool getMousePressed(int button = 0) const {
+    return (button >= 0 && button < 3) ? mousePressed_[button] : false;
+  }
+
+  // Keyboard state
+  void setKeyPressed(int key, bool pressed) {
+    if (pressed) {
+      keysPressed_.insert(key);
+    } else {
+      keysPressed_.erase(key);
+    }
+  }
+  bool getKeyPressed(int key) const {
+    return keysPressed_.find(key) != keysPressed_.end();
+  }
+  bool isAnyKeyPressed() const { return !keysPressed_.empty(); }
+
+  // Modifier keys
+  void setModifierKeys(bool shift, bool ctrl, bool alt, bool cmd) {
+    shiftPressed_ = shift;
+    ctrlPressed_ = ctrl;
+    altPressed_ = alt;
+    cmdPressed_ = cmd;
+  }
+  bool isShiftPressed() const { return shiftPressed_; }
+  bool isCtrlPressed() const { return ctrlPressed_; }
+  bool isAltPressed() const { return altPressed_; }
+  bool isCmdPressed() const { return cmdPressed_; }
+
+  DrawList& drawList() { return drawList_; }
+  MetalRenderer& renderer() { return renderer_; }
 
 private:
   std::unique_ptr<AppBase> app_;
@@ -86,15 +116,25 @@ private:
 
   int pixelW_{1};
   int pixelH_{1};
-  float contentScale_{2.0f};  // Default Retina scale
+  float contentScale_{2.0f};
 
   double elapsed_{0.0};
   double lastDt_{0.0};
   float frameRate_{60.0f};
   int frameNum_{0};
 
-  DrawList2D drawList_;
-  Renderer2D renderer_;
+  int mouseX_{0};
+  int mouseY_{0};
+  bool mousePressed_[3]{false, false, false};
+
+  std::set<int> keysPressed_;
+  bool shiftPressed_{false};
+  bool ctrlPressed_{false};
+  bool altPressed_{false};
+  bool cmdPressed_{false};
+
+  DrawList drawList_;
+  MetalRenderer renderer_;
 };
 
 } // namespace oflike
