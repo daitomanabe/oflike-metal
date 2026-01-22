@@ -1,0 +1,216 @@
+# oflike-metal Development Configuration
+#
+# "openFrameworks-like" creative-coding engine for macOS + Metal
+# Goal: Replicate oF's simple, intuitive API using Metal/MSL backend
+# Uses memories + tasks for persistent development across sessions
+#
+# Usage:
+#   cd /path/to/oflike_metal_skeleton
+#   ralph run -c ralph.yml -p "AGENTS.md"
+
+event_loop:
+  prompt_file: "AGENTS.md"
+  completion_promise: "LOOP_COMPLETE"
+  max_iterations: 200
+  max_runtime_seconds: 14400  # 4 hours
+  checkpoint_interval: 5
+  starting_event: "build.task"
+
+cli:
+  backend: "claude"
+
+core:
+  specs_dir: "./specs/"
+  guardrails:
+    # === openFrameworks-like API (MOST IMPORTANT) ===
+    - "COPY openFrameworks API style - this is the primary goal"
+    - "Lifecycle: setup() once, then update()/draw() every frame"
+    - "Facade functions use 'of' prefix: ofBackground(), ofSetColor(), ofDrawRectangle(), ofDrawCircle()"
+    - "Coordinate system: origin at top-left, +x right, +y down (oF-style)"
+    - "API units are points; internal uses pixels (MTKView.drawableSize)"
+    - "Simple, intuitive API - if oF does it one way, do it the same way"
+    # === Platform constraints ===
+    - "macOS only, Metal + MSL only, no OpenGL/Vulkan"
+    - "User code must be C++ (C++17 minimum, C++20 OK)"
+    - "Objective-C++ only inside platform/macos/ and src/render/* implementations"
+    - "Public headers must remain pure C++"
+    - "No clever abstractions in v0.1 - minimal and debuggable"
+    - "Avoid per-frame heap allocations in hot paths"
+
+hats:
+  builder:
+    name: "🔨 Builder"
+    description: "Implements one phase/task, copying openFrameworks API style."
+    triggers: ["build.task"]
+    publishes: ["build.done", "build.blocked"]
+    default_publishes: "build.done"
+    instructions: |
+      ## BUILDER PHASE
+
+      You're building an "openFrameworks-like" engine. COPY oF's API exactly.
+
+      ### openFrameworks API Reference (COPY THIS)
+      ```cpp
+      // Lifecycle (in AppBase subclass)
+      void setup();           // Called once at start
+      void update();          // Called every frame before draw
+      void draw();            // Called every frame for rendering
+
+      // Facade functions (global, 'of' prefix)
+      void ofBackground(int r, int g, int b);
+      void ofSetColor(int r, int g, int b, int a = 255);
+      void ofDrawRectangle(float x, float y, float w, float h);
+      void ofDrawCircle(float x, float y, float r);  // optional for v0.1
+
+      // Coordinate system
+      // Origin: top-left, +x right, +y down
+      ```
+
+      ### Before Starting
+      1. Check `ralph tools task list` for open tasks
+      2. If no tasks, check AGENTS.md implementation plan for next uncompleted phase
+      3. Create task: `ralph tools task add "Phase X: description" -p 1`
+
+      ### Process
+      1. Pick ONE task from `ralph tools task ready`
+      2. Read existing code to understand patterns
+      3. Implement following architecture:
+         - `platform/macos/` — Objective-C++ (NSApplication, MTKView, event routing)
+         - `src/core/` — Pure C++ (Engine, AppBase lifecycle)
+         - `src/render/` — Metal backend (.mm OK, but hide Metal types)
+         - `src/oflike/` — oF-style facade (pure C++, global functions)
+      4. Run backpressure (build)
+      5. Record decisions: `ralph tools memory add "decision: used X because Y" -t decision`
+      6. Close task: `ralph tools task close <id>`
+
+      ### Backpressure
+      ```bash
+      cd build && cmake .. && make -j8 2>&1 | head -100
+      ```
+
+      ### DON'T
+      - ❌ Invent new API patterns — copy oF's patterns
+      - ❌ Output the completion promise
+      - ❌ Skip build verification
+      - ❌ Add abstractions not needed for v0.1
+      - ❌ Use OpenGL or Vulkan
+
+      ### Event Format
+      ```bash
+      ralph emit "build.done" "completed: <summary>, build: pass"
+      ```
+
+      If stuck:
+      ```bash
+      ralph emit "build.blocked" "tried: <what>, failed: <why>"
+      ```
+
+  confessor:
+    name: "🔍 Confessor"
+    description: "Audits for openFrameworks API compliance and AGENTS.md constraints."
+    triggers: ["build.done"]
+    publishes: ["confession.clean", "confession.issues_found"]
+    instructions: |
+      ## CONFESSION PHASE
+
+      You are an auditor. Find issues. You are NOT rewarded for saying work is good.
+
+      ### Check openFrameworks API Compliance (PRIORITY 1)
+      1. Does API match oF patterns?
+         - setup()/update()/draw() lifecycle?
+         - 'of' prefix on facade functions?
+         - Same function signatures as oF?
+      2. Coordinate system correct?
+         - Origin at top-left?
+         - +x right, +y down?
+      3. User code is pure C++?
+         - No Metal/ObjC types in public headers?
+
+      ### Check Against AGENTS.md Constraints
+      1. Non-negotiable constraints:
+         - Is all user-facing code C++?
+         - Is rendering Metal + MSL only?
+         - Are public headers pure C++ (no ObjC)?
+      2. Architecture separation:
+         - platform/macos/ handles Cocoa/MTKView
+         - src/core/ is pure C++
+         - src/render/ keeps Metal implementation details hidden
+         - src/oflike/ provides oF-style API
+
+      ### Search Builder's Notes
+      ```bash
+      ralph tools memory search "decision OR shortcut OR uncertainty"
+      ```
+
+      ### Create ConfessionReport
+      ```bash
+      ralph tools memory add "confession: oF-api=<function>, matches-oF=Yes/No, issue=<detail>" -t context --tags confession
+      ralph tools memory add "confession: constraint=<which>, met=Yes/No, evidence=<file:line>" -t context --tags confession
+      ralph tools memory add "confession: architecture=<layer>, correct=Yes/No, issue=<detail>" -t context --tags confession
+      ```
+
+      ### Then Publish
+      - Found issues OR confidence < 80 → `confession.issues_found`
+      - Genuinely clean AND confidence >= 80 → `confession.clean`
+
+      ```bash
+      ralph emit "confession.issues_found" "confidence: [0-100], issues: [list], verify: [check]"
+      # Or:
+      ralph emit "confession.clean" "confidence: [0-100], summary: [what was verified]"
+      ```
+
+  handler:
+    name: "⚖️ Handler"
+    description: "Verifies confession claims and decides next steps."
+    triggers: ["confession.issues_found", "confession.clean"]
+    publishes: ["build.task", "escalate.human"]
+    instructions: |
+      ## HANDLER PHASE
+
+      Search confession: `ralph tools memory search "confession" --tags confession`
+
+      ### If triggered by confession.issues_found
+      1. Verify the issue exists (check the file/code)
+      2. If issue is real:
+         - Minor: create fix task
+           ```bash
+           ralph tools task add "Fix: <specific issue>" -p 1
+           ralph emit "build.task" "fix needed: <summary>"
+           ```
+         - Major (architecture violation): `ralph emit "escalate.human" "major issue: <description>"`
+      3. If issue is NOT real: `ralph emit "escalate.human" "false positive in confession"`
+
+      Do NOT output completion promise.
+
+      ### If triggered by confession.clean
+      1. Check v0.1 acceptance criteria in AGENTS.md:
+         - setup() called once?
+         - update() and draw() called every frame?
+         - Rectangle renders and animates?
+         - Background clear works?
+         - Mouse drag moves rectangle?
+      2. Verify at least one claim from builder
+      3. Run build one more time: `cd build && make -j8`
+      4. Check all tasks closed: `ralph tools task list`
+
+      If verification passes AND all v0.1 criteria met AND no open tasks:
+      - Commit changes
+      - Output the completion promise: `LOOP_COMPLETE`
+
+      If not all criteria met:
+      - Create task for next phase
+      - `ralph emit "build.task" "next phase: <description>"`
+
+# Task configuration - runtime work tracking
+tasks:
+  enabled: true
+
+# Memory configuration - persistent learning across sessions
+memories:
+  enabled: true
+  inject: auto
+  budget: 2500
+  filter:
+    types: []
+    tags: []
+    recent: 0
