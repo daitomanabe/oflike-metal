@@ -33,6 +33,142 @@ void DrawList::addCircle(float cx, float cy, float radius, int segments) {
   addEllipse(cx, cy, radius, radius, segments);
 }
 
+void DrawList::addRectRounded(float x, float y, float w, float h, float r, int segments) {
+  addRectRounded(x, y, w, h, r, r, r, r, segments);
+}
+
+void DrawList::addRectRounded(float x, float y, float w, float h,
+                              float topLeftRadius, float topRightRadius,
+                              float bottomRightRadius, float bottomLeftRadius,
+                              int segments) {
+  // Handle negative width/height
+  if (w < 0.0f) {
+    x += w;
+    w *= -1.0f;
+  }
+  if (h < 0.0f) {
+    y += h;
+    h *= -1.0f;
+  }
+
+  // Clamp radii to maximum possible value
+  float maxRadius = std::min(w / 2.0f, h / 2.0f);
+  topLeftRadius = std::min(topLeftRadius, maxRadius);
+  topRightRadius = std::min(topRightRadius, maxRadius);
+  bottomRightRadius = std::min(bottomRightRadius, maxRadius);
+  bottomLeftRadius = std::min(bottomLeftRadius, maxRadius);
+
+  // If all radii are ~0, just draw a regular rectangle
+  const float epsilon = 0.0001f;
+  if (topLeftRadius < epsilon && topRightRadius < epsilon &&
+      bottomRightRadius < epsilon && bottomLeftRadius < epsilon) {
+    addRect(x, y, w, h);
+    return;
+  }
+
+  float left = x;
+  float right = x + w;
+  float top = y;
+  float bottom = y + h;
+
+  // Build the path vertices
+  std::vector<Vertex2D> pathVerts;
+
+  // Start at top-left corner (after the radius)
+  {
+    float px = left + topLeftRadius, py = top;
+    applyTransform(px, py);
+    pathVerts.push_back({px, py, 0.f, 0.f, current_.r, current_.g, current_.b, current_.a});
+  }
+
+  // Top-right corner
+  if (topRightRadius >= epsilon) {
+    addArcVertices(pathVerts, right - topRightRadius, top + topRightRadius,
+                   topRightRadius, topRightRadius, -90.f, 0.f, segments);
+  } else {
+    float px = right, py = top;
+    applyTransform(px, py);
+    pathVerts.push_back({px, py, 0.f, 0.f, current_.r, current_.g, current_.b, current_.a});
+  }
+
+  // Right edge to bottom-right corner
+  {
+    float px = right, py = bottom - bottomRightRadius;
+    applyTransform(px, py);
+    pathVerts.push_back({px, py, 0.f, 0.f, current_.r, current_.g, current_.b, current_.a});
+  }
+
+  // Bottom-right corner
+  if (bottomRightRadius >= epsilon) {
+    addArcVertices(pathVerts, right - bottomRightRadius, bottom - bottomRightRadius,
+                   bottomRightRadius, bottomRightRadius, 0.f, 90.f, segments);
+  }
+
+  // Bottom edge to bottom-left corner
+  {
+    float px = left + bottomLeftRadius, py = bottom;
+    applyTransform(px, py);
+    pathVerts.push_back({px, py, 0.f, 0.f, current_.r, current_.g, current_.b, current_.a});
+  }
+
+  // Bottom-left corner
+  if (bottomLeftRadius >= epsilon) {
+    addArcVertices(pathVerts, left + bottomLeftRadius, bottom - bottomLeftRadius,
+                   bottomLeftRadius, bottomLeftRadius, 90.f, 180.f, segments);
+  }
+
+  // Left edge to top-left corner
+  {
+    float px = left, py = top + topLeftRadius;
+    applyTransform(px, py);
+    pathVerts.push_back({px, py, 0.f, 0.f, current_.r, current_.g, current_.b, current_.a});
+  }
+
+  // Top-left corner
+  if (topLeftRadius >= epsilon) {
+    addArcVertices(pathVerts, left + topLeftRadius, top + topLeftRadius,
+                   topLeftRadius, topLeftRadius, 180.f, 270.f, segments);
+  }
+
+  // Close the path
+  pathVerts.push_back(pathVerts[0]);
+
+  // Tessellate
+  if (filled_) {
+    // Fan triangulation from first vertex
+    if (pathVerts.size() >= 3) {
+      for (size_t i = 1; i < pathVerts.size() - 1; i++) {
+        verts_.push_back(pathVerts[0]);
+        verts_.push_back(pathVerts[i]);
+        verts_.push_back(pathVerts[i + 1]);
+      }
+    }
+  } else {
+    // Draw outline
+    for (size_t i = 0; i < pathVerts.size() - 1; i++) {
+      addLineRaw(pathVerts[i].x, pathVerts[i].y,
+                 pathVerts[i + 1].x, pathVerts[i + 1].y);
+    }
+  }
+}
+
+void DrawList::addArcVertices(std::vector<Vertex2D>& verts, float cx, float cy,
+                               float rx, float ry, float startAngle, float endAngle,
+                               int segments) {
+  const float PI = 3.14159265358979f;
+  float startRad = startAngle * PI / 180.f;
+  float endRad = endAngle * PI / 180.f;
+  float angleStep = (endRad - startRad) / segments;
+
+  for (int i = 0; i <= segments; i++) {
+    float angle = startRad + i * angleStep;
+    float px = cx + rx * std::cos(angle);
+    float py = cy + ry * std::sin(angle);
+    applyTransform(px, py);
+    verts.push_back({px, py, 0.f, 0.f, current_.r, current_.g, current_.b, current_.a});
+  }
+}
+
 void DrawList::addEllipse(float cx, float cy, float rx, float ry, int segments) {
   if (segments < 3) segments = 3;
 
@@ -218,6 +354,40 @@ void DrawList::bezierVertex(float cx1, float cy1, float cx2, float cy2, float x,
 
     shapeVerts_.push_back({bx, by, 0.f, 0.f, current_.r, current_.g, current_.b, current_.a});
   }
+}
+
+void DrawList::nextContour(bool close) {
+  if (!inShape_) return;
+
+  // Process curve vertices first if any
+  if (!curveVerts_.empty()) {
+    processCurveVertices();
+    curveVerts_.clear();
+  }
+
+  // Close the current contour if requested and we have enough vertices
+  if (close && shapeVerts_.size() >= 3) {
+    shapeVerts_.push_back(shapeVerts_[0]);
+  }
+
+  // Tessellate current contour
+  if (filled_) {
+    if (shapeVerts_.size() >= 3) {
+      for (size_t i = 1; i < shapeVerts_.size() - 1; i++) {
+        verts_.push_back(shapeVerts_[0]);
+        verts_.push_back(shapeVerts_[i]);
+        verts_.push_back(shapeVerts_[i + 1]);
+      }
+    }
+  } else {
+    for (size_t i = 0; i < shapeVerts_.size() - 1; i++) {
+      addLineRaw(shapeVerts_[i].x, shapeVerts_[i].y,
+                 shapeVerts_[i + 1].x, shapeVerts_[i + 1].y);
+    }
+  }
+
+  // Clear for next contour
+  shapeVerts_.clear();
 }
 
 void DrawList::endShape(bool close) {

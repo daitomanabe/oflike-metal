@@ -17,7 +17,15 @@
 #include "graphics/ofColor.h"
 #include "graphics/ofGraphics.h"
 #include "graphics/ofPolyline.h"
+#include "graphics/ofPath.h"
 #include "graphics/of3dPrimitives.h"
+#include "graphics/ofTrueTypeFont.h"
+
+// 3D
+#include "3d/ofMesh.h"
+
+// Types
+#include "types/ofRectangle.h"
 
 // Image
 #include "image/ofTexture.h"

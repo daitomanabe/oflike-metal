@@ -1,18 +1,17 @@
 # oflike-metal Development Configuration
 #
-# "openFrameworks-like" creative-coding engine for macOS + Metal
-# Goal: Replicate oF's simple, intuitive API using Metal/MSL backend
-# Uses memories + tasks for persistent development across sessions
+# openFrameworks API ported to macOS Metal
+# ドキュメント駆動開発: docs/ が設計の真実
 #
 # Usage:
 #   cd /path/to/oflike_metal_skeleton
-#   ralph run -c ralph.yml -p "AGENTS.md"
+#   ralph run -c ralph.yml -p "docs/INDEX.md"
 
 event_loop:
-  prompt_file: "AGENTS.md"
+  prompt_file: "docs/INDEX.md"
   completion_promise: "LOOP_COMPLETE"
-  max_iterations: 200
-  max_runtime_seconds: 14400  # 4 hours
+  max_iterations: 1000
+  max_runtime_seconds: 28800  # 8 hours
   checkpoint_interval: 5
   starting_event: "build.task"
 
@@ -20,196 +19,259 @@ cli:
   backend: "claude"
 
 core:
-  specs_dir: "./specs/"
+  specs_dir: "./docs/"
   guardrails:
-    # === openFrameworks-like API (MOST IMPORTANT) ===
-    - "COPY openFrameworks API style - this is the primary goal"
-    - "Lifecycle: setup() once, then update()/draw() every frame"
-    - "Facade functions use 'of' prefix: ofBackground(), ofSetColor(), ofDrawRectangle(), ofDrawCircle()"
-    - "Coordinate system: origin at top-left, +x right, +y down (oF-style)"
-    - "API units are points; internal uses pixels (MTKView.drawableSize)"
-    - "Simple, intuitive API - if oF does it one way, do it the same way"
-    # === Platform constraints ===
-    - "macOS only, Metal + MSL only, no OpenGL/Vulkan"
-    - "User code must be C++ (C++17 minimum, C++20 OK)"
-    - "Objective-C++ only inside platform/macos/ and src/render/* implementations"
-    - "Public headers must remain pure C++"
-    - "No clever abstractions in v0.1 - minimal and debuggable"
-    - "Avoid per-frame heap allocations in hot paths"
+    # === ドキュメント駆動 ===
+    - "docs/INDEX.md を最初に読む - 全体構造を把握"
+    - "docs/ARCHITECTURE.md の禁止事項は絶対 - 例外なし"
+    - "docs/IMPLEMENTATION.md で進捗確認 - 次のPhaseを特定"
+    - "docs/api/*.md に設計がある - 実装前に必ず確認"
+    - "docs/metal/*.md でMetal詳細を確認"
+    # === 絶対禁止 (ARCHITECTURE.md より) ===
+    - "❌ FreeType禁止 → Core Text使用"
+    - "❌ stb_image禁止 → ImageIO/MTKTextureLoader使用"
+    - "❌ OpenGL禁止 → Metal使用"
+    - "❌ SDL/GLFW禁止 → Cocoa/AppKit使用"
+    - "❌ 外部SIMDライブラリ禁止 → Accelerate使用"
+    # === 必須フレームワーク ===
+    - "✅ Metal / MetalKit - GPU描画"
+    - "✅ Core Text - フォント"
+    - "✅ ImageIO / MTKTextureLoader - 画像読み込み"
+    - "✅ Core Graphics - パス、ビットマップ"
+    - "✅ Cocoa - ウィンドウ、イベント"
+    # === openFrameworks互換 ===
+    - "oF APIシグネチャを維持 - 内部はMetal最適化"
+    - "GL定数は内部でMetalに変換"
 
 hats:
   builder:
     name: "🔨 Builder"
-    description: "Implements one phase/task, copying openFrameworks API style."
+    description: "docs/の設計に従って実装。IMPLEMENTATION.mdを更新。"
     triggers: ["build.task"]
     publishes: ["build.done", "build.blocked"]
     default_publishes: "build.done"
     instructions: |
       ## BUILDER PHASE
 
-      You're building an "openFrameworks-like" engine. COPY oF's API exactly.
+      ドキュメント駆動で実装する。
 
-      ### openFrameworks API Reference (COPY THIS)
-      ```cpp
-      // Lifecycle (in AppBase subclass)
-      void setup();           // Called once at start
-      void update();          // Called every frame before draw
-      void draw();            // Called every frame for rendering
+      ### ⚠️ 最初に必ずドキュメントを読む (毎回実行)
 
-      // Facade functions (global, 'of' prefix)
-      void ofBackground(int r, int g, int b);
-      void ofSetColor(int r, int g, int b, int a = 255);
-      void ofDrawRectangle(float x, float y, float w, float h);
-      void ofDrawCircle(float x, float y, float r);  // optional for v0.1
+      **Step 1: 禁止事項を確認**
+      ```bash
+      cat docs/ARCHITECTURE.md
+      ```
+      → FreeType/stb_image/OpenGL は絶対禁止
 
-      // Coordinate system
-      // Origin: top-left, +x right, +y down
+      **Step 2: 実装ステータスを確認**
+      ```bash
+      cat docs/IMPLEMENTATION.md
+      ```
+      → 次の ⬜ 未実装 を特定
+
+      **Step 3: 該当APIの設計を読む**
+      ```bash
+      # 例: 3D基盤を実装する場合
+      cat docs/api/CORE.md
       ```
 
-      ### Before Starting
-      1. Check `ralph tools task list` for open tasks
-      2. If no tasks, check AGENTS.md implementation plan for next uncompleted phase
-      3. Create task: `ralph tools task add "Phase X: description" -p 1`
+      **Step 4: Metal実装詳細を確認 (必要に応じて)**
+      ```bash
+      cat docs/metal/PIPELINE.md
+      cat docs/metal/SHADERS.md
+      ```
 
-      ### Process
-      1. Pick ONE task from `ralph tools task ready`
-      2. Read existing code to understand patterns
-      3. Implement following architecture:
-         - `platform/macos/` — Objective-C++ (NSApplication, MTKView, event routing)
-         - `src/core/` — Pure C++ (Engine, AppBase lifecycle)
-         - `src/render/` — Metal backend (.mm OK, but hide Metal types)
-         - `src/oflike/` — oF-style facade (pure C++, global functions)
-      4. Run backpressure (build)
-      5. Record decisions: `ralph tools memory add "decision: used X because Y" -t decision`
-      6. Close task: `ralph tools task close <id>`
+      ### 実装ワークフロー
+      1. ↑のドキュメントを読む (スキップ禁止)
+      2. **docs/api/*.md の設計に従って実装**
+      3. **docs/IMPLEMENTATION.md を更新** - ステータスを ✅ に
+
+      ### 現在の実装フェーズ (IMPLEMENTATION.md より)
+      - Phase 1-5: ✅ 完了
+      - **Phase 6: 3D基盤** ⬜ 未着手
+        - ofNode, 3D行列スタック, ofCamera, ofEasyCam
+      - **Phase 7: 3Dプリミティブ** ⬜ 未着手
+        - of3dPrimitive, ofBoxPrimitive, ofSpherePrimitive, etc.
+      - **Phase 8: ライティング** ⬜ 未着手
+        - ofLight, ofMaterial, Phongシェーダー
+
+      ### API設計ドキュメント
+      | ファイル | 内容 |
+      |---------|------|
+      | docs/api/CORE.md | ofNode, ofCamera, ofEasyCam |
+      | docs/api/GRAPHICS_3D.md | of3dPrimitive, 3D描画関数 |
+      | docs/api/MESH.md | ofMesh, ofVboMesh |
+      | docs/api/LIGHTING.md | ofLight, ofMaterial |
+      | docs/metal/PIPELINE.md | レンダリングパイプライン |
+      | docs/metal/SHADERS.md | シェーダー設計 |
+
+      ### Before Starting
+      1. `ralph tools task list` で open tasks 確認
+      2. なければ IMPLEMENTATION.md から次のタスクを選択
+      3. `ralph tools task add "Phase 6: ofNode実装" -p 1`
+
+      ### ディレクトリ構造
+      ```
+      src/
+      ├── core/         # Context, Types
+      ├── render/       # DrawList, metal/
+      └── oflike/
+          ├── graphics/ # ofGraphics, ofPath, ofColor, ofTrueTypeFont
+          ├── image/    # ofTexture, ofPixels
+          ├── types/    # ofRectangle, ofPolyline
+          └── 3d/       # ofMesh, ofNode, ofCamera (←次はここ)
+      ```
 
       ### Backpressure
       ```bash
       cd build && cmake .. && make -j8 2>&1 | head -100
       ```
 
-      ### DON'T
-      - ❌ Invent new API patterns — copy oF's patterns
-      - ❌ Output the completion promise
-      - ❌ Skip build verification
-      - ❌ Add abstractions not needed for v0.1
-      - ❌ Use OpenGL or Vulkan
+      ### 完了時
+      1. docs/IMPLEMENTATION.md のステータスを ✅ に更新
+      2. `ralph tools task close <id>`
+      3. `ralph emit "build.done" "implemented: <API名>, updated: IMPLEMENTATION.md"`
 
-      ### Event Format
+      ### ブロック時
       ```bash
-      ralph emit "build.done" "completed: <summary>, build: pass"
-      ```
-
-      If stuck:
-      ```bash
-      ralph emit "build.blocked" "tried: <what>, failed: <why>"
+      ralph emit "build.blocked" "tried: <what>, blocked: <why>"
       ```
 
   confessor:
     name: "🔍 Confessor"
-    description: "Audits for openFrameworks API compliance and AGENTS.md constraints."
+    description: "ARCHITECTURE.md準拠とドキュメント整合性を監査。"
     triggers: ["build.done"]
     publishes: ["confession.clean", "confession.issues_found"]
     instructions: |
       ## CONFESSION PHASE
 
-      You are an auditor. Find issues. You are NOT rewarded for saying work is good.
+      ドキュメントと実装の整合性を監査する。
 
-      ### Check openFrameworks API Compliance (PRIORITY 1)
-      1. Does API match oF patterns?
-         - setup()/update()/draw() lifecycle?
-         - 'of' prefix on facade functions?
-         - Same function signatures as oF?
-      2. Coordinate system correct?
-         - Origin at top-left?
-         - +x right, +y down?
-      3. User code is pure C++?
-         - No Metal/ObjC types in public headers?
+      ### ⚠️ 最初に必ずドキュメントを読む (毎回実行)
 
-      ### Check Against AGENTS.md Constraints
-      1. Non-negotiable constraints:
-         - Is all user-facing code C++?
-         - Is rendering Metal + MSL only?
-         - Are public headers pure C++ (no ObjC)?
-      2. Architecture separation:
-         - platform/macos/ handles Cocoa/MTKView
-         - src/core/ is pure C++
-         - src/render/ keeps Metal implementation details hidden
-         - src/oflike/ provides oF-style API
-
-      ### Search Builder's Notes
+      **Step 1: ARCHITECTURE.md を読んで禁止事項を確認**
       ```bash
-      ralph tools memory search "decision OR shortcut OR uncertainty"
+      cat docs/ARCHITECTURE.md
       ```
 
-      ### Create ConfessionReport
+      **Step 2: IMPLEMENTATION.md を読んで更新状況を確認**
       ```bash
-      ralph tools memory add "confession: oF-api=<function>, matches-oF=Yes/No, issue=<detail>" -t context --tags confession
-      ralph tools memory add "confession: constraint=<which>, met=Yes/No, evidence=<file:line>" -t context --tags confession
-      ralph tools memory add "confession: architecture=<layer>, correct=Yes/No, issue=<detail>" -t context --tags confession
+      cat docs/IMPLEMENTATION.md
       ```
 
-      ### Then Publish
-      - Found issues OR confidence < 80 → `confession.issues_found`
-      - Genuinely clean AND confidence >= 80 → `confession.clean`
-
+      **Step 3: 該当APIの設計書を読む**
       ```bash
-      ralph emit "confession.issues_found" "confidence: [0-100], issues: [list], verify: [check]"
-      # Or:
-      ralph emit "confession.clean" "confidence: [0-100], summary: [what was verified]"
+      # 実装されたAPIに対応するファイルを読む
+      cat docs/api/CORE.md        # ofNode, ofCamera
+      cat docs/api/GRAPHICS_3D.md # of3dPrimitive
+      cat docs/api/LIGHTING.md    # ofLight, ofMaterial
       ```
+
+      ### ARCHITECTURE.md 準拠チェック (最重要)
+
+      **実装コードに以下が含まれていないか grep で確認:**
+      ```bash
+      grep -r "FreeType\|freetype" src/
+      grep -r "stb_image\|STB_IMAGE" src/
+      grep -r "glBegin\|glEnd\|GL_" src/
+      grep -r "SDL_\|GLFW" src/
+      ```
+      → ヒットしたら即 `confession.issues_found`
+
+      ### ドキュメント整合性チェック
+      1. **docs/api/*.md と実装が一致しているか?**
+         - 関数シグネチャが設計通りか
+         - 記載されている全機能が実装されているか
+      2. **docs/IMPLEMENTATION.md が更新されているか?**
+         - 実装したAPIが ✅ になっているか
+      3. **docs/metal/*.md のパイプライン設計に従っているか?**
+
+      ### openFrameworks互換性チェック
+      1. oF APIシグネチャと一致?
+      2. パブリックヘッダーは純粋C++? (ObjC型なし)
+
+      ### ConfessionReport
+      ```bash
+      ralph tools memory add "confession: arch-check=passed|FAILED:<detail>" -t context --tags confession
+      ralph tools memory add "confession: doc-sync=Yes|No, missing=<what>" -t context --tags confession
+      ```
+
+      ### Publish
+      - ARCHITECTURE違反 → 即 `confession.issues_found`
+      - その他問題あり OR confidence < 80 → `confession.issues_found`
+      - 問題なし AND confidence >= 80 → `confession.clean`
 
   handler:
     name: "⚖️ Handler"
-    description: "Verifies confession claims and decides next steps."
+    description: "次のPhase/タスクを決定。IMPLEMENTATION.mdを参照。"
     triggers: ["confession.issues_found", "confession.clean"]
     publishes: ["build.task", "escalate.human"]
     instructions: |
       ## HANDLER PHASE
 
-      Search confession: `ralph tools memory search "confession" --tags confession`
+      ### ⚠️ 最初に必ず IMPLEMENTATION.md を読む (毎回実行)
+      ```bash
+      cat docs/IMPLEMENTATION.md
+      ```
+      → 現在のPhase完了状況と次のタスクを特定
 
-      ### If triggered by confession.issues_found
-      1. Verify the issue exists (check the file/code)
-      2. If issue is real:
-         - Minor: create fix task
-           ```bash
-           ralph tools task add "Fix: <specific issue>" -p 1
-           ralph emit "build.task" "fix needed: <summary>"
-           ```
-         - Major (architecture violation): `ralph emit "escalate.human" "major issue: <description>"`
-      3. If issue is NOT real: `ralph emit "escalate.human" "false positive in confession"`
+      ### confession.issues_found の場合
+      1. 問題を検証
+      2. 問題が実在:
+         - 軽微: `ralph tools task add "Fix: <issue>" -p 1` → `build.task`
+         - 重大 (ARCHITECTURE違反): `escalate.human`
+      3. 誤検知: `escalate.human`
 
-      Do NOT output completion promise.
+      ### confession.clean の場合
 
-      ### If triggered by confession.clean
-      1. Check v0.1 acceptance criteria in AGENTS.md:
-         - setup() called once?
-         - update() and draw() called every frame?
-         - Rectangle renders and animates?
-         - Background clear works?
-         - Mouse drag moves rectangle?
-      2. Verify at least one claim from builder
-      3. Run build one more time: `cd build && make -j8`
-      4. Check all tasks closed: `ralph tools task list`
+      **IMPLEMENTATION.md の ⬜ を見て次のタスクを決定:**
 
-      If verification passes AND all v0.1 criteria met AND no open tasks:
-      - Commit changes
-      - Output the completion promise: `LOOP_COMPLETE`
+      #### Phase 6: 3D基盤
+      設計: `cat docs/api/CORE.md`
+      1. ofNode - 3D変換ノード
+      2. 3D行列スタック - View/Projection管理
+      3. ofCamera - カメラ基底クラス
+      4. ofEasyCam - マウス操作カメラ
 
-      If not all criteria met:
-      - Create task for next phase
-      - `ralph emit "build.task" "next phase: <description>"`
+      #### Phase 7: 3Dプリミティブ
+      設計: `cat docs/api/GRAPHICS_3D.md`
+      1. of3dPrimitive - 基底クラス
+      2. ofBoxPrimitive, ofSpherePrimitive
+      3. ofCylinderPrimitive, ofConePrimitive
+      4. ofPlanePrimitive, ofIcoSpherePrimitive
 
-# Task configuration - runtime work tracking
+      #### Phase 8: ライティング
+      設計: `cat docs/api/LIGHTING.md`
+      Metal: `cat docs/metal/SHADERS.md`
+      1. ofLight - ライト
+      2. ofMaterial - マテリアル
+      3. Phongシェーダー (Metal)
+
+      ### 次のタスク作成
+      ```bash
+      # 次の ⬜ 未実装APIを特定してタスク作成
+      ralph tools task add "Phase N: <API名>実装 - docs/api/XXX.md参照" -p 1
+      ralph emit "build.task" "next: <API名>"
+      ```
+
+      ### 進捗記録
+      ```bash
+      ralph tools memory add "completed: <API名>, next: <次のAPI>" -t pattern --tags progress
+      ```
+
+      ### LOOP_COMPLETE 条件
+      - ユーザーが "stop" または "done" と言った場合
+      - Phase 8 まで全て ✅ 完了した場合
+
+# Task tracking
 tasks:
   enabled: true
 
-# Memory configuration - persistent learning across sessions
+# Memory - セッション間で学習を保持
 memories:
   enabled: true
   inject: auto
-  budget: 2500
+  budget: 3000
   filter:
     types: []
     tags: []

@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <set>
+#include <stack>
 
 #include "AppBase.h"
 #include "../render/DrawList.h"
@@ -110,6 +111,79 @@ public:
   DrawList& drawList() { return drawList_; }
   MetalRenderer& renderer() { return renderer_; }
 
+  // Style management
+  Style& style() { return currentStyle_; }
+  const Style& style() const { return currentStyle_; }
+
+  void pushStyle() { styleStack_.push(currentStyle_); }
+  void popStyle() {
+    if (!styleStack_.empty()) {
+      currentStyle_ = styleStack_.top();
+      styleStack_.pop();
+      applyStyle();
+    }
+  }
+
+  void setStyle(const Style& s) {
+    currentStyle_ = s;
+    applyStyle();
+  }
+
+  Style getStyle() const { return currentStyle_; }
+
+  // Blend mode
+  void setBlendMode(BlendMode mode) {
+    currentStyle_.blendMode = mode;
+  }
+  BlendMode getBlendMode() const { return currentStyle_.blendMode; }
+
+  // Rectangle mode
+  void setRectMode(RectMode mode) { currentStyle_.rectMode = mode; }
+  RectMode getRectMode() const { return currentStyle_.rectMode; }
+
+  // Circle resolution
+  void setCircleResolution(int res) {
+    currentStyle_.circleResolution = res > 3 ? res : 3;
+  }
+  int getCircleResolution() const { return currentStyle_.circleResolution; }
+
+  // Curve resolution
+  void setCurveResolution(int res) {
+    currentStyle_.curveResolution = res > 1 ? res : 1;
+  }
+  int getCurveResolution() const { return currentStyle_.curveResolution; }
+
+  // Point size
+  void setPointSize(float size) { currentStyle_.pointSize = size; }
+  float getPointSize() const { return currentStyle_.pointSize; }
+
+  // Depth test
+  void setDepthTest(bool enabled) { currentStyle_.depthTest = enabled; }
+  bool getDepthTest() const { return currentStyle_.depthTest; }
+
+  // Smoothing
+  void setSmoothing(bool enabled) { currentStyle_.smoothing = enabled; }
+  bool getSmoothing() const { return currentStyle_.smoothing; }
+
+  // Polygon winding mode
+  void setPolyMode(PolyWindingMode mode) { currentStyle_.polyMode = mode; }
+  PolyWindingMode getPolyMode() const { return currentStyle_.polyMode; }
+
+  // Background color
+  Color4f getBackgroundColor() const { return currentStyle_.bgColor; }
+  void setBackgroundColor(Color4f c) {
+    currentStyle_.bgColor = c;
+    renderer_.setClearColor(c);
+  }
+
+private:
+  void applyStyle() {
+    drawList_.setColor(currentStyle_.color);
+    drawList_.setFilled(currentStyle_.filled);
+    drawList_.setLineWidth(currentStyle_.lineWidth);
+    renderer_.setClearColor(currentStyle_.bgColor);
+  }
+
 private:
   std::unique_ptr<AppBase> app_;
   bool didSetup_{false};
@@ -135,6 +209,9 @@ private:
 
   DrawList drawList_;
   MetalRenderer renderer_;
+
+  Style currentStyle_;
+  std::stack<Style> styleStack_;
 };
 
 } // namespace oflike

@@ -34,6 +34,10 @@ public:
   // Draw a textured quad
   void drawTexture(void* texture, void* sampler, float x, float y, float w, float h);
 
+  // Texture binding for mesh rendering
+  void bindTexture(void* texture, void* sampler, int textureLocation = 0);
+  void unbindTexture(int textureLocation = 0);
+
   // Get current content scale
   float getContentScale() const;
 

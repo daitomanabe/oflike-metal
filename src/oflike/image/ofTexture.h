@@ -1,3 +1,10 @@
+// ofTexture - Metal-based texture implementation for macOS
+// NOTE: This implementation uses macOS-specific frameworks:
+//   - Metal for GPU textures
+//   - ImageIO for image loading (NOT stb_image)
+//   - MTKTextureLoader for optimized texture creation
+// See ARCHITECTURE.md for the absolute policy on Mac-native APIs.
+
 #pragma once
 
 #include <memory>
@@ -45,6 +52,11 @@ public:
 
   void allocate(int width, int height, int channels = 4);
   void loadData(const unsigned char* data, int width, int height, int channels = 4);
+
+  // Load from native Metal texture (for MTKTextureLoader optimization)
+  // Takes ownership of the texture (will be released on clear/destruction)
+  void loadFromNativeTexture(void* metalTexture, int width, int height);
+
   void clear();
 
   bool isAllocated() const { return texture_ != nullptr; }
@@ -54,6 +66,16 @@ public:
 
   void draw(float x, float y) const;
   void draw(float x, float y, float w, float h) const;
+
+  // Binding (for use with custom rendering)
+  void bind(int textureLocation = 0) const;
+  void unbind(int textureLocation = 0) const;
+
+  // Texture wrapping modes
+  // For Metal: uses MTLSamplerAddressMode
+  // GL_REPEAT = 0, GL_CLAMP = 1, GL_CLAMP_TO_EDGE = 2, GL_MIRRORED_REPEAT = 3
+  void setTextureWrap(int wrapModeS, int wrapModeT);
+  void setTextureMinMagFilter(int minFilter, int magFilter);
 
   void* getTexturePtr() const { return texture_; }
   void* getSamplerPtr() const { return sampler_; }
@@ -65,3 +87,7 @@ private:
   int height_{0};
   int channels_{4};
 };
+
+// Global image loading functions
+bool ofLoadImage(oflike::ofPixels& pix, const std::string& path);
+bool ofLoadImage(ofTexture& tex, const std::string& path);

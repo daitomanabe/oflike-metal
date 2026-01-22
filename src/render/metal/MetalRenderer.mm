@@ -654,4 +654,20 @@ void MetalRenderer::drawTexture(void* texture, void* samplerState, float x, floa
   [impl_->enc drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:6];
 }
 
+void MetalRenderer::bindTexture(void* texture, void* samplerState, int textureLocation) {
+  if (!impl_->enc || !texture) return;
+
+  id<MTLTexture> tex = (__bridge id<MTLTexture>)texture;
+  id<MTLSamplerState> samp = (__bridge id<MTLSamplerState>)samplerState;
+  if (!samp) samp = impl_->sampler;
+
+  [impl_->enc setFragmentTexture:tex atIndex:textureLocation];
+  [impl_->enc setFragmentSamplerState:samp atIndex:textureLocation];
+}
+
+void MetalRenderer::unbindTexture(int textureLocation) {
+  if (!impl_->enc) return;
+  [impl_->enc setFragmentTexture:nil atIndex:textureLocation];
+}
+
 } // namespace oflike

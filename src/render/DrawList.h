@@ -38,6 +38,11 @@ public:
   void translate(float x, float y) {
     currentMatrix_ = currentMatrix_ * Matrix2D::translation(x, y);
   }
+  void translate(float x, float y, float z) {
+    // 2D rendering: z is ignored for now (oF API compatibility)
+    currentMatrix_ = currentMatrix_ * Matrix2D::translation(x, y);
+    (void)z; // suppress unused warning
+  }
   void rotate(float radians) {
     currentMatrix_ = currentMatrix_ * Matrix2D::rotation(radians);
   }
@@ -48,6 +53,11 @@ public:
 
   // Primitive drawing
   void addRect(float x, float y, float w, float h);
+  void addRectRounded(float x, float y, float w, float h, float r, int segments = 8);
+  void addRectRounded(float x, float y, float w, float h,
+                      float topLeftRadius, float topRightRadius,
+                      float bottomRightRadius, float bottomLeftRadius,
+                      int segments = 8);
   void addCircle(float cx, float cy, float radius, int segments = 32);
   void addEllipse(float cx, float cy, float rx, float ry, int segments = 32);
   void addTriangle(float x1, float y1, float x2, float y2, float x3, float y3);
@@ -62,6 +72,7 @@ public:
   void vertex(float x, float y, float u, float v);
   void curveVertex(float x, float y);
   void bezierVertex(float cx1, float cy1, float cx2, float cy2, float x, float y);
+  void nextContour(bool close = true);
   void endShape(bool close = false);
 
   // Access recorded vertices
@@ -76,6 +87,8 @@ private:
   struct CurvePoint { float x, y; };
 
   void addLineRaw(float x1, float y1, float x2, float y2);
+  void addArcVertices(std::vector<Vertex2D>& verts, float cx, float cy, float rx, float ry,
+                      float startAngle, float endAngle, int segments);
   void processCurveVertices();
 
   inline void applyTransform(float& x, float& y) {

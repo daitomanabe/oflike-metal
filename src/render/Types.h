@@ -9,6 +9,47 @@ struct Color4f {
   float r{1.f}, g{1.f}, b{1.f}, a{1.f};
 };
 
+// Blend modes (compatible with openFrameworks)
+enum class BlendMode {
+  Disabled,
+  Alpha,
+  Add,
+  Subtract,
+  Multiply,
+  Screen
+};
+
+// Rectangle drawing mode
+enum class RectMode {
+  Corner,  // Draw from top-left corner (default)
+  Center   // Draw from center
+};
+
+// Polygon winding mode for fill
+enum class PolyWindingMode {
+  Odd,
+  NonZero,
+  Positive,
+  Negative,
+  AbsGeqTwo
+};
+
+// Graphics style state
+struct Style {
+  Color4f color{1.f, 1.f, 1.f, 1.f};
+  Color4f bgColor{0.f, 0.f, 0.f, 1.f};
+  BlendMode blendMode{BlendMode::Alpha};
+  RectMode rectMode{RectMode::Corner};
+  PolyWindingMode polyMode{PolyWindingMode::Odd};
+  float lineWidth{1.0f};
+  float pointSize{1.0f};
+  int circleResolution{32};
+  int curveResolution{20};
+  bool filled{true};
+  bool smoothing{false};
+  bool depthTest{false};
+};
+
 // 2D vertex with position, UV, and color
 struct Vertex2D {
   float x{0.f}, y{0.f};
