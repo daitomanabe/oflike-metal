@@ -121,7 +121,7 @@ public:
     ofVec2f center(560, 400);
     ofVec2f dir(40, 0);
     for (int i = 0; i < 8; i++) {
-      ofVec2f rotated = dir.rotated(i * TWO_PI / 8.f + time);
+      ofVec2f rotated = ofVec2fRotated(dir, i * TWO_PI / 8.f + time);
       ofVec2f end = center + rotated;
 
       ofSetColor(255, 255, 255, 150);

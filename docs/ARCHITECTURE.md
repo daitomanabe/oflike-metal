@@ -100,6 +100,172 @@ CGPathRef path = CTFontCreatePathForGlyph(font, glyph, NULL);
 
 ---
 
+## レイヤー責務境界
+
+### 概要図
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      User Application                           │
+│                   (examples/, ofApp.h)                          │
+└─────────────────────────────────────────────────────────────────┘
+                              │ 呼び出し
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    oflike/ (oF互換API層)                        │
+│  責務: openFrameworks互換のAPIを提供                            │
+│  禁止: Metal/GPU直接操作、レンダリングロジック                   │
+├─────────────────────────────────────────────────────────────────┤
+│  oflike/graphics/ofGraphics.h                                   │
+│    - ofDrawCircle(), ofSetColor(), ofPushMatrix() 等            │
+│    - DrawListへコマンド発行のみ                                 │
+│                                                                 │
+│  oflike/3d/ofCamera.h                                           │
+│    - View/Projection行列の計算                                  │
+│    - begin()/end()でDrawListに行列をpush/pop                    │
+│                                                                 │
+│  oflike/image/ofTexture.h                                       │
+│    - テクスチャの論理的管理                                     │
+│    - 内部でMetalTexture.mmを呼び出し（pImpl）                   │
+└─────────────────────────────────────────────────────────────────┘
+                              │ コマンド発行
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                  render/DrawList.h (抽象化層)                   │
+│  責務: 描画コマンドのバッファリング・状態管理                    │
+│  禁止: Metal API直接呼び出し、プラットフォーム固有コード         │
+├─────────────────────────────────────────────────────────────────┤
+│  DrawCommand構造体                                              │
+│    - 頂点データ (positions, colors, texCoords, normals)         │
+│    - インデックスデータ                                         │
+│    - プリミティブタイプ (triangles, lines, points)              │
+│    - テクスチャバインド情報                                     │
+│                                                                 │
+│  状態スタック                                                   │
+│    - 行列スタック (Model, View, Projection)                     │
+│    - スタイルスタック (fillColor, strokeColor, lineWidth)       │
+│    - ライティング状態 (lights[], materials[])                   │
+│    - ブレンドモード、深度テスト状態                             │
+│                                                                 │
+│  バッチング                                                     │
+│    - 同一テクスチャ・同一状態のコマンドをマージ                 │
+│    - 描画順序の最適化（不透明→半透明）                          │
+└─────────────────────────────────────────────────────────────────┘
+                              │ 実行
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│              render/metal/MetalRenderer.mm (実装層)             │
+│  責務: DrawListをMetal APIで実行                                │
+│  許可: Metal API、Objective-C++、GPUリソース管理                │
+├─────────────────────────────────────────────────────────────────┤
+│  GPUリソース管理                                                │
+│    - MTLDevice, MTLCommandQueue                                 │
+│    - MTLRenderPipelineState (シェーダー)                        │
+│    - MTLDepthStencilState                                       │
+│    - MTLBuffer (頂点/インデックス/Uniform)                      │
+│                                                                 │
+│  描画実行                                                       │
+│    - DrawList → MTLRenderCommandEncoder                         │
+│    - setVertexBuffer, setFragmentTexture                        │
+│    - drawPrimitives, drawIndexedPrimitives                      │
+│                                                                 │
+│  テクスチャ管理 (MetalTexture.mm)                               │
+│    - MTLTexture生成・破棄                                       │
+│    - MTKTextureLoader経由の読み込み                             │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    macOS Native Frameworks                      │
+│          Metal, MetalKit, Core Graphics, Core Text, etc.        │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 各層の責務詳細
+
+#### oflike/ 層
+| やること | やらないこと |
+|----------|--------------|
+| oF互換APIの提供 | Metal API呼び出し |
+| DrawListへのコマンド発行 | GPUバッファ管理 |
+| 行列計算（GLM使用） | シェーダー操作 |
+| パス→ポリライン変換 | ピクセルフォーマット変換 |
+| ユーザー入力の正規化 | プラットフォーム固有処理 |
+
+#### render/DrawList 層
+| やること | やらないこと |
+|----------|--------------|
+| 描画コマンドの蓄積 | Metal/GL API呼び出し |
+| 状態スタック管理 | テクスチャ読み込み |
+| バッチング・ソート | ウィンドウ管理 |
+| 頂点データの集約 | シェーダーコンパイル |
+
+#### render/metal/ 層
+| やること | やらないこと |
+|----------|--------------|
+| Metal API呼び出し | oF API定義 |
+| GPUリソース管理 | 描画ロジック（何を描くか） |
+| シェーダーバインド | 行列計算 |
+| テクスチャアップロード | パス処理 |
+
+### コード例
+
+```cpp
+// ❌ 悪い例: oflike/でMetal直接操作
+// oflike/graphics/ofGraphics.h
+void ofDrawCircle(float x, float y, float r) {
+    id<MTLBuffer> buffer = ...;  // NG: Metal直接操作
+    [encoder drawPrimitives:...]; // NG
+}
+
+// ✅ 良い例: oflike/からDrawListへ発行
+// oflike/graphics/ofGraphics.h
+void ofDrawCircle(float x, float y, float r) {
+    auto& dl = getDrawList();
+    dl.addCircle(x, y, r, dl.getCurrentStyle());
+}
+
+// render/DrawList.cpp
+void DrawList::addCircle(float x, float y, float r, const Style& style) {
+    // 頂点生成してコマンドに追加
+    DrawCommand cmd;
+    cmd.primitiveType = PrimitiveType::TriangleFan;
+    cmd.vertices = generateCircleVertices(x, y, r, style.circleResolution);
+    cmd.style = style;
+    commands_.push_back(cmd);
+}
+
+// render/metal/MetalRenderer.mm
+void MetalRenderer::executeDrawList(const DrawList& dl) {
+    for (const auto& cmd : dl.getCommands()) {
+        // Metal APIで実際に描画
+        [encoder setVertexBytes:cmd.vertices.data() ...];
+        [encoder drawPrimitives:toMTLPrimitiveType(cmd.primitiveType) ...];
+    }
+}
+```
+
+### 依存方向の原則
+
+```
+     依存OK          依存NG
+        │               │
+        ▼               ▼
+  oflike/ ───────> render/DrawList ───────> render/metal/
+        │                    │
+        │                    │
+        └──────> third_party/glm
+                     │
+                     ▼
+               (header-only)
+
+  ※ render/metal/ から oflike/ への依存は禁止
+  ※ DrawList から Metal への依存は禁止
+  ※ 循環依存は禁止
+```
+
+---
+
 ## 実装パターン
 
 ### pImplパターン

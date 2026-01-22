@@ -5,8 +5,7 @@
 #include <cmath>
 #include "../../core/Context.h"
 #include "ofColor.h"
-#include "../math/ofVec2f.h"
-#include "../math/ofVec3f.h"
+#include "../math/ofVectorMath.h"
 #include "../types/ofRectangle.h"
 
 // ============== Primitive Mode ==============
@@ -281,6 +280,17 @@ inline void ofLine(float x1, float y1, float x2, float y2) {
 
 inline void ofDrawLine(const ofVec2f& p1, const ofVec2f& p2) {
   ofDrawLine(p1.x, p1.y, p2.x, p2.y);
+}
+
+inline void ofDrawLine(float x1, float y1, float z1, float x2, float y2, float z2) {
+  // TODO: Implement true 3D line drawing with depth
+  // For now, use 2D projection (ignore z)
+  (void)z1; (void)z2;
+  ofDrawLine(x1, y1, x2, y2);
+}
+
+inline void ofDrawLine(const ofVec3f& p1, const ofVec3f& p2) {
+  ofDrawLine(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z);
 }
 
 // ============== Custom Shapes ==============
@@ -734,4 +744,178 @@ inline void ofScale(const ofVec3f& s) {
 inline void ofScale(float x, float y, float z) {
   (void)z;  // 2D rendering ignores z
   oflike::engine().drawList().scale(x, y);
+}
+
+// ============== Lighting Functions ==============
+
+#include "../graphics/ofColor.h"
+
+// Enable/disable lighting globally
+inline void ofEnableLighting() {
+  // TODO: Set lighting enabled flag in DrawList/Engine
+  // This will be used by Metal shaders to switch between lit and unlit rendering
+}
+
+inline void ofDisableLighting() {
+  // TODO: Set lighting disabled flag in DrawList/Engine
+}
+
+inline bool ofGetLightingEnabled() {
+  // TODO: Return lighting enabled state from DrawList/Engine
+  return false;  // Default: lighting disabled
+}
+
+// Separate specular lighting (for more realistic rendering)
+inline void ofEnableSeparateSpecularLight() {
+  // TODO: Enable separate specular pass in Metal shaders
+}
+
+inline void ofDisableSeparateSpecularLight() {
+  // TODO: Disable separate specular pass
+}
+
+// Smooth shading (interpolate normals across faces)
+inline void ofSetSmoothLighting(bool smooth) {
+  (void)smooth;
+  // TODO: Set smooth shading flag for DrawList/MetalRenderer
+  // This affects how normals are calculated/interpolated
+}
+
+// Global ambient light color (affects all surfaces)
+inline void ofSetGlobalAmbientColor(const ofFloatColor& c) {
+  (void)c;
+  // TODO: Set global ambient color in DrawList/Engine
+  // This is added to all lighting calculations
+}
+
+inline ofFloatColor ofGetGlobalAmbientColor() {
+  // TODO: Return global ambient color from DrawList/Engine
+  return ofFloatColor(0.2f, 0.2f, 0.2f, 1.0f);  // Default gray ambient
+}
+
+// ============== 3D Drawing Functions ==============
+// Forward declarations (implementations in ofGraphics3D.h to avoid circular deps)
+void ofDrawSphere(float x, float y, float z, float radius);
+void ofDrawSphere(const glm::vec3& position, float radius);
+void ofDrawSphere(float radius);
+
+void ofDrawBox(float x, float y, float z, float size);
+void ofDrawBox(float x, float y, float z, float width, float height, float depth);
+void ofDrawBox(const glm::vec3& position, float size);
+void ofDrawBox(float size);
+
+void ofDrawCone(float x, float y, float z, float radius, float height);
+void ofDrawCone(const glm::vec3& position, float radius, float height);
+
+void ofDrawCylinder(float x, float y, float z, float radius, float height);
+void ofDrawCylinder(const glm::vec3& position, float radius, float height);
+
+void ofDrawPlane(float x, float y, float z, float width, float height);
+
+// Grid drawing functions
+inline void ofDrawGrid(float stepSize, size_t numberOfSteps, bool labels, bool x, bool y, bool z) {
+  ofPushMatrix();
+
+  float size = stepSize * numberOfSteps;
+  float halfSize = size * 0.5f;
+
+  // Save fill state and set to wireframe
+  bool wasFilled = oflike::engine().drawList().isFilled();
+  ofNoFill();
+
+  // Draw X-Z plane grid (Y axis)
+  if (y) {
+    for (size_t i = 0; i <= numberOfSteps; i++) {
+      float pos = -halfSize + i * stepSize;
+      // Lines parallel to X axis
+      ofDrawLine(-halfSize, 0, pos, halfSize, 0, pos);
+      // Lines parallel to Z axis
+      ofDrawLine(pos, 0, -halfSize, pos, 0, halfSize);
+    }
+  }
+
+  // Draw Y-Z plane grid (X axis)
+  if (x) {
+    for (size_t i = 0; i <= numberOfSteps; i++) {
+      float pos = -halfSize + i * stepSize;
+      ofDrawLine(0, -halfSize, pos, 0, halfSize, pos);
+      ofDrawLine(0, pos, -halfSize, 0, pos, halfSize);
+    }
+  }
+
+  // Draw X-Y plane grid (Z axis)
+  if (z) {
+    for (size_t i = 0; i <= numberOfSteps; i++) {
+      float pos = -halfSize + i * stepSize;
+      ofDrawLine(-halfSize, pos, 0, halfSize, pos, 0);
+      ofDrawLine(pos, -halfSize, 0, pos, halfSize, 0);
+    }
+  }
+
+  // Restore fill state
+  if (wasFilled) ofFill();
+
+  // TODO: Implement labels if requested
+  (void)labels;
+
+  ofPopMatrix();
+}
+
+inline void ofDrawGrid(float stepSize, size_t numberOfSteps, bool labels) {
+  ofDrawGrid(stepSize, numberOfSteps, labels, true, true, true);
+}
+
+inline void ofDrawGrid(float stepSize) {
+  ofDrawGrid(stepSize, 8, false, true, true, true);
+}
+
+inline void ofDrawGridPlane(float stepSize, size_t numberOfSteps, bool labels) {
+  // Draw only the X-Z plane (Y axis)
+  ofDrawGrid(stepSize, numberOfSteps, labels, false, true, false);
+}
+
+inline void ofDrawGridPlane(float stepSize) {
+  ofDrawGridPlane(stepSize, 8, false);
+}
+
+// Axis drawing function
+inline void ofDrawAxis(float size) {
+  bool wasFilled = oflike::engine().drawList().isFilled();
+  ofNoFill();
+
+  // Save current color
+  ofPushStyle();
+
+  // X axis (red)
+  ofSetColor(255, 0, 0);
+  ofDrawLine(0, 0, 0, size, 0, 0);
+
+  // Y axis (green)
+  ofSetColor(0, 255, 0);
+  ofDrawLine(0, 0, 0, 0, size, 0);
+
+  // Z axis (blue)
+  ofSetColor(0, 0, 255);
+  ofDrawLine(0, 0, 0, 0, 0, size);
+
+  // Restore style
+  ofPopStyle();
+
+  // Restore fill state
+  if (wasFilled) ofFill();
+}
+
+// Rotation axes drawing (visualizes rotation handles)
+inline void ofDrawRotationAxes(float radius, float stripWidth, int circleRes) {
+  ofPushStyle();
+  ofNoFill();
+
+  // TODO: Implement rotation axes visualization
+  // This should draw three colored circles representing X, Y, Z rotation handles
+  // For now, provide a stub implementation
+  (void)radius;
+  (void)stripWidth;
+  (void)circleRes;
+
+  ofPopStyle();
 }

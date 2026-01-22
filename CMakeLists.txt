@@ -5,6 +5,9 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Third-party libraries (GLM, tess2, utf8)
+add_subdirectory(third_party)
+
 # Core source files
 set(OFLIKE_CORE_SOURCES
   src/render/DrawList.cpp
@@ -12,6 +15,18 @@ set(OFLIKE_CORE_SOURCES
   src/render/metal/MetalTexture.mm
   src/render/metal/MetalImage.mm
   src/oflike/graphics/ofTrueTypeFont.mm
+  src/oflike/3d/ofNode.cpp
+  src/oflike/3d/ofCamera.cpp
+  src/oflike/3d/ofEasyCam.cpp
+  src/oflike/3d/of3dPrimitive.cpp
+  src/oflike/3d/ofBoxPrimitive.cpp
+  src/oflike/3d/ofSpherePrimitive.cpp
+  src/oflike/3d/ofCylinderPrimitive.cpp
+  src/oflike/3d/ofConePrimitive.cpp
+  src/oflike/3d/ofPlanePrimitive.cpp
+  src/oflike/3d/ofIcoSpherePrimitive.cpp
+  src/oflike/lighting/ofLight.cpp
+  src/oflike/lighting/ofMaterial.cpp
 )
 
 # Platform source files
@@ -52,9 +67,11 @@ macro(add_oflike_example name source)
   )
   target_include_directories(${name} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/third_party
   )
-  target_link_libraries(${name} PRIVATE ${OFLIKE_FRAMEWORKS})
+  target_link_libraries(${name} PRIVATE
+    ${OFLIKE_FRAMEWORKS}
+    third_party
+  )
 endmacro()
 
 # Examples

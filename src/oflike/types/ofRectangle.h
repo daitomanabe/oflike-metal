@@ -1,7 +1,7 @@
 #pragma once
 
 #include <algorithm>
-#include "../math/ofVec2f.h"
+#include "../math/ofVectorMath.h"
 
 class ofRectangle {
 public:

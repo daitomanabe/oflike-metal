@@ -100,14 +100,14 @@ public:
 
   void close() {
     closed_ = true;
-    if (points_.size() > 1 && points_.front().distance(points_.back()) > 0.0001f) {
+    if (points_.size() > 1 && glm::distance(points_.front(), points_.back()) > 0.0001f) {
       points_.push_back(points_.front());
     }
   }
 
   void setClosed(bool closed) {
     closed_ = closed;
-    if (closed && points_.size() > 1 && points_.front().distance(points_.back()) > 0.0001f) {
+    if (closed && points_.size() > 1 && glm::distance(points_.front(), points_.back()) > 0.0001f) {
       points_.push_back(points_.front());
     }
   }
@@ -137,7 +137,7 @@ public:
     float currentLen = 0;
 
     for (size_t i = 0; i < points_.size() - 1; i++) {
-      float segLen = points_[i].distance(points_[i + 1]);
+      float segLen = glm::distance(points_[i], points_[i + 1]);
       if (currentLen + segLen >= targetLen) {
         float t = (targetLen - currentLen) / segLen;
         return ofVec2f(
@@ -159,17 +159,17 @@ public:
     float currentLen = 0;
 
     for (size_t i = 0; i < points_.size() - 1; i++) {
-      float segLen = points_[i].distance(points_[i + 1]);
+      float segLen = glm::distance(points_[i], points_[i + 1]);
       if (currentLen + segLen >= targetLen) {
         ofVec2f tangent = points_[i + 1] - points_[i];
-        tangent.normalize();
+        tangent = glm::normalize(tangent);
         return tangent;
       }
       currentLen += segLen;
     }
 
     ofVec2f tangent = points_.back() - points_[points_.size() - 2];
-    tangent.normalize();
+    tangent = glm::normalize(tangent);
     return tangent;
   }
 
@@ -181,7 +181,7 @@ public:
   float getPerimeter() const {
     float len = 0;
     for (size_t i = 0; i < points_.size() - 1; i++) {
-      len += points_[i].distance(points_[i + 1]);
+      len += glm::distance(points_[i], points_[i + 1]);
     }
     return len;
   }
@@ -223,8 +223,8 @@ public:
 
     for (size_t i = 0; i < points_.size() - 1; i++) {
       ofVec2f dir = points_[i + 1] - points_[i];
-      float segLen = dir.length();
-      dir.normalize();
+      float segLen = glm::length(dir);
+      dir = glm::normalize(dir);
 
       while (currentDist + segLen >= targetDist) {
         float t = (targetDist - currentDist) / segLen;

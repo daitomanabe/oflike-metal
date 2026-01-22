@@ -112,7 +112,7 @@ public:
     if (isDrawing) {
       // Only add if moved enough distance
       if (drawnLine.size() == 0 ||
-          drawnLine[drawnLine.size() - 1].distance(ofVec2f(x, y)) > 5) {
+          glm::distance(drawnLine[drawnLine.size() - 1], ofVec2f(x, y)) > 5) {
         drawnLine.addVertex(x, y);
       }
     }

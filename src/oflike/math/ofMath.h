@@ -4,8 +4,7 @@
 #include <cstdlib>
 #include <random>
 
-#include "ofVec2f.h"
-#include "ofVec3f.h"
+#include "ofVectorMath.h"
 
 // Constants
 constexpr float PI = 3.14159265358979f;

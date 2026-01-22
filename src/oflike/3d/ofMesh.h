@@ -5,25 +5,7 @@
 #include "../graphics/ofColor.h"
 #include "../graphics/ofGraphics.h"
 #include "../../core/Context.h"
-
-// Forward declaration for glm compatibility
-namespace glm {
-  struct vec2 {
-    float x{0}, y{0};
-    vec2() = default;
-    vec2(float x_, float y_) : x(x_), y(y_) {}
-  };
-
-  struct vec3 {
-    float x{0}, y{0}, z{0};
-    vec3() = default;
-    vec3(float x_, float y_, float z_) : x(x_), y(y_), z(z_) {}
-    vec3(float v) : x(v), y(v), z(v) {}
-  };
-
-  template<typename T>
-  inline T half_pi() { return static_cast<T>(1.5707963267948966); }
-}
+#include "../math/ofVectorMath.h"
 
 // ofMesh template class
 // V = vertex type, N = normal type, C = color type, T = texcoord type

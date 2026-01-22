@@ -23,6 +23,7 @@
 
 // 3D
 #include "3d/ofMesh.h"
+#include "graphics/ofGraphics3D.h"
 
 // Types
 #include "types/ofRectangle.h"

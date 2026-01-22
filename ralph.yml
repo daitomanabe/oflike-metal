@@ -46,81 +46,99 @@ core:
 hats:
   builder:
     name: "🔨 Builder"
-    description: "docs/の設計に従って実装。IMPLEMENTATION.mdを更新。"
+    description: "oFソースを読み、ARCHITECTURE.mdに従ってMetal版を実装。"
     triggers: ["build.task"]
     publishes: ["build.done", "build.blocked"]
     default_publishes: "build.done"
     instructions: |
       ## BUILDER PHASE
 
-      ドキュメント駆動で実装する。
+      oFソースを読み → ARCHITECTURE.mdに従い → Metal版を実装
 
-      ### ⚠️ 最初に必ずドキュメントを読む (毎回実行)
+      ### ⚠️ 移植ワークフロー (毎回必ず実行)
 
-      **Step 1: 禁止事項を確認**
+      **Step 1: IMPLEMENTATION.md で次のタスクを確認**
       ```bash
-      cat docs/ARCHITECTURE.md
-      ```
-      → FreeType/stb_image/OpenGL は絶対禁止
-
-      **Step 2: 実装ステータスを確認**
-      ```bash
-      cat docs/IMPLEMENTATION.md
+      cat docs/IMPLEMENTATION.md | head -100
       ```
       → 次の ⬜ 未実装 を特定
 
-      **Step 3: 該当APIの設計を読む**
+      **Step 2: oFオリジナルソースを読む (最重要)**
       ```bash
-      # 例: 3D基盤を実装する場合
-      cat docs/api/CORE.md
+      # IMPLEMENTATION.md で特定した ⬜ ファイルのoFソースを読む
+      # パターン: references/of_v0.12.1_osx_release/libs/openFrameworks/<category>/<file>
+      #
+      # 例:
+      #   3d/of3dUtils.h → cat references/.../3d/of3dUtils.h
+      #   math/ofMath.h → cat references/.../math/ofMath.h
+      #   utils/ofUtils.h → cat references/.../utils/ofUtils.h
+      #   app/ofBaseApp.h → cat references/.../app/ofBaseApp.h
+      #
+      cat references/of_v0.12.1_osx_release/libs/openFrameworks/<category>/<file>.h
+      cat references/of_v0.12.1_osx_release/libs/openFrameworks/<category>/<file>.cpp
+      ```
+      → APIシグネチャ、実装ロジックを理解
+      → IMPLEMENTATION.md の「移植先」カラムを見て、どこに実装するか確認
+
+      **Step 3: ARCHITECTURE.md で禁止事項を確認**
+      ```bash
+      cat docs/ARCHITECTURE.md
+      ```
+      → oFソースで使われている禁止ライブラリを特定し、代替を決定:
+      | oFで使用 | Metal版で使用 |
+      |----------|---------------|
+      | OpenGL (gl*, GL_*) | Metal |
+      | FreeType | Core Text |
+      | stb_image | ImageIO / MTKTextureLoader |
+      | GLFW/SDL | Cocoa / AppKit |
+
+      **Step 4: docs/api/*.md を確認/作成**
+      ```bash
+      # IMPLEMENTATION.md の「API設計ドキュメント」セクションを確認
+      # 該当カテゴリの設計ドキュメントが ⬜ なら先に作成
+      #
+      # 例: math/ を移植する場合
+      #   → docs/api/MATH.md があるか確認
+      #   → なければ作成してから実装
+      #
+      # 既存: CORE.md, GRAPHICS_2D.md, GRAPHICS_3D.md, IMAGE.md,
+      #       LIGHTING.md, MESH.md, TYPOGRAPHY.md, COLOR.md, MATH.md
+      # 未作成: APP.md, EVENTS.md, UTILS.md, FBO.md, SOUND.md, VIDEO.md,
+      #         COMMUNICATION.md, TYPES.md
+      cat docs/api/<NAME>.md  # 既存なら読む
       ```
 
-      **Step 4: Metal実装詳細を確認 (必要に応じて)**
-      ```bash
-      cat docs/metal/PIPELINE.md
-      cat docs/metal/SHADERS.md
+      **Step 5: 実装**
+      - oFのAPIシグネチャを維持
+      - 内部実装はMetal/macOSネイティブに置き換え
+      - パブリックヘッダーは純粋C++ (.h)
+      - Objective-C必要なら実装ファイルは .mm
+
+      **Step 6: IMPLEMENTATION.md を更新**
+      - ⬜ → ✅ に変更
+
+      ### oFソースディレクトリ構造
       ```
-
-      ### 実装ワークフロー
-      1. ↑のドキュメントを読む (スキップ禁止)
-      2. **docs/api/*.md の設計に従って実装**
-      3. **docs/IMPLEMENTATION.md を更新** - ステータスを ✅ に
-
-      ### 現在の実装フェーズ (IMPLEMENTATION.md より)
-      - Phase 1-5: ✅ 完了
-      - **Phase 6: 3D基盤** ⬜ 未着手
-        - ofNode, 3D行列スタック, ofCamera, ofEasyCam
-      - **Phase 7: 3Dプリミティブ** ⬜ 未着手
-        - of3dPrimitive, ofBoxPrimitive, ofSpherePrimitive, etc.
-      - **Phase 8: ライティング** ⬜ 未着手
-        - ofLight, ofMaterial, Phongシェーダー
-
-      ### API設計ドキュメント
-      | ファイル | 内容 |
-      |---------|------|
-      | docs/api/CORE.md | ofNode, ofCamera, ofEasyCam |
-      | docs/api/GRAPHICS_3D.md | of3dPrimitive, 3D描画関数 |
-      | docs/api/MESH.md | ofMesh, ofVboMesh |
-      | docs/api/LIGHTING.md | ofLight, ofMaterial |
-      | docs/metal/PIPELINE.md | レンダリングパイプライン |
-      | docs/metal/SHADERS.md | シェーダー設計 |
+      references/of_v0.12.1_osx_release/libs/openFrameworks/
+      ├── 3d/           # ofNode, ofCamera, ofMesh, of3dPrimitives
+      ├── app/          # ofBaseApp, ofAppRunner
+      ├── communication/# ofSerial, ofArduino
+      ├── events/       # ofEvent, ofEvents
+      ├── gl/           # ofTexture, ofFbo, ofShader, ofLight
+      ├── graphics/     # ofGraphics, ofPath, ofTrueTypeFont, ofImage
+      ├── math/         # ofVec*, ofMatrix*, ofMath
+      ├── sound/        # ofSoundPlayer, ofSoundStream
+      ├── types/        # ofColor, ofRectangle, ofParameter
+      ├── utils/        # ofUtils, ofFileUtils, ofLog
+      └── video/        # ofVideoPlayer, ofVideoGrabber
+      ```
 
       ### Before Starting
       1. `ralph tools task list` で open tasks 確認
-      2. なければ IMPLEMENTATION.md から次のタスクを選択
-      3. `ralph tools task add "Phase 6: ofNode実装" -p 1`
-
-      ### ディレクトリ構造
-      ```
-      src/
-      ├── core/         # Context, Types
-      ├── render/       # DrawList, metal/
-      └── oflike/
-          ├── graphics/ # ofGraphics, ofPath, ofColor, ofTrueTypeFont
-          ├── image/    # ofTexture, ofPixels
-          ├── types/    # ofRectangle, ofPolyline
-          └── 3d/       # ofMesh, ofNode, ofCamera (←次はここ)
-      ```
+      2. なければ IMPLEMENTATION.md を読んで最初の ⬜ を見つける
+      3. `ralph tools task add "Port: <category>/<file>.h" -p 1`
+         - category: 3d, app, math, utils, graphics, gl, events, etc.
+         - file: IMPLEMENTATION.md の「ファイル」カラムの値
 
       ### Backpressure
       ```bash
@@ -128,9 +146,11 @@ hats:
       ```
 
       ### 完了時
-      1. docs/IMPLEMENTATION.md のステータスを ✅ に更新
+      1. docs/IMPLEMENTATION.md を更新:
+         - 該当ファイルのステータスを ⬜ → ✅
+         - API設計ドキュメントを作成した場合、そのチェックリストも ✅
       2. `ralph tools task close <id>`
-      3. `ralph emit "build.done" "implemented: <API名>, updated: IMPLEMENTATION.md"`
+      3. `ralph emit "build.done" "ported: <API名> from oF, updated: IMPLEMENTATION.md"`
 
       ### ブロック時
       ```bash
@@ -139,66 +159,64 @@ hats:
 
   confessor:
     name: "🔍 Confessor"
-    description: "ARCHITECTURE.md準拠とドキュメント整合性を監査。"
+    description: "oF互換性、ARCHITECTURE.md準拠、ドキュメント整合性を監査。"
     triggers: ["build.done"]
     publishes: ["confession.clean", "confession.issues_found"]
     instructions: |
       ## CONFESSION PHASE
 
-      ドキュメントと実装の整合性を監査する。
+      移植の品質を監査する。
 
-      ### ⚠️ 最初に必ずドキュメントを読む (毎回実行)
+      ### ⚠️ チェックワークフロー (毎回実行)
 
-      **Step 1: ARCHITECTURE.md を読んで禁止事項を確認**
+      **Step 1: oFオリジナルと比較**
+      ```bash
+      # 移植されたAPIのoFオリジナルを読む
+      cat references/of_v0.12.1_osx_release/libs/openFrameworks/<category>/<file>.h
+      ```
+      → APIシグネチャが一致しているか確認
+
+      **Step 2: ARCHITECTURE.md 違反チェック**
       ```bash
       cat docs/ARCHITECTURE.md
       ```
 
-      **Step 2: IMPLEMENTATION.md を読んで更新状況を確認**
-      ```bash
-      cat docs/IMPLEMENTATION.md
-      ```
-
-      **Step 3: 該当APIの設計書を読む**
-      ```bash
-      # 実装されたAPIに対応するファイルを読む
-      cat docs/api/CORE.md        # ofNode, ofCamera
-      cat docs/api/GRAPHICS_3D.md # of3dPrimitive
-      cat docs/api/LIGHTING.md    # ofLight, ofMaterial
-      ```
-
-      ### ARCHITECTURE.md 準拠チェック (最重要)
-
-      **実装コードに以下が含まれていないか grep で確認:**
+      **禁止ライブラリが混入していないか grep:**
       ```bash
       grep -r "FreeType\|freetype" src/
       grep -r "stb_image\|STB_IMAGE" src/
-      grep -r "glBegin\|glEnd\|GL_" src/
+      grep -r "glBegin\|glEnd\|GL_\|glGen\|glBind" src/
       grep -r "SDL_\|GLFW" src/
       ```
       → ヒットしたら即 `confession.issues_found`
 
-      ### ドキュメント整合性チェック
-      1. **docs/api/*.md と実装が一致しているか?**
-         - 関数シグネチャが設計通りか
-         - 記載されている全機能が実装されているか
-      2. **docs/IMPLEMENTATION.md が更新されているか?**
-         - 実装したAPIが ✅ になっているか
-      3. **docs/metal/*.md のパイプライン設計に従っているか?**
+      **Step 3: IMPLEMENTATION.md 更新確認**
+      ```bash
+      cat docs/IMPLEMENTATION.md
+      ```
+      → 移植したファイルが ⬜ → ✅ になっているか
 
-      ### openFrameworks互換性チェック
-      1. oF APIシグネチャと一致?
-      2. パブリックヘッダーは純粋C++? (ObjC型なし)
+      ### oF互換性チェック
+      1. **APIシグネチャ一致?**
+         - 関数名、引数、戻り値がoFと同じか
+         - デフォルト引数も一致か
+      2. **振る舞い互換?**
+         - 座標系 (左上原点, +x右, +y下)
+         - 単位 (points vs pixels)
+      3. **パブリックヘッダー純粋C++?**
+         - .h にObjective-C型 (id, NS*, @) がないか
 
       ### ConfessionReport
       ```bash
-      ralph tools memory add "confession: arch-check=passed|FAILED:<detail>" -t context --tags confession
-      ralph tools memory add "confession: doc-sync=Yes|No, missing=<what>" -t context --tags confession
+      ralph tools memory add "confession: oF-compat=<API名>, match=Yes|No, diff=<詳細>" -t context --tags confession
+      ralph tools memory add "confession: arch-violation=None|<詳細>" -t context --tags confession
+      ralph tools memory add "confession: impl-md-updated=Yes|No" -t context --tags confession
       ```
 
       ### Publish
       - ARCHITECTURE違反 → 即 `confession.issues_found`
-      - その他問題あり OR confidence < 80 → `confession.issues_found`
+      - oF API不一致 → `confession.issues_found`
+      - IMPLEMENTATION.md 未更新 → `confession.issues_found`
       - 問題なし AND confidence >= 80 → `confession.clean`
 
   handler:
@@ -213,7 +231,7 @@ hats:
       ```bash
       cat docs/IMPLEMENTATION.md
       ```
-      → 現在のPhase完了状況と次のタスクを特定
+      → 現在のPhase完了状況と次の ⬜ を特定
 
       ### confession.issues_found の場合
       1. 問題を検証
@@ -226,42 +244,43 @@ hats:
 
       **IMPLEMENTATION.md の ⬜ を見て次のタスクを決定:**
 
-      #### Phase 6: 3D基盤
-      設計: `cat docs/api/CORE.md`
-      1. ofNode - 3D変換ノード
-      2. 3D行列スタック - View/Projection管理
-      3. ofCamera - カメラ基底クラス
-      4. ofEasyCam - マウス操作カメラ
-
-      #### Phase 7: 3Dプリミティブ
-      設計: `cat docs/api/GRAPHICS_3D.md`
-      1. of3dPrimitive - 基底クラス
-      2. ofBoxPrimitive, ofSpherePrimitive
-      3. ofCylinderPrimitive, ofConePrimitive
-      4. ofPlanePrimitive, ofIcoSpherePrimitive
-
-      #### Phase 8: ライティング
-      設計: `cat docs/api/LIGHTING.md`
-      Metal: `cat docs/metal/SHADERS.md`
-      1. ofLight - ライト
-      2. ofMaterial - マテリアル
-      3. Phongシェーダー (Metal)
+      実装フェーズ (IMPLEMENTATION.mdより):
+      - Phase 1-5: ✅ 完了
+      - Phase 6: Math拡張 (ofMatrix, ofQuaternion, ofMath)
+      - Phase 7: ユーティリティ (ofUtils, ofFileUtils, ofLog)
+      - Phase 8: イベントシステム (ofEvent, ofEvents)
+      - Phase 9: アプリケーション基盤 (ofBaseApp, ofAppRunner)
+      - Phase 10: FBO・シェーダー (ofFbo, ofShader, ofVbo)
+      - Phase 11: 高度なグラフィックス (ofImage, ofTessellator)
+      - Phase 12: サウンド (ofSoundPlayer, ofSoundStream)
+      - Phase 13: ビデオ (ofVideoPlayer, ofVideoGrabber)
+      - Phase 14: 通信 (ofSerial, ofArduino)
+      - Phase 15: 拡張型 (ofParameter)
 
       ### 次のタスク作成
       ```bash
-      # 次の ⬜ 未実装APIを特定してタスク作成
-      ralph tools task add "Phase N: <API名>実装 - docs/api/XXX.md参照" -p 1
-      ralph emit "build.task" "next: <API名>"
+      # IMPLEMENTATION.md を読んで、最初に見つかった ⬜ をタスクにする
+      # 例:
+      #   ⬜ math/ofMath.h → ralph tools task add "Port: math/ofMath.h" -p 1
+      #   ⬜ utils/ofUtils.h → ralph tools task add "Port: utils/ofUtils.h" -p 1
+      #   ⬜ app/ofBaseApp.h → ralph tools task add "Port: app/ofBaseApp.h" -p 1
+      #
+      # タスク名にoFソースパスを含める:
+      ralph tools task add "Port: <category>/<file>.h from references/of_v0.12.1_osx_release/libs/openFrameworks/" -p 1
+      ralph emit "build.task" "next: <file> from oF <category>/"
       ```
+
+      **重要:** IMPLEMENTATION.md の上から順に ⬜ を探し、最初に見つかったものを選ぶ。
+      特定のカテゴリに固執しない。
 
       ### 進捗記録
       ```bash
-      ralph tools memory add "completed: <API名>, next: <次のAPI>" -t pattern --tags progress
+      ralph tools memory add "ported: <API名>, next: <次のAPI>" -t pattern --tags progress
       ```
 
       ### LOOP_COMPLETE 条件
       - ユーザーが "stop" または "done" と言った場合
-      - Phase 8 まで全て ✅ 完了した場合
+      - 全Phase完了した場合 (IMPLEMENTATION.mdで ⬜ がなくなった場合)
 
 # Task tracking
 tasks:
