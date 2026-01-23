@@ -201,13 +201,13 @@
 - [x] ofSetCurveResolution()
 
 ### 5.2 行列スタック
-- [ ] ofPushMatrix() / ofPopMatrix()
-- [ ] ofTranslate()
-- [ ] ofRotate() / ofRotateX() / ofRotateY() / ofRotateZ()
-- [ ] ofScale()
-- [ ] ofLoadIdentityMatrix()
-- [ ] ofLoadMatrix()
-- [ ] ofMultMatrix()
+- [x] ofPushMatrix() / ofPopMatrix()
+- [x] ofTranslate()
+- [x] ofRotate() / ofRotateX() / ofRotateY() / ofRotateZ()
+- [x] ofScale()
+- [x] ofLoadIdentityMatrix()
+- [x] ofLoadMatrix()
+- [x] ofMultMatrix()
 
 ### 5.3 基本図形
 - [ ] ofDrawLine()
@@ -649,8 +649,8 @@
 | 1 | SwiftUI + Metal 基盤 | 完了 | 100% |
 | 2 | Core システム | 完了 | 100% |
 | 3 | 数学ライブラリ | 完了 | 100% |
-| 4 | レンダリング基盤 | 進行中 | 60% |
-| 5 | 2D 描画 API | 未着手 | 0% |
+| 4 | レンダリング基盤 | 完了 | 100% |
+| 5 | 2D 描画 API | 進行中 | 15% |
 | 6 | 色 | 未着手 | 0% |
 | 7 | 画像・テクスチャ | 未着手 | 0% |
 | 8 | 3D 描画 | 未着手 | 0% |
@@ -668,8 +668,8 @@
 ---
 
 **総タスク数**: 約 350 項目
-**完了**: 88 項目
-**全体進捗**: 25.1%
+**完了**: 95 項目
+**全体進捗**: 27.1%
 
 ---
 

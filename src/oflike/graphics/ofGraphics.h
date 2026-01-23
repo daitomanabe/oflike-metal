@@ -220,3 +220,106 @@ void ofGetColor(uint8_t& r, uint8_t& g, uint8_t& b, uint8_t& a);
  * @param a Output: Alpha component
  */
 void ofGetBackgroundColor(uint8_t& r, uint8_t& g, uint8_t& b, uint8_t& a);
+
+// ============================================================================
+// Matrix Stack (Forward Declaration)
+// ============================================================================
+
+// Forward declare matrix type to avoid including heavy headers
+namespace oflike { class ofMatrix4x4; }
+
+/**
+ * Push the current transformation matrix onto the stack.
+ * Use this to save the current transformation state before making changes.
+ */
+void ofPushMatrix();
+
+/**
+ * Pop the transformation matrix from the stack.
+ * Restores the previously saved transformation state.
+ */
+void ofPopMatrix();
+
+/**
+ * Apply a translation to the current matrix.
+ * @param x Translation in X axis
+ * @param y Translation in Y axis
+ * @param z Translation in Z axis (default: 0)
+ */
+void ofTranslate(float x, float y, float z = 0.0f);
+
+/**
+ * Apply a rotation around an arbitrary axis.
+ * @param angle Rotation angle in degrees
+ * @param x X component of rotation axis
+ * @param y Y component of rotation axis
+ * @param z Z component of rotation axis
+ */
+void ofRotate(float angle, float x, float y, float z);
+
+/**
+ * Apply a rotation around the Z axis (2D rotation).
+ * @param angle Rotation angle in degrees
+ */
+void ofRotate(float angle);
+
+/**
+ * Apply a rotation around the X axis.
+ * @param angle Rotation angle in degrees
+ */
+void ofRotateX(float angle);
+
+/**
+ * Apply a rotation around the Y axis.
+ * @param angle Rotation angle in degrees
+ */
+void ofRotateY(float angle);
+
+/**
+ * Apply a rotation around the Z axis.
+ * @param angle Rotation angle in degrees
+ */
+void ofRotateZ(float angle);
+
+/**
+ * Apply a scale transformation.
+ * @param x Scale factor in X axis
+ * @param y Scale factor in Y axis
+ * @param z Scale factor in Z axis (default: 1.0)
+ */
+void ofScale(float x, float y, float z = 1.0f);
+
+/**
+ * Apply a uniform scale transformation.
+ * @param scale Scale factor applied to all axes
+ */
+void ofScale(float scale);
+
+/**
+ * Reset the current matrix to identity.
+ */
+void ofLoadIdentityMatrix();
+
+/**
+ * Load a custom matrix as the current transformation matrix.
+ * @param m The matrix to load
+ */
+void ofLoadMatrix(const oflike::ofMatrix4x4& m);
+
+/**
+ * Multiply the current matrix by a custom matrix.
+ * @param m The matrix to multiply with
+ */
+void ofMultMatrix(const oflike::ofMatrix4x4& m);
+
+/**
+ * Get the current transformation matrix.
+ * @return The current matrix
+ */
+oflike::ofMatrix4x4 ofGetCurrentMatrix();
+
+/**
+ * Get the current depth of the matrix stack.
+ * @return Stack depth
+ */
+int ofGetMatrixStackDepth();

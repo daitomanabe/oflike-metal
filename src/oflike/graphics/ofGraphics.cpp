@@ -1,6 +1,9 @@
 #include "ofGraphics.h"
+#include "../math/ofMatrix4x4.h"
 #include <algorithm>
 #include <simd/simd.h>
+#include <vector>
+#include <stack>
 
 // ============================================================================
 // Internal Graphics State
@@ -20,6 +23,15 @@ namespace {
         uint32_t circleResolution = 32;
         uint32_t curveResolution = 20;
         uint32_t sphereResolution = 20;
+
+        // Matrix stack
+        std::stack<oflike::ofMatrix4x4> matrixStack;
+        oflike::ofMatrix4x4 currentMatrix;
+
+        GraphicsState() {
+            // Initialize with identity matrix
+            currentMatrix = oflike::ofMatrix4x4::identity();
+        }
     };
 
     GraphicsState& getGraphicsState() {
@@ -229,4 +241,84 @@ void ofGetBackgroundColor(uint8_t& r, uint8_t& g, uint8_t& b, uint8_t& a) {
     g = state.backgroundColor[1];
     b = state.backgroundColor[2];
     a = state.backgroundColor[3];
+}
+
+// ============================================================================
+// Matrix Stack
+// ============================================================================
+
+void ofPushMatrix() {
+    auto& state = getGraphicsState();
+    state.matrixStack.push(state.currentMatrix);
+}
+
+void ofPopMatrix() {
+    auto& state = getGraphicsState();
+    if (!state.matrixStack.empty()) {
+        state.currentMatrix = state.matrixStack.top();
+        state.matrixStack.pop();
+    }
+    // If stack is empty, do nothing (silently fail, matching oF behavior)
+}
+
+void ofTranslate(float x, float y, float z) {
+    auto& state = getGraphicsState();
+    auto translationMatrix = oflike::ofMatrix4x4::newTranslationMatrix(x, y, z);
+    state.currentMatrix = state.currentMatrix * translationMatrix;
+}
+
+void ofRotate(float angle, float x, float y, float z) {
+    auto& state = getGraphicsState();
+    auto rotationMatrix = oflike::ofMatrix4x4::newRotationMatrix(angle, x, y, z);
+    state.currentMatrix = state.currentMatrix * rotationMatrix;
+}
+
+void ofRotate(float angle) {
+    // 2D rotation around Z axis
+    ofRotate(angle, 0.0f, 0.0f, 1.0f);
+}
+
+void ofRotateX(float angle) {
+    ofRotate(angle, 1.0f, 0.0f, 0.0f);
+}
+
+void ofRotateY(float angle) {
+    ofRotate(angle, 0.0f, 1.0f, 0.0f);
+}
+
+void ofRotateZ(float angle) {
+    ofRotate(angle, 0.0f, 0.0f, 1.0f);
+}
+
+void ofScale(float x, float y, float z) {
+    auto& state = getGraphicsState();
+    auto scaleMatrix = oflike::ofMatrix4x4::newScaleMatrix(x, y, z);
+    state.currentMatrix = state.currentMatrix * scaleMatrix;
+}
+
+void ofScale(float scale) {
+    ofScale(scale, scale, scale);
+}
+
+void ofLoadIdentityMatrix() {
+    auto& state = getGraphicsState();
+    state.currentMatrix = oflike::ofMatrix4x4::identity();
+}
+
+void ofLoadMatrix(const oflike::ofMatrix4x4& m) {
+    auto& state = getGraphicsState();
+    state.currentMatrix = m;
+}
+
+void ofMultMatrix(const oflike::ofMatrix4x4& m) {
+    auto& state = getGraphicsState();
+    state.currentMatrix = state.currentMatrix * m;
+}
+
+oflike::ofMatrix4x4 ofGetCurrentMatrix() {
+    return getGraphicsState().currentMatrix;
+}
+
+int ofGetMatrixStackDepth() {
+    return static_cast<int>(getGraphicsState().matrixStack.size());
 }
