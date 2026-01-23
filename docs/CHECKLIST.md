@@ -304,21 +304,21 @@
 - [x] getNativeHandle()
 
 ### 7.3 ofImage
-- [ ] load()（MTKTextureLoader / ImageIO）
-- [ ] save()（CGImageDestination）
-- [ ] draw()
-- [ ] getPixels() / getTexture()
-- [ ] setFromPixels()
-- [ ] resize()
-- [ ] crop()
-- [ ] rotate90()
-- [ ] mirror()
-- [ ] setImageType()
+- [x] load()（MTKTextureLoader / ImageIO）
+- [x] save()（CGImageDestination）
+- [x] draw()
+- [x] getPixels() / getTexture()
+- [x] setFromPixels()
+- [x] resize()
+- [x] crop()
+- [x] rotate90()
+- [x] mirror()
+- [x] setImageType()
 
 ### 7.4 画像読み込み関数
-- [ ] ofLoadImage(ofPixels&, path)
-- [ ] ofLoadImage(ofTexture&, path)
-- [ ] ofSaveImage(ofPixels&, path)
+- [x] ofLoadImage(ofPixels&, path)
+- [x] ofLoadImage(ofTexture&, path)
+- [x] ofSaveImage(ofPixels&, path)
 
 ---
 
@@ -652,7 +652,7 @@
 | 4 | レンダリング基盤 | 完了 | 100% |
 | 5 | 2D 描画 API | 完了 | 100% |
 | 6 | 色 | 完了 | 100% |
-| 7 | 画像・テクスチャ | 進行中 | 60% |
+| 7 | 画像・テクスチャ | 完了 | 100% |
 | 8 | 3D 描画 | 未着手 | 0% |
 | 9 | カメラ | 未着手 | 0% |
 | 10 | ライティング | 未着手 | 0% |
@@ -668,8 +668,8 @@
 ---
 
 **総タスク数**: 約 350 項目
-**完了**: 173 項目
-**全体進捗**: 49.4%
+**完了**: 186 項目
+**全体進捗**: 53.1%
 
 ---
 
