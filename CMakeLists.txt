@@ -117,8 +117,8 @@ endforeach()
 # Examples subdirectory
 add_subdirectory(examples)
 
-# Tests subdirectory (optional)
-option(BUILD_TESTS "Build tests" OFF)
+# Tests
+option(BUILD_TESTS "Build tests" ON)
 if(BUILD_TESTS)
     add_subdirectory(tests)
 endif()
