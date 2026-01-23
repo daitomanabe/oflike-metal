@@ -340,6 +340,12 @@ private:
     std::vector<ofVec2f> texCoords_;
     std::vector<ofColor> colors_;
     std::vector<uint32_t> indices_;
+
+    // File I/O helper methods
+    bool loadOBJ(const std::string& filename);
+    bool saveOBJ(const std::string& filename) const;
+    bool loadPLY(const std::string& filename);
+    bool savePLY(const std::string& filename) const;
 };
 
 } // namespace oflike

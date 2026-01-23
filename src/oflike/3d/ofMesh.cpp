@@ -5,6 +5,9 @@
 #include <cmath>
 #include <unordered_map>
 #include <algorithm>
+#include <fstream>
+#include <sstream>
+#include <cstring>
 
 namespace oflike {
 
@@ -1025,8 +1028,8 @@ ofMesh ofMesh::icosphere(float radius, int subdivisions) {
 
         // Spherical UV mapping
         float u = 0.5f + std::atan2(normal.z, normal.x) / (2.0f * M_PI);
-        float v = 0.5f - std::asin(normal.y) / M_PI;
-        mesh.addTexCoord(ofVec2f(u, v));
+        float vCoord = 0.5f - std::asin(normal.y) / M_PI;
+        mesh.addTexCoord(ofVec2f(u, vCoord));
     }
 
     for (const auto& face : faces) {
@@ -1037,17 +1040,420 @@ ofMesh ofMesh::icosphere(float radius, int subdivisions) {
 }
 
 // ============================================================================
-// File I/O (PLY / OBJ) - Stub for now
+// File I/O (PLY / OBJ)
 // ============================================================================
 
 bool ofMesh::load(const std::string& filename) {
-    // TODO: Implement PLY/OBJ loading
+    // Determine file format by extension
+    std::string ext;
+    size_t dotPos = filename.find_last_of('.');
+    if (dotPos != std::string::npos) {
+        ext = filename.substr(dotPos + 1);
+        std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+    }
+
+    if (ext == "obj") {
+        return loadOBJ(filename);
+    } else if (ext == "ply") {
+        return loadPLY(filename);
+    }
+
+    // Unsupported format
     return false;
 }
 
 bool ofMesh::save(const std::string& filename) const {
-    // TODO: Implement PLY/OBJ saving
+    // Determine file format by extension
+    std::string ext;
+    size_t dotPos = filename.find_last_of('.');
+    if (dotPos != std::string::npos) {
+        ext = filename.substr(dotPos + 1);
+        std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+    }
+
+    if (ext == "obj") {
+        return saveOBJ(filename);
+    } else if (ext == "ply") {
+        return savePLY(filename);
+    }
+
+    // Unsupported format
     return false;
+}
+
+// Helper: Load OBJ file
+bool ofMesh::loadOBJ(const std::string& filename) {
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        return false;
+    }
+
+    clear();
+
+    std::vector<ofVec3f> tempVertices;
+    std::vector<ofVec3f> tempNormals;
+    std::vector<ofVec2f> tempTexCoords;
+
+    std::string line;
+    while (std::getline(file, line)) {
+        std::istringstream iss(line);
+        std::string type;
+        iss >> type;
+
+        if (type == "v") {
+            // Vertex position
+            float x, y, z;
+            iss >> x >> y >> z;
+            tempVertices.push_back(ofVec3f(x, y, z));
+        } else if (type == "vn") {
+            // Vertex normal
+            float x, y, z;
+            iss >> x >> y >> z;
+            tempNormals.push_back(ofVec3f(x, y, z));
+        } else if (type == "vt") {
+            // Texture coordinate
+            float u, v;
+            iss >> u >> v;
+            tempTexCoords.push_back(ofVec2f(u, v));
+        } else if (type == "f") {
+            // Face (triangle)
+            // Format: f v1/vt1/vn1 v2/vt2/vn2 v3/vt3/vn3
+            // or: f v1//vn1 v2//vn2 v3//vn3
+            // or: f v1/vt1 v2/vt2 v3/vt3
+            // or: f v1 v2 v3
+
+            std::vector<int> vIndices, vtIndices, vnIndices;
+            std::string vertex;
+
+            while (iss >> vertex) {
+                int vIdx = 0, vtIdx = 0, vnIdx = 0;
+                size_t slash1 = vertex.find('/');
+
+                if (slash1 == std::string::npos) {
+                    // Format: v
+                    vIdx = std::stoi(vertex);
+                } else {
+                    vIdx = std::stoi(vertex.substr(0, slash1));
+                    size_t slash2 = vertex.find('/', slash1 + 1);
+
+                    if (slash2 == std::string::npos) {
+                        // Format: v/vt
+                        vtIdx = std::stoi(vertex.substr(slash1 + 1));
+                    } else {
+                        // Format: v/vt/vn or v//vn
+                        if (slash2 > slash1 + 1) {
+                            vtIdx = std::stoi(vertex.substr(slash1 + 1, slash2 - slash1 - 1));
+                        }
+                        if (slash2 + 1 < vertex.length()) {
+                            vnIdx = std::stoi(vertex.substr(slash2 + 1));
+                        }
+                    }
+                }
+
+                vIndices.push_back(vIdx);
+                vtIndices.push_back(vtIdx);
+                vnIndices.push_back(vnIdx);
+            }
+
+            // OBJ indices are 1-based, convert to 0-based
+            // Add vertices for this face
+            for (size_t i = 0; i < vIndices.size(); ++i) {
+                int vIdx = vIndices[i] - 1;
+                int vtIdx = vtIndices[i] - 1;
+                int vnIdx = vnIndices[i] - 1;
+
+                if (vIdx >= 0 && vIdx < static_cast<int>(tempVertices.size())) {
+                    addVertex(tempVertices[vIdx]);
+                }
+                if (vtIdx >= 0 && vtIdx < static_cast<int>(tempTexCoords.size())) {
+                    addTexCoord(tempTexCoords[vtIdx]);
+                }
+                if (vnIdx >= 0 && vnIdx < static_cast<int>(tempNormals.size())) {
+                    addNormal(tempNormals[vnIdx]);
+                }
+            }
+
+            // Triangulate if needed (for quads/n-gons)
+            if (vIndices.size() == 3) {
+                // Triangle
+                uint32_t base = static_cast<uint32_t>(getNumVertices()) - 3;
+                addTriangle(base, base + 1, base + 2);
+            } else if (vIndices.size() == 4) {
+                // Quad -> two triangles
+                uint32_t base = static_cast<uint32_t>(getNumVertices()) - 4;
+                addTriangle(base, base + 1, base + 2);
+                addTriangle(base, base + 2, base + 3);
+            }
+        }
+    }
+
+    file.close();
+    return true;
+}
+
+// Helper: Save OBJ file
+bool ofMesh::saveOBJ(const std::string& filename) const {
+    std::ofstream file(filename);
+    if (!file.is_open()) {
+        return false;
+    }
+
+    file << "# OBJ file exported from oflike-metal\n";
+    file << "# Vertices: " << vertices_.size() << "\n";
+    file << "# Faces: " << (indices_.size() / 3) << "\n\n";
+
+    // Write vertices
+    for (const auto& v : vertices_) {
+        file << "v " << v.x << " " << v.y << " " << v.z << "\n";
+    }
+
+    // Write normals
+    if (!normals_.empty()) {
+        file << "\n";
+        for (const auto& n : normals_) {
+            file << "vn " << n.x << " " << n.y << " " << n.z << "\n";
+        }
+    }
+
+    // Write texture coordinates
+    if (!texCoords_.empty()) {
+        file << "\n";
+        for (const auto& t : texCoords_) {
+            file << "vt " << t.x << " " << t.y << "\n";
+        }
+    }
+
+    // Write faces
+    file << "\n";
+    bool hasNormals = normals_.size() == vertices_.size();
+    bool hasTexCoords = texCoords_.size() == vertices_.size();
+
+    if (hasIndices()) {
+        // Indexed mesh
+        for (size_t i = 0; i < indices_.size(); i += 3) {
+            file << "f";
+            for (int j = 0; j < 3; ++j) {
+                uint32_t idx = indices_[i + j] + 1; // OBJ is 1-based
+                file << " " << idx;
+                if (hasTexCoords) {
+                    file << "/" << idx;
+                }
+                if (hasNormals) {
+                    if (!hasTexCoords) file << "/";
+                    file << "/" << idx;
+                }
+            }
+            file << "\n";
+        }
+    } else {
+        // Non-indexed mesh
+        for (size_t i = 0; i < vertices_.size(); i += 3) {
+            file << "f";
+            for (int j = 0; j < 3; ++j) {
+                uint32_t idx = static_cast<uint32_t>(i + j + 1); // OBJ is 1-based
+                file << " " << idx;
+                if (hasTexCoords) {
+                    file << "/" << idx;
+                }
+                if (hasNormals) {
+                    if (!hasTexCoords) file << "/";
+                    file << "/" << idx;
+                }
+            }
+            file << "\n";
+        }
+    }
+
+    file.close();
+    return true;
+}
+
+// Helper: Load PLY file (ASCII format only)
+bool ofMesh::loadPLY(const std::string& filename) {
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        return false;
+    }
+
+    clear();
+
+    std::string line;
+    bool inHeader = true;
+    int numVertices = 0;
+    int numFaces = 0;
+    bool hasNormals = false;
+    bool hasTexCoords = false;
+    bool hasColors = false;
+
+    // Parse header
+    while (std::getline(file, line) && inHeader) {
+        std::istringstream iss(line);
+        std::string keyword;
+        iss >> keyword;
+
+        if (keyword == "element") {
+            std::string type;
+            int count;
+            iss >> type >> count;
+            if (type == "vertex") {
+                numVertices = count;
+            } else if (type == "face") {
+                numFaces = count;
+            }
+        } else if (keyword == "property") {
+            std::string propType, propName;
+            iss >> propType >> propName;
+            if (propName == "nx" || propName == "ny" || propName == "nz") {
+                hasNormals = true;
+            } else if (propName == "s" || propName == "t" || propName == "u" || propName == "v") {
+                hasTexCoords = true;
+            } else if (propName == "red" || propName == "green" || propName == "blue") {
+                hasColors = true;
+            }
+        } else if (keyword == "end_header") {
+            inHeader = false;
+        }
+    }
+
+    // Read vertices
+    for (int i = 0; i < numVertices; ++i) {
+        if (!std::getline(file, line)) break;
+        std::istringstream iss(line);
+
+        float x, y, z;
+        iss >> x >> y >> z;
+        addVertex(ofVec3f(x, y, z));
+
+        if (hasNormals) {
+            float nx, ny, nz;
+            iss >> nx >> ny >> nz;
+            addNormal(ofVec3f(nx, ny, nz));
+        }
+
+        if (hasTexCoords) {
+            float u, v;
+            iss >> u >> v;
+            addTexCoord(ofVec2f(u, v));
+        }
+
+        if (hasColors) {
+            int r, g, b;
+            iss >> r >> g >> b;
+            addColor(ofColor(r, g, b));
+        }
+    }
+
+    // Read faces
+    for (int i = 0; i < numFaces; ++i) {
+        if (!std::getline(file, line)) break;
+        std::istringstream iss(line);
+
+        int vertexCount;
+        iss >> vertexCount;
+
+        std::vector<uint32_t> faceIndices;
+        for (int j = 0; j < vertexCount; ++j) {
+            uint32_t idx;
+            iss >> idx;
+            faceIndices.push_back(idx);
+        }
+
+        // Triangulate
+        if (faceIndices.size() == 3) {
+            addTriangle(faceIndices[0], faceIndices[1], faceIndices[2]);
+        } else if (faceIndices.size() == 4) {
+            // Quad -> two triangles
+            addTriangle(faceIndices[0], faceIndices[1], faceIndices[2]);
+            addTriangle(faceIndices[0], faceIndices[2], faceIndices[3]);
+        }
+    }
+
+    file.close();
+    return true;
+}
+
+// Helper: Save PLY file (ASCII format)
+bool ofMesh::savePLY(const std::string& filename) const {
+    std::ofstream file(filename);
+    if (!file.is_open()) {
+        return false;
+    }
+
+    bool hasNormals = normals_.size() == vertices_.size();
+    bool hasTexCoords = texCoords_.size() == vertices_.size();
+    bool hasColors = colors_.size() == vertices_.size();
+    int numFaces = hasIndices() ? (indices_.size() / 3) : (vertices_.size() / 3);
+
+    // Write header
+    file << "ply\n";
+    file << "format ascii 1.0\n";
+    file << "comment exported from oflike-metal\n";
+    file << "element vertex " << vertices_.size() << "\n";
+    file << "property float x\n";
+    file << "property float y\n";
+    file << "property float z\n";
+
+    if (hasNormals) {
+        file << "property float nx\n";
+        file << "property float ny\n";
+        file << "property float nz\n";
+    }
+
+    if (hasTexCoords) {
+        file << "property float s\n";
+        file << "property float t\n";
+    }
+
+    if (hasColors) {
+        file << "property uchar red\n";
+        file << "property uchar green\n";
+        file << "property uchar blue\n";
+        file << "property uchar alpha\n";
+    }
+
+    file << "element face " << numFaces << "\n";
+    file << "property list uchar int vertex_indices\n";
+    file << "end_header\n";
+
+    // Write vertices
+    for (size_t i = 0; i < vertices_.size(); ++i) {
+        const auto& v = vertices_[i];
+        file << v.x << " " << v.y << " " << v.z;
+
+        if (hasNormals) {
+            const auto& n = normals_[i];
+            file << " " << n.x << " " << n.y << " " << n.z;
+        }
+
+        if (hasTexCoords) {
+            const auto& t = texCoords_[i];
+            file << " " << t.x << " " << t.y;
+        }
+
+        if (hasColors) {
+            const auto& c = colors_[i];
+            file << " " << static_cast<int>(c.r) << " " << static_cast<int>(c.g)
+                 << " " << static_cast<int>(c.b) << " " << static_cast<int>(c.a);
+        }
+
+        file << "\n";
+    }
+
+    // Write faces
+    if (hasIndices()) {
+        // Indexed mesh
+        for (size_t i = 0; i < indices_.size(); i += 3) {
+            file << "3 " << indices_[i] << " " << indices_[i+1] << " " << indices_[i+2] << "\n";
+        }
+    } else {
+        // Non-indexed mesh
+        for (size_t i = 0; i < vertices_.size(); i += 3) {
+            file << "3 " << i << " " << (i+1) << " " << (i+2) << "\n";
+        }
+    }
+
+    file.close();
+    return true;
 }
 
 } // namespace oflike
