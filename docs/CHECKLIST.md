@@ -354,7 +354,7 @@
 - [x] addTriangle()
 - [x] setMode()
 - [x] draw() / drawWireframe() / drawVertices() / drawFaces()
-- [ ] getVertices() / getNormals() / getTexCoords() / getColors()
+- [x] getVertices() / getNormals() / getTexCoords() / getColors()
 - [ ] getIndices()
 - [ ] clear()
 - [ ] mergeDuplicateVertices()
