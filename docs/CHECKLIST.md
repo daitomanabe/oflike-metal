@@ -359,7 +359,7 @@
 - [x] clear()
 - [x] mergeDuplicateVertices()
 - [x] setupIndicesAuto()
-- [ ] smoothNormals() / flatNormals()
+- [x] smoothNormals() / flatNormals()
 - [ ] append()
 
 ### 8.5 ofMesh ジェネレータ
