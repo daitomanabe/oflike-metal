@@ -175,9 +175,27 @@ private class MouseTrackingMTKView: MTKView {
             scrollY: Float(event.scrollingDeltaY)
         )
     }
+
+    // MARK: - Keyboard Events (Phase 13.2)
+
+    override var acceptsFirstResponder: Bool {
+        return true
+    }
+
+    override func keyDown(with event: NSEvent) {
+        // Get the key code from the event
+        let keyCode = Int(event.keyCode)
+        mouseEventReceiver?.keyPressed(key: keyCode)
+    }
+
+    override func keyUp(with event: NSEvent) {
+        // Get the key code from the event
+        let keyCode = Int(event.keyCode)
+        mouseEventReceiver?.keyReleased(key: keyCode)
+    }
 }
 
-/// Protocol for receiving mouse events from MouseTrackingMTKView
+/// Protocol for receiving mouse and keyboard events from MouseTrackingMTKView
 protocol MouseEventReceiver: AnyObject {
     func mouseMoved(x: Float, y: Float)
     func mouseDragged(x: Float, y: Float, button: Int)
@@ -186,6 +204,8 @@ protocol MouseEventReceiver: AnyObject {
     func mouseScrolled(x: Float, y: Float, scrollX: Float, scrollY: Float)
     func mouseEntered(x: Float, y: Float)
     func mouseExited(x: Float, y: Float)
+    func keyPressed(key: Int)
+    func keyReleased(key: Int)
 }
 
 /// Coordinator that implements MTKViewDelegate and MouseEventReceiver
@@ -490,5 +510,17 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject, MouseEv
     func mouseExited(x: Float, y: Float) {
         // Forward to C++ bridge
         bridge?.mouseExitedX(x, y: y)
+    }
+
+    // MARK: - Keyboard Events (Phase 13.2)
+
+    func keyPressed(key: Int) {
+        // Forward to C++ bridge
+        bridge?.keyPressed(Int32(key))
+    }
+
+    func keyReleased(key: Int) {
+        // Forward to C++ bridge
+        bridge?.keyReleased(Int32(key))
     }
 }

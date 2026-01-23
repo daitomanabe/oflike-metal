@@ -228,9 +228,10 @@
             return;
         }
 
-        // TODO Phase 13: Forward to C++ event system
-        // engine_->keyPressed(key);
-        // app_->keyPressed(key);
+        // Phase 13.2: Forward to C++ app
+        if (testApp_) {
+            testApp_->keyPressed(key);
+        }
     }
 }
 
@@ -240,9 +241,10 @@
             return;
         }
 
-        // TODO Phase 13: Forward to C++ event system
-        // engine_->keyReleased(key);
-        // app_->keyReleased(key);
+        // Phase 13.2: Forward to C++ app
+        if (testApp_) {
+            testApp_->keyReleased(key);
+        }
     }
 }
 
