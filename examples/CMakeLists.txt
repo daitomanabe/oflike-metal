@@ -29,6 +29,8 @@ add_oflike_example(06_3d_primitives)
 add_oflike_example(07_camera)
 add_oflike_example(08_lighting)
 add_oflike_example(09_mesh)
+add_oflike_example(10_fbo)
+add_oflike_example(11_events)
 # etc.
 
 # Standalone test programs (not full apps)
