@@ -4,6 +4,8 @@
 #include <sstream>
 #include <iomanip>
 #include <type_traits>
+#include <algorithm>
+#include <cctype>
 
 /// Template implementation for ofToString functions
 /// This file provides the implementation of ofToString templates
@@ -84,4 +86,55 @@ template<>
 inline std::string ofToString(const char* const& value, int precision) {
     (void)precision; // Unused
     return std::string(value);
+}
+
+// MARK: - String to Type Conversion Functions
+
+/// Convert string to integer
+inline int ofToInt(const std::string& str) {
+    try {
+        // std::stoi handles whitespace and throws on invalid input
+        return std::stoi(str);
+    } catch (const std::invalid_argument&) {
+        // Return 0 for invalid input (oF behavior)
+        return 0;
+    } catch (const std::out_of_range&) {
+        // Return 0 for out-of-range values (oF behavior)
+        return 0;
+    }
+}
+
+/// Convert string to float
+inline float ofToFloat(const std::string& str) {
+    try {
+        // std::stof handles whitespace and throws on invalid input
+        return std::stof(str);
+    } catch (const std::invalid_argument&) {
+        // Return 0.0f for invalid input (oF behavior)
+        return 0.0f;
+    } catch (const std::out_of_range&) {
+        // Return 0.0f for out-of-range values (oF behavior)
+        return 0.0f;
+    }
+}
+
+/// Convert string to boolean
+inline bool ofToBool(const std::string& str) {
+    // Empty string is false
+    if (str.empty()) {
+        return false;
+    }
+
+    // Convert to lowercase for case-insensitive comparison
+    std::string lower = str;
+    std::transform(lower.begin(), lower.end(), lower.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+
+    // Check for true values
+    if (lower == "true" || lower == "1" || lower == "yes") {
+        return true;
+    }
+
+    // All other values are false (including "false", "0", "no", etc.)
+    return false;
 }

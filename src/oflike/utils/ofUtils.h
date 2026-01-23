@@ -221,5 +221,24 @@ std::string ofToString(const T& value, int precision);
 template<typename T>
 std::string ofToString(const T& value, int width, char fill);
 
+/// Convert string to integer
+/// Converts string to int, returns 0 if conversion fails
+/// @param str String to convert
+/// @return Converted integer value, or 0 if conversion fails
+int ofToInt(const std::string& str);
+
+/// Convert string to float
+/// Converts string to float, returns 0.0f if conversion fails
+/// @param str String to convert
+/// @return Converted float value, or 0.0f if conversion fails
+float ofToFloat(const std::string& str);
+
+/// Convert string to boolean
+/// Interprets "true", "1", "yes" as true (case-insensitive)
+/// All other values (including "false", "0", "no", empty string) as false
+/// @param str String to convert
+/// @return Converted boolean value
+bool ofToBool(const std::string& str);
+
 // Template implementation
 #include "ofUtilsImpl.h"
