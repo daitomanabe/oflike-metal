@@ -47,9 +47,13 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject {
     private var frameCount: UInt64 = 0
     private var startTime: CFTimeInterval = 0
 
+    // C++ Bridge
+    private var bridge: OFLBridge?
+
     override init() {
         super.init()
         startTime = CACurrentMediaTime()
+        bridge = OFLBridge()
     }
 
     func setup(device: MTLDevice) {
@@ -71,6 +75,9 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject {
         self.pipelineState = pipelineState
 
         print("Metal initialization complete: Device, CommandQueue, Library, PipelineState")
+
+        // Initialize C++ bridge
+        bridge?.setup()
     }
 
     // MARK: - Metal Initialization
@@ -141,8 +148,10 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject {
     /// Called whenever view changes orientation or is resized
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
         // Handle resize
-        // TODO: Notify C++ layer about window resize
         print("MetalView resized to: \(size.width) x \(size.height)")
+
+        // Notify C++ layer through bridge
+        bridge?.windowResized(width: Float(size.width), height: Float(size.height))
     }
 
     /// Called whenever the view needs to render a frame
@@ -161,10 +170,8 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject {
     /// Update logic (called every frame before render)
     private func update() {
         autoreleasepool {
-            // TODO: Call C++ update() callback
-            let elapsed = CACurrentMediaTime() - startTime
-            // Placeholder for C++ bridge call
-            // bridge.update(elapsed: elapsed)
+            // Call C++ update through bridge
+            bridge?.update()
         }
     }
 
@@ -189,8 +196,8 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject {
                 return
             }
 
-            // TODO: Execute C++ draw commands
-            // bridge.draw()
+            // Execute C++ draw commands through bridge
+            bridge?.draw()
 
             // End encoding
             renderEncoder.endEncoding()
