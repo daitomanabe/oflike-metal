@@ -1,6 +1,7 @@
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
 #import <QuartzCore/QuartzCore.h>
+#import <AppKit/AppKit.h>
 #include "Context.h"
 #include "../render/DrawList.h"
 // #include "../render/metal/MetalRenderer.h"  // TODO: Phase 4.4
@@ -201,6 +202,28 @@ void Context::incrementFrame() {
 int Context::getWindowWidth() const { return impl_->windowWidth; }
 
 int Context::getWindowHeight() const { return impl_->windowHeight; }
+
+int Context::getScreenWidth() const {
+    @autoreleasepool {
+        NSScreen* mainScreen = [NSScreen mainScreen];
+        if (mainScreen) {
+            NSRect frame = [mainScreen frame];
+            return static_cast<int>(frame.size.width);
+        }
+        return 1920; // Fallback default
+    }
+}
+
+int Context::getScreenHeight() const {
+    @autoreleasepool {
+        NSScreen* mainScreen = [NSScreen mainScreen];
+        if (mainScreen) {
+            NSRect frame = [mainScreen frame];
+            return static_cast<int>(frame.size.height);
+        }
+        return 1080; // Fallback default
+    }
+}
 
 void Context::setWindowSize(int width, int height) {
     impl_->windowWidth = width;

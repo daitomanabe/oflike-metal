@@ -90,3 +90,11 @@ void ofToggleFullscreen() {
     bool currentFullscreen = ctx().isFullscreen();
     ctx().requestFullscreen(!currentFullscreen);
 }
+
+int ofGetScreenWidth() {
+    return ctx().getScreenWidth();
+}
+
+int ofGetScreenHeight() {
+    return ctx().getScreenHeight();
+}

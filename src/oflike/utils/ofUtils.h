@@ -176,3 +176,13 @@ void ofSetFullscreen(bool fullscreen);
 /// If currently in fullscreen, exits fullscreen
 /// If currently in windowed mode, enters fullscreen
 void ofToggleFullscreen();
+
+/// Get main screen width in pixels
+/// Returns the width of the main display screen (not the window)
+/// @return Main screen width in pixels
+int ofGetScreenWidth();
+
+/// Get main screen height in pixels
+/// Returns the height of the main display screen (not the window)
+/// @return Main screen height in pixels
+int ofGetScreenHeight();

@@ -122,6 +122,14 @@ public:
     /// Get window height (alias for getWindowHeight)
     int getHeight() const { return getWindowHeight(); }
 
+    /// Get main screen width in pixels
+    /// @return Main screen width in pixels
+    int getScreenWidth() const;
+
+    /// Get main screen height in pixels
+    /// @return Main screen height in pixels
+    int getScreenHeight() const;
+
     // MARK: - Matrix Stack
 
     /// Get current transformation matrix
