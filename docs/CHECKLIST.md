@@ -176,9 +176,9 @@
 - [x] バッファプール
 
 ### 4.6 MetalTexture
-- [ ] MTKTextureLoader ラッパー
-- [ ] テクスチャキャッシュ
-- [ ] サンプラー管理
+- [x] MTKTextureLoader ラッパー
+- [x] テクスチャキャッシュ
+- [x] サンプラー管理
 
 ### 4.7 シェーダー
 - [ ] Common.h（共通定義）
