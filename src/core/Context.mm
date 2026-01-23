@@ -6,6 +6,7 @@
 // #include "../render/metal/MetalRenderer.h"  // TODO: Phase 4.4
 #include <iostream>
 #include <mutex>
+#include <unordered_map>
 
 // MARK: - Context Implementation
 
@@ -33,6 +34,9 @@ struct Context::Impl {
     // Window
     int windowWidth = 0;
     int windowHeight = 0;
+
+    // Keyboard state (Phase 13.2)
+    std::unordered_map<int, bool> keyStates;
 
     // State
     bool initialized = false;
@@ -207,4 +211,18 @@ simd_float4x4 Context::getCurrentMatrix() const {
     // TODO: Implement proper matrix stack
     // For now, return identity matrix
     return matrix_identity_float4x4;
+}
+
+// MARK: - Keyboard State
+
+void Context::setKeyState(int key, bool pressed) {
+    impl_->keyStates[key] = pressed;
+}
+
+bool Context::getKeyPressed(int key) const {
+    auto it = impl_->keyStates.find(key);
+    if (it != impl_->keyStates.end()) {
+        return it->second;
+    }
+    return false;
 }

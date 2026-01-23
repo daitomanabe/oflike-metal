@@ -86,6 +86,19 @@ public:
     /// @return Current matrix from the matrix stack
     simd_float4x4 getCurrentMatrix() const;
 
+    // MARK: - Keyboard State
+
+    /// Set key state (pressed or released)
+    /// Called internally by event system
+    /// @param key Key code
+    /// @param pressed true if pressed, false if released
+    void setKeyState(int key, bool pressed);
+
+    /// Get key state
+    /// @param key Key code
+    /// @return true if key is currently pressed, false otherwise
+    bool getKeyPressed(int key) const;
+
 private:
     // Singleton: private constructor/destructor
     Context();

@@ -22,3 +22,9 @@ float ofGetFrameRate() {
 void ofSetFrameRate(float targetRate) {
     ctx().setFrameRate(targetRate);
 }
+
+// MARK: - Keyboard State Functions
+
+bool ofGetKeyPressed(int key) {
+    return ctx().getKeyPressed(key);
+}

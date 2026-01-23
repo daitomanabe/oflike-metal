@@ -103,3 +103,10 @@ bool ofSaveImage(const ofShortPixels& pixels, const std::string& path, float qua
 /// @param quality JPEG quality 0.0-1.0, ignored for PNG/TIFF
 /// @return true if successful, false otherwise
 bool ofSaveImage(const ofFloatPixels& pixels, const std::string& path, float quality = 0.9f);
+
+// MARK: - Keyboard State Functions
+
+/// Check if a specific key is currently pressed
+/// @param key Key character or key code to check
+/// @return true if the key is currently pressed, false otherwise
+bool ofGetKeyPressed(int key);

@@ -228,6 +228,9 @@
             return;
         }
 
+        // Phase 13.2: Update keyboard state in Context
+        Context::instance().setKeyState(key, true);
+
         // Phase 13.2: Forward to C++ app
         if (testApp_) {
             testApp_->keyPressed(key);
@@ -240,6 +243,9 @@
         if (!isSetup_) {
             return;
         }
+
+        // Phase 13.2: Update keyboard state in Context
+        Context::instance().setKeyState(key, false);
 
         // Phase 13.2: Forward to C++ app
         if (testApp_) {
