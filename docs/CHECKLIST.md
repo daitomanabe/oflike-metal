@@ -351,7 +351,7 @@
 - [x] addTexCoord() / addTexCoords()
 - [x] addColor() / addColors()
 - [x] addIndex() / addIndices()
-- [ ] addTriangle()
+- [x] addTriangle()
 - [ ] setMode()
 - [ ] draw() / drawWireframe() / drawVertices() / drawFaces()
 - [ ] getVertices() / getNormals() / getTexCoords() / getColors()
