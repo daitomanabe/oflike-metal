@@ -25,6 +25,7 @@
 		E94E4E5EF4FEACF080DFC7E7 /* mesh.c in Sources */ = {isa = PBXBuildFile; fileRef = 769BC55D23AEC969FD283FCD /* mesh.c */; };
 		F89E661CED1CEFAC5B6E5EEF /* bucketalloc.c in Sources */ = {isa = PBXBuildFile; fileRef = F2208344D230DA3226148D4B /* bucketalloc.c */; };
 		F9399D9F5270C5ED7DD19E08 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A1645174B6E903DD3D21BBF /* App.swift */; };
+		A1B2C3D4E5F6789012345678 /* MetalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2C3D4E5F67890123456789A /* MetalView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -70,6 +71,7 @@
 		3D4B7C285DCD7BB2D0772F5D /* priorityq.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = priorityq.c; sourceTree = "<group>"; };
 		4A1645174B6E903DD3D21BBF /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
 		4E950E8DC7A838FE2F748D28 /* mesh.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = mesh.h; sourceTree = "<group>"; };
+		B2C3D4E5F67890123456789A /* MetalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalView.swift; sourceTree = "<group>"; };
 		591D3AF24B61B3F205F7DA81 /* oflike-metal.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "oflike-metal.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		6E8721CEA82525313FA568C0 /* dict.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = dict.c; sourceTree = "<group>"; };
 		769BC55D23AEC969FD283FCD /* mesh.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = mesh.c; sourceTree = "<group>"; };
@@ -103,6 +105,7 @@
 			isa = PBXGroup;
 			children = (
 				4A1645174B6E903DD3D21BBF /* App.swift */,
+				B2C3D4E5F67890123456789A /* MetalView.swift */,
 			);
 			path = swiftui;
 			sourceTree = "<group>";
@@ -346,6 +349,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F9399D9F5270C5ED7DD19E08 /* App.swift in Sources */,
+				A1B2C3D4E5F6789012345678 /* MetalView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

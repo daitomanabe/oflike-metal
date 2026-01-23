@@ -14,11 +14,6 @@ struct OFLikeApp: App {
 
 struct ContentView: View {
     var body: some View {
-        ZStack {
-            Color.black
-            Text("oflike-metal")
-                .foregroundColor(.white)
-                .font(.system(size: 32, weight: .light))
-        }
+        MetalView()
     }
 }
