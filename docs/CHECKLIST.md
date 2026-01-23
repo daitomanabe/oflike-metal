@@ -358,7 +358,7 @@
 - [x] getIndices()
 - [x] clear()
 - [x] mergeDuplicateVertices()
-- [ ] setupIndicesAuto()
+- [x] setupIndicesAuto()
 - [ ] smoothNormals() / flatNormals()
 - [ ] append()
 
