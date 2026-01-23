@@ -353,7 +353,7 @@
 - [x] addIndex() / addIndices()
 - [x] addTriangle()
 - [x] setMode()
-- [ ] draw() / drawWireframe() / drawVertices() / drawFaces()
+- [x] draw() / drawWireframe() / drawVertices() / drawFaces()
 - [ ] getVertices() / getNormals() / getTexCoords() / getColors()
 - [ ] getIndices()
 - [ ] clear()
