@@ -16,6 +16,9 @@ DerivedData/
 .idea/
 .vscode/
 
+# clangd cache
+.cache/clangd/
+
 # Ralph orchestrator
 .agent/
 .ralph/

@@ -36,7 +36,7 @@ event_loop:
   starting_event: "build.task"
 
 cli:
-  backend: "claude"
+  backend: "codex"
 
 core:
   specs_dir: "./docs/"
