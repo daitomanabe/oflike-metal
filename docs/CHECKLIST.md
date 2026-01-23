@@ -384,19 +384,19 @@
 ## Phase 9: カメラ
 
 ### 9.1 ofCamera
-- [ ] コンストラクタ
-- [ ] begin() / end()
-- [ ] setPosition() / getPosition()
-- [ ] setOrientation() / getOrientation()
-- [ ] lookAt()
-- [ ] setNearClip() / setFarClip()
-- [ ] setFov() / getFov()
-- [ ] setAspectRatio()
-- [ ] getModelViewMatrix()
-- [ ] getProjectionMatrix()
-- [ ] getModelViewProjectionMatrix()
-- [ ] worldToScreen()
-- [ ] screenToWorld()
+- [x] コンストラクタ
+- [x] begin() / end()
+- [x] setPosition() / getPosition()
+- [x] setOrientation() / getOrientation()
+- [x] lookAt()
+- [x] setNearClip() / setFarClip()
+- [x] setFov() / getFov()
+- [x] setAspectRatio()
+- [x] getModelViewMatrix()
+- [x] getProjectionMatrix()
+- [x] getModelViewProjectionMatrix()
+- [x] worldToScreen()
+- [x] screenToWorld()
 
 ### 9.2 ofEasyCam
 - [ ] コンストラクタ
@@ -654,7 +654,7 @@
 | 6 | 色 | 完了 | 100% |
 | 7 | 画像・テクスチャ | 完了 | 100% |
 | 8 | 3D 描画 | 完了 | 100% |
-| 9 | カメラ | 未着手 | 0% |
+| 9 | カメラ | 進行中 | 54% (13/24) |
 | 10 | ライティング | 未着手 | 0% |
 | 11 | FBO | 未着手 | 0% |
 | 12 | フォント | 未着手 | 0% |
@@ -668,8 +668,8 @@
 ---
 
 **総タスク数**: 399 項目
-**完了**: 241 項目
-**全体進捗**: 60.4%
+**完了**: 254 項目
+**全体進捗**: 63.7%
 
 ---
 

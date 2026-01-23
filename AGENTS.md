@@ -62,7 +62,8 @@
 1. docs/CHECKLIST.md を確認
 2. 現在のPhaseのタスクを実行
 3. 完了したら `[x]` を付ける
-4. 次のタスクへ
+4. gitにcommit、Githubにpush
+5. 次のタスクへ
 
 ---
 
