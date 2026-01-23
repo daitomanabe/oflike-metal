@@ -130,15 +130,15 @@
 - [x] simd_quatf との相互変換
 
 ### 3.7 数学関数
-- [ ] ofRandom() / ofRandomf() / ofRandomuf()
-- [ ] ofSeedRandom()
-- [ ] ofNoise() / ofSignedNoise()
-- [ ] ofMap()
-- [ ] ofClamp()
-- [ ] ofLerp()
-- [ ] ofDist() / ofDistSquared()
-- [ ] ofDegToRad() / ofRadToDeg()
-- [ ] ofWrap() / ofWrapDegrees() / ofWrapRadians()
+- [x] ofRandom() / ofRandomf() / ofRandomuf()
+- [x] ofSeedRandom()
+- [x] ofNoise() / ofSignedNoise()
+- [x] ofMap()
+- [x] ofClamp()
+- [x] ofLerp()
+- [x] ofDist() / ofDistSquared()
+- [x] ofDegToRad() / ofRadToDeg()
+- [x] ofWrap() / ofWrapDegrees() / ofWrapRadians()
 
 ---
 
@@ -648,7 +648,7 @@
 | 0 | プロジェクト基盤 | 完了 | 100% |
 | 1 | SwiftUI + Metal 基盤 | 完了 | 100% |
 | 2 | Core システム | 完了 | 100% |
-| 3 | 数学ライブラリ | 進行中 | 64% |
+| 3 | 数学ライブラリ | 完了 | 100% |
 | 4 | レンダリング基盤 | 未着手 | 0% |
 | 5 | 2D 描画 API | 未着手 | 0% |
 | 6 | 色 | 未着手 | 0% |
@@ -668,8 +668,8 @@
 ---
 
 **総タスク数**: 約 350 項目
-**完了**: 60 項目
-**全体進捗**: 17.1%
+**完了**: 69 項目
+**全体進捗**: 19.7%
 
 ---
 
