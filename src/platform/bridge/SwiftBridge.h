@@ -36,6 +36,8 @@
 - (void)mousePressedX:(float)x y:(float)y button:(int)button;
 - (void)mouseReleasedX:(float)x y:(float)y button:(int)button;
 - (void)mouseScrolledX:(float)x y:(float)y scrollX:(float)scrollX scrollY:(float)scrollY;
+- (void)mouseEnteredX:(float)x y:(float)y;
+- (void)mouseExitedX:(float)x y:(float)y;
 
 /// Keyboard events
 - (void)keyPressed:(int)key;

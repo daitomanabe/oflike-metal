@@ -484,13 +484,11 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject, MouseEv
 
     func mouseEntered(x: Float, y: Float) {
         // Forward to C++ bridge
-        // TODO Phase 13.1: Implement mouseEntered in bridge
-        // bridge?.mouseEnteredX(x, y: y)
+        bridge?.mouseEnteredX(x, y: y)
     }
 
     func mouseExited(x: Float, y: Float) {
         // Forward to C++ bridge
-        // TODO Phase 13.1: Implement mouseExited in bridge
-        // bridge?.mouseExitedX(x, y: y)
+        bridge?.mouseExitedX(x, y: y)
     }
 }

@@ -194,6 +194,32 @@
     }
 }
 
+- (void)mouseEnteredX:(float)x y:(float)y {
+    @autoreleasepool {
+        if (!isSetup_) {
+            return;
+        }
+
+        // Phase 13.1: Forward to C++ app
+        if (testApp_) {
+            testApp_->mouseEntered((int)x, (int)y);
+        }
+    }
+}
+
+- (void)mouseExitedX:(float)x y:(float)y {
+    @autoreleasepool {
+        if (!isSetup_) {
+            return;
+        }
+
+        // Phase 13.1: Forward to C++ app
+        if (testApp_) {
+            testApp_->mouseExited((int)x, (int)y);
+        }
+    }
+}
+
 // MARK: - Keyboard Events
 
 - (void)keyPressed:(int)key {
