@@ -41,10 +41,11 @@ cli:
 core:
   specs_dir: "./docs/"
   guardrails:
-    # === チェックリスト駆動 ===
+    # === チェックリスト駆動 (最重要) ===
     - "docs/CHECKLIST.md の [ ] を見つけて実装 → [x] に更新"
     - "Phase 0 → Phase 1 → ... の順に進める"
-    - "1タスク完了ごとに CHECKLIST.md を更新"
+    - "⚠️ CHECKLIST.md の [x] 更新なしに次に進んではいけない"
+    - "⚠️ build.done 発行前に grep で [x] 更新を必ず検証"
     # === ARCHITECTURE.md 絶対ルール ===
     - "❌ FreeType → Core Text"
     - "❌ OpenGL → Metal"
@@ -127,19 +128,36 @@ hats:
       cd build && cmake .. && make -j8 2>&1 | head -100
       ```
 
-      **Step 5: CHECKLIST.md を更新**
+      **Step 5: CHECKLIST.md を更新 (必須)**
       完了したタスクを `- [ ]` → `- [x]` に変更
+
+      **Step 6: CHECKLIST更新を検証 (必須)**
+      ```bash
+      # 更新前の状態を確認
+      grep -n "\- \[ \]" docs/CHECKLIST.md | head -5
+
+      # ファイルを編集して [ ] → [x] に変更
+      # (実装したタスクの行を編集)
+
+      # 更新後: 該当行が [x] になっていることを確認
+      grep -n "\- \[x\].*<実装したタスク名の一部>" docs/CHECKLIST.md
+      ```
+      → **[x] が確認できるまで build.done を発行しない**
 
       ### Before Starting
       1. `ralph tools task list` で open tasks 確認
       2. なければ CHECKLIST.md から次の [ ] を選択
       3. `ralph tools task add "Phase X.Y: <タスク名>" -p 1`
 
-      ### 完了時
+      ### 完了時 (この順序を厳守)
       1. docs/CHECKLIST.md の該当項目を `[x]` に更新
       2. 進捗サマリーの完了率も更新
-      3. `ralph tools task close <id>`
-      4. `ralph emit "build.done" "completed: <タスク名>"`
+      3. **grep で [x] 更新を検証** ← 必須
+      4. `ralph tools task close <id>`
+      5. `ralph emit "build.done" "completed: <タスク名>, checklist: updated"`
+
+      ### ⚠️ CHECKLIST未更新で build.done を発行してはいけない
+      CHECKLIST.md に [x] が入っていない場合は、先に更新すること。
 
       ### ブロック時
       ```bash
@@ -190,23 +208,46 @@ hats:
       - 関数シグネチャがoFと一致しているか
       - 座標系が正しいか (2D: 左上原点, 3D: 右手系)
 
-      **Step 5: CHECKLIST.md 更新確認**
+      **Step 5: CHECKLIST.md 更新確認 (最重要)**
+
       ```bash
-      cat docs/CHECKLIST.md
+      # 最近のgit diffでCHECKLIST.mdの変更を確認
+      git diff docs/CHECKLIST.md
+
+      # または未コミットの変更を確認
+      git diff --cached docs/CHECKLIST.md
+
+      # [x] の数をカウント（増えているはず）
+      grep -c "\- \[x\]" docs/CHECKLIST.md
       ```
-      → 完了したタスクが [x] になっているか
+
+      **必須チェック:**
+      - [ ] CHECKLIST.md に変更があるか
+      - [ ] 実装したタスクが `- [x]` になっているか
+      - [ ] `- [ ]` → `- [x]` の差分が見えるか
+
+      → **[x] 更新が確認できない場合は即 `confession.issues_found`**
 
       ### ConfessionReport
       ```bash
       ralph tools memory add "confession: arch-violation=<None|詳細>" -t context --tags confession
-      ralph tools memory add "confession: checklist-updated=<Yes|No>" -t context --tags confession
+      ralph tools memory add "confession: checklist-updated=<Yes|No|検証方法>" -t context --tags confession
       ralph tools memory add "confession: oF-compat=<Yes|No|差異詳細>" -t context --tags confession
       ```
 
-      ### Publish
-      - ARCHITECTURE違反 → 即 `confession.issues_found`
-      - CHECKLIST.md未更新 → `confession.issues_found`
-      - 問題なし → `confession.clean`
+      ### Publish (厳格な判定)
+
+      **即 `confession.issues_found` を発行:**
+      - ARCHITECTURE違反がある
+      - **CHECKLIST.md が更新されていない** ← 最重要
+      - **git diff で [x] 変更が確認できない**
+
+      **`confession.clean` を発行できる条件:**
+      - ARCHITECTURE違反なし AND
+      - **CHECKLIST.md に [x] 更新が確認できた** AND
+      - oF API互換性に問題なし
+
+      ⚠️ CHECKLIST未更新は重大な問題として扱う
 
   committer:
     name: "📦 Committer"
@@ -330,6 +371,16 @@ hats:
       3. リモート設定問題など重大な場合: `escalate.human`
 
       ### commit.done の場合 (成功パス)
+
+      **まず CHECKLIST.md の進捗を検証:**
+      ```bash
+      # [x] の総数を確認（前回より増えているはず）
+      echo "Completed tasks: $(grep -c '\- \[x\]' docs/CHECKLIST.md)"
+
+      # 最新のコミットで CHECKLIST.md が更新されているか
+      git show --stat HEAD | grep CHECKLIST
+      ```
+      → CHECKLIST.md の更新がない場合は警告を記録
 
       **CHECKLIST.md から次の [ ] を見つける:**
 

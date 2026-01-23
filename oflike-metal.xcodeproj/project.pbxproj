@@ -18,6 +18,7 @@
 		6251B98E114DEF1D98AC8C98 /* MetalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC218826FD2A9E665095551D /* MetalView.swift */; };
 		6A4FB06C259CAA9E16F976FD /* dict.c in Sources */ = {isa = PBXBuildFile; fileRef = 6E8721CEA82525313FA568C0 /* dict.c */; };
 		8C6DC7234AA1DE4A2BD7AFD9 /* SwiftBridge.mm in Sources */ = {isa = PBXBuildFile; fileRef = 730BC9EEC5E1C10F0051939D /* SwiftBridge.mm */; };
+		85D5077990114D76AE5CB692 /* Context.mm in Sources */ = {isa = PBXBuildFile; fileRef = BF7113E680994C41A6AD7E0E /* Context.mm */; };
 		8F2EF72F4E6FA59529A49875 /* tess.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = FB491D598AAA9970B65C05A4 /* tess.h */; };
 		96439999608CB49E682ACE3C /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = B47B2F4987FC7F3C8DC766B4 /* Info.plist */; };
 		A5D75505464683EBE6A0CAFA /* Common.h in Resources */ = {isa = PBXBuildFile; fileRef = 592C5AFD5DC2D16406DED829 /* Common.h */; };
@@ -80,6 +81,8 @@
 		592C5AFD5DC2D16406DED829 /* Common.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Common.h; sourceTree = "<group>"; };
 		6E8721CEA82525313FA568C0 /* dict.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = dict.c; sourceTree = "<group>"; };
 		730BC9EEC5E1C10F0051939D /* SwiftBridge.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = SwiftBridge.mm; sourceTree = "<group>"; };
+		CF53633423614D3489918EDE /* Context.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Context.h; sourceTree = "<group>"; };
+		BF7113E680994C41A6AD7E0E /* Context.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Context.mm; sourceTree = "<group>"; };
 		74CF6894D53C84B9EF450FDB /* oflike-metal-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "oflike-metal-Bridging-Header.h"; sourceTree = "<group>"; };
 		769BC55D23AEC969FD283FCD /* mesh.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = mesh.c; sourceTree = "<group>"; };
 		7E1D6C08E598F6BF8244DB7C /* oflike-metalTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "oflike-metalTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -162,6 +165,8 @@
 			isa = PBXGroup;
 			children = (
 				30F318EC7E1EFD6807D4AFF2 /* TestApp.h */,
+				CF53633423614D3489918EDE /* Context.h */,
+				BF7113E680994C41A6AD7E0E /* Context.mm */,
 			);
 			path = core;
 			sourceTree = "<group>";
@@ -384,6 +389,7 @@
 				F9399D9F5270C5ED7DD19E08 /* App.swift in Sources */,
 				6251B98E114DEF1D98AC8C98 /* MetalView.swift in Sources */,
 				8C6DC7234AA1DE4A2BD7AFD9 /* SwiftBridge.mm in Sources */,
+				85D5077990114D76AE5CB692 /* Context.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
