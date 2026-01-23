@@ -360,7 +360,7 @@
 - [x] mergeDuplicateVertices()
 - [x] setupIndicesAuto()
 - [x] smoothNormals() / flatNormals()
-- [ ] append()
+- [x] append()
 
 ### 8.5 ofMesh ジェネレータ
 - [ ] ofMesh::plane()
