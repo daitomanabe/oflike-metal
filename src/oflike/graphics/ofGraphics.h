@@ -3,6 +3,20 @@
 #include <cstdint>
 
 // ============================================================================
+// Blend Mode Constants
+// ============================================================================
+
+/// Blend mode constants (compatible with openFrameworks)
+enum {
+    OF_BLENDMODE_DISABLED = 0,      ///< No blending
+    OF_BLENDMODE_ALPHA = 1,         ///< Standard alpha blending (default)
+    OF_BLENDMODE_ADD = 2,           ///< Additive blending
+    OF_BLENDMODE_SUBTRACT = 3,      ///< Subtractive blending
+    OF_BLENDMODE_MULTIPLY = 4,      ///< Multiply blending
+    OF_BLENDMODE_SCREEN = 5,        ///< Screen blending
+};
+
+// ============================================================================
 // ofGraphics - openFrameworks Compatible Graphics API
 // ============================================================================
 
@@ -601,3 +615,38 @@ void ofBezierVertex(float cx1, float cy1, float cz1, float cx2, float cy2, float
  * @endcode
  */
 void ofNextContour();
+
+// ============================================================================
+// Blend Mode
+// ============================================================================
+
+/**
+ * Enable alpha blending with standard blend mode.
+ * Equivalent to ofEnableBlendMode(OF_BLENDMODE_ALPHA).
+ * This is the default mode for transparency.
+ *
+ * Blend equation: src.rgb * src.a + dst.rgb * (1 - src.a)
+ */
+void ofEnableAlphaBlending();
+
+/**
+ * Disable blending entirely.
+ * New pixels will completely overwrite existing pixels.
+ * Equivalent to ofEnableBlendMode(OF_BLENDMODE_DISABLED).
+ */
+void ofDisableAlphaBlending();
+
+/**
+ * Enable a specific blend mode.
+ *
+ * Available blend modes:
+ * - OF_BLENDMODE_DISABLED (0): No blending
+ * - OF_BLENDMODE_ALPHA (1): Standard alpha blending (default)
+ * - OF_BLENDMODE_ADD (2): Additive blending (brightens)
+ * - OF_BLENDMODE_SUBTRACT (3): Subtractive blending (darkens)
+ * - OF_BLENDMODE_MULTIPLY (4): Multiply blending
+ * - OF_BLENDMODE_SCREEN (5): Screen blending
+ *
+ * @param blendMode The blend mode to use (see OF_BLENDMODE_* constants)
+ */
+void ofEnableBlendMode(int blendMode);

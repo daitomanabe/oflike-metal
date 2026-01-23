@@ -2,6 +2,9 @@
 #include "../math/ofMatrix4x4.h"
 #include "../math/ofVec3f.h"
 #include "ofPath.h"
+#include "../../core/Context.h"
+#include "../../render/metal/MetalRenderer.h"
+#include "../../render/RenderTypes.h"
 #include <algorithm>
 #include <simd/simd.h>
 #include <vector>
@@ -37,6 +40,9 @@ namespace {
         uint32_t circleResolution = 32;
         uint32_t curveResolution = 20;
         uint32_t sphereResolution = 20;
+
+        // Blend mode (default: alpha blending)
+        int blendMode = OF_BLENDMODE_ALPHA;
 
         // Matrix stack
         std::stack<oflike::ofMatrix4x4> matrixStack;
@@ -836,5 +842,36 @@ void ofNextContour() {
     if (!state.currentContour.empty()) {
         state.shapeContours.push_back(state.currentContour);
         state.currentContour.clear();
+    }
+}
+
+// ============================================================================
+// Blend Mode
+// ============================================================================
+
+void ofEnableAlphaBlending() {
+    ofEnableBlendMode(OF_BLENDMODE_ALPHA);
+}
+
+void ofDisableAlphaBlending() {
+    ofEnableBlendMode(OF_BLENDMODE_DISABLED);
+}
+
+void ofEnableBlendMode(int blendMode) {
+    auto& state = getGraphicsState();
+
+    // Clamp blend mode to valid range
+    if (blendMode < OF_BLENDMODE_DISABLED || blendMode > OF_BLENDMODE_SCREEN) {
+        blendMode = OF_BLENDMODE_ALPHA;  // Default to alpha if invalid
+    }
+
+    state.blendMode = blendMode;
+
+    // Apply to renderer if context is initialized
+    auto* renderer = ctx().renderer();
+    if (renderer) {
+        // Convert oflike blend mode constant to render::BlendMode enum
+        render::BlendMode renderBlendMode = static_cast<render::BlendMode>(blendMode);
+        renderer->setBlendMode(renderBlendMode);
     }
 }

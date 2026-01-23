@@ -257,9 +257,9 @@
 - [x] ofNextContour()
 
 ### 5.8 ブレンドモード
-- [ ] ofEnableAlphaBlending()
-- [ ] ofDisableAlphaBlending()
-- [ ] ofEnableBlendMode()
+- [x] ofEnableAlphaBlending()
+- [x] ofDisableAlphaBlending()
+- [x] ofEnableBlendMode()
 
 ---
 
@@ -650,7 +650,7 @@
 | 2 | Core システム | 完了 | 100% |
 | 3 | 数学ライブラリ | 完了 | 100% |
 | 4 | レンダリング基盤 | 完了 | 100% |
-| 5 | 2D 描画 API | 進行中 | 87% |
+| 5 | 2D 描画 API | 完了 | 100% |
 | 6 | 色 | 未着手 | 0% |
 | 7 | 画像・テクスチャ | 未着手 | 0% |
 | 8 | 3D 描画 | 未着手 | 0% |
@@ -668,8 +668,8 @@
 ---
 
 **総タスク数**: 約 350 項目
-**完了**: 132 項目
-**全体進捗**: 37.7%
+**完了**: 135 項目
+**全体進捗**: 38.6%
 
 ---
 
