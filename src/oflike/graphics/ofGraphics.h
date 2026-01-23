@@ -907,3 +907,35 @@ void ofEnableCulling();
  * Useful for double-sided meshes or transparent objects.
  */
 void ofDisableCulling();
+
+// ============================================================================
+// Lighting
+// ============================================================================
+
+/**
+ * Enable lighting for 3D rendering.
+ * When enabled, surfaces are lit according to active lights and materials.
+ * Use ofLight::enable() to activate individual lights.
+ * Default state: disabled.
+ */
+void ofEnableLighting();
+
+/**
+ * Disable lighting for 3D rendering.
+ * When disabled, geometry is rendered with flat colors (no lighting calculations).
+ */
+void ofDisableLighting();
+
+/**
+ * Check if lighting is enabled.
+ * @return true if lighting is enabled, false otherwise
+ */
+bool ofGetLightingEnabled();
+
+/**
+ * Enable smooth (Phong) lighting shading.
+ * Interpolates normals across triangle faces for smooth lighting.
+ * Default state: enabled (when lighting is enabled).
+ * @param smooth If true, use smooth shading; if false, use flat shading
+ */
+void ofSetSmoothLighting(bool smooth);

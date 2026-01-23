@@ -49,6 +49,10 @@ namespace {
         bool depthWriteEnabled = true;
         bool cullingEnabled = false;
 
+        // Lighting (default: disabled for 2D compatibility)
+        bool lightingEnabled = false;
+        bool smoothLighting = true;
+
         // Matrix stack
         std::stack<oflike::ofMatrix4x4> matrixStack;
         oflike::ofMatrix4x4 currentMatrix;
@@ -1182,4 +1186,36 @@ void ofDisableCulling() {
     if (renderer) {
         renderer->setCullingMode(false, false);  // cullBack doesn't matter, enabled=false
     }
+}
+
+// ============================================================================
+// Lighting Implementation
+// ============================================================================
+
+void ofEnableLighting() {
+    auto& state = getGraphicsState();
+    state.lightingEnabled = true;
+
+    // TODO: Update renderer state when lighting system is integrated
+    // For now, just track the state
+}
+
+void ofDisableLighting() {
+    auto& state = getGraphicsState();
+    state.lightingEnabled = false;
+
+    // TODO: Update renderer state when lighting system is integrated
+}
+
+bool ofGetLightingEnabled() {
+    auto& state = getGraphicsState();
+    return state.lightingEnabled;
+}
+
+void ofSetSmoothLighting(bool smooth) {
+    auto& state = getGraphicsState();
+    state.smoothLighting = smooth;
+
+    // TODO: Update renderer state when shader integration is complete
+    // This will switch between smooth (Phong) and flat shading
 }
