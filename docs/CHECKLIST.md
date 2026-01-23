@@ -532,7 +532,7 @@
 - [x] ofGetWindowWidth() / ofGetWindowHeight()
 - [x] ofSetWindowShape()
 - [x] ofSetWindowPosition()
-- [ ] ofSetWindowTitle()
+- [x] ofSetWindowTitle()
 - [ ] ofSetFullscreen()
 - [ ] ofToggleFullscreen()
 - [ ] ofGetScreenWidth() / ofGetScreenHeight()
@@ -659,7 +659,7 @@
 | 11 | FBO | 完了 | 100% (15/15) |
 | 12 | フォント | 完了 | 100% (10/10) |
 | 13 | イベントシステム | 完了 | 100% (17/17) |
-| 14 | ウィンドウ管理 | 進行中 | 44% (4/9) |
+| 14 | ウィンドウ管理 | 進行中 | 56% (5/9) |
 | 15 | ユーティリティ | 未着手 | 0% |
 | 16 | デバッグ機能 | 未着手 | 0% |
 | 17 | サンプル・テスト | 未着手 | 0% |
@@ -667,9 +667,9 @@
 
 ---
 
-**総タスク数**: 398 項目
-**完了**: 335 項目
-**全体進捗**: 84.2%
+**総タスク数**: 399 項目
+**完了**: 337 項目
+**全体進捗**: 84.5%
 
 ---
 

@@ -92,6 +92,14 @@ public:
     /// @param callback Function pointer to call when position change is requested
     void setWindowPositionCallback(void (*callback)(int x, int y));
 
+    /// Request window title change (calls back to Swift layer)
+    /// @param title Requested window title
+    void requestWindowTitle(const std::string& title);
+
+    /// Set callback for window title requests (called by Swift layer)
+    /// @param callback Function pointer to call when title change is requested
+    void setWindowTitleCallback(void (*callback)(const char* title));
+
     /// Get window width (alias for getWindowWidth)
     int getWidth() const { return getWindowWidth(); }
 

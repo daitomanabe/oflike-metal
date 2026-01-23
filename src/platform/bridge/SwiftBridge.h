@@ -56,4 +56,8 @@
 /// @param callback C function pointer for window position change requests
 - (void)setWindowPositionCallback:(void (*)(int x, int y))callback;
 
+/// Set window title callback
+/// @param callback C function pointer for window title change requests
+- (void)setWindowTitleCallback:(void (*)(const char* title))callback;
+
 @end

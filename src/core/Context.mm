@@ -36,6 +36,7 @@ struct Context::Impl {
     int windowHeight = 0;
     void (*windowResizeCallback)(int width, int height) = nullptr;
     void (*windowPositionCallback)(int x, int y) = nullptr;
+    void (*windowTitleCallback)(const char* title) = nullptr;
 
     // Keyboard state (Phase 13.2)
     std::unordered_map<int, bool> keyStates;
@@ -242,6 +243,22 @@ void Context::requestWindowPosition(int x, int y) {
 void Context::setWindowPositionCallback(void (*callback)(int x, int y)) {
     impl_->windowPositionCallback = callback;
     std::cout << "[Context] Window position callback registered" << std::endl;
+}
+
+void Context::requestWindowTitle(const std::string& title) {
+    std::cout << "[Context] Window title change requested: " << title << std::endl;
+
+    if (impl_->windowTitleCallback) {
+        impl_->windowTitleCallback(title.c_str());
+    } else {
+        std::cout << "[Context] Warning: No window title callback registered"
+                  << std::endl;
+    }
+}
+
+void Context::setWindowTitleCallback(void (*callback)(const char* title)) {
+    impl_->windowTitleCallback = callback;
+    std::cout << "[Context] Window title callback registered" << std::endl;
 }
 
 // MARK: - Matrix Stack

@@ -163,3 +163,7 @@ void ofSetWindowShape(int width, int height);
 /// @param x New window x position in screen coordinates
 /// @param y New window y position in screen coordinates
 void ofSetWindowPosition(int x, int y);
+
+/// Set window title
+/// @param title New window title string
+void ofSetWindowTitle(const std::string& title);

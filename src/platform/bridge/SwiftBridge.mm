@@ -271,4 +271,11 @@
     }
 }
 
+- (void)setWindowTitleCallback:(void (*)(const char* title))callback {
+    @autoreleasepool {
+        // Phase 14.1: Register callback in Context
+        Context::instance().setWindowTitleCallback(callback);
+    }
+}
+
 @end

@@ -77,3 +77,7 @@ void ofSetWindowShape(int width, int height) {
 void ofSetWindowPosition(int x, int y) {
     ctx().requestWindowPosition(x, y);
 }
+
+void ofSetWindowTitle(const std::string& title) {
+    ctx().requestWindowTitle(title);
+}

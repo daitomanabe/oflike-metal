@@ -247,6 +247,9 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject, MouseEv
     private var lastFPSUpdate: CFTimeInterval = 0
     private var framesSinceLastUpdate: Int = 0
 
+    // Phase 14.1: Window state
+    @Published var windowTitle: String = "oflike-metal"
+
     // C++ Bridge
     private var bridge: OFLBridge?
 
@@ -279,6 +282,9 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject, MouseEv
 
         // Phase 2.1: Initialize global context with Metal device
         bridge?.initializeContext(withDevice: device)
+
+        // Phase 14.1: Register window callbacks
+        setupWindowCallbacks()
 
         // Initialize C++ bridge
         bridge?.setup()
@@ -554,5 +560,33 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject, MouseEv
     func dragEvent(x: Float, y: Float) {
         // Forward to C++ bridge
         bridge?.dragEventX(x, y: y)
+    }
+
+    // MARK: - Window Callbacks (Phase 14.1)
+
+    private func setupWindowCallbacks() {
+        // Window resize callback
+        bridge?.setWindowResizeCallback { [weak self] width, height in
+            guard let self = self else { return }
+            // Note: Window resize is handled by SwiftUI's frame modifiers
+            print("[Swift] Window resize requested: \(width)x\(height)")
+        }
+
+        // Window position callback
+        bridge?.setWindowPositionCallback { [weak self] x, y in
+            guard let self = self else { return }
+            // Note: Window position is managed by SwiftUI/AppKit
+            print("[Swift] Window position change requested: \(x),\(y)")
+        }
+
+        // Window title callback
+        bridge?.setWindowTitleCallback { [weak self] titlePtr in
+            guard let self = self, let titlePtr = titlePtr else { return }
+            let title = String(cString: titlePtr)
+            DispatchQueue.main.async {
+                self.windowTitle = title
+                print("[Swift] Window title changed to: \(title)")
+            }
+        }
     }
 }
