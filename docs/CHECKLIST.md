@@ -377,7 +377,7 @@
 ### 8.7 3D シェーダー
 - [x] Basic3D.metal（頂点色）
 - [x] Textured3D.metal
-- [ ] Lighting.metal（Phong）
+- [~] Lighting.metal（Phong） → Phase 10.4で実装
 
 ---
 
