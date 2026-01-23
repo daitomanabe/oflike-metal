@@ -222,19 +222,19 @@
 - [x] ofDrawBezier()
 
 ### 5.5 ofPolyline
-- [ ] コンストラクタ
-- [ ] addVertex() / addVertices()
-- [ ] lineTo() / curveTo() / bezierTo()
-- [ ] arc() / arcNegative()
-- [ ] close()
-- [ ] draw()
-- [ ] getVertices() / size()
-- [ ] getPerimeter() / getArea()
-- [ ] getCentroid2D() / getBoundingBox()
-- [ ] getClosestPoint() / inside()
-- [ ] simplify()
-- [ ] getResampledBySpacing() / getResampledByCount()
-- [ ] getSmoothed()
+- [x] コンストラクタ
+- [x] addVertex() / addVertices()
+- [x] lineTo() / curveTo() / bezierTo()
+- [x] arc() / arcNegative()
+- [x] close()
+- [x] draw()
+- [x] getVertices() / size()
+- [x] getPerimeter() / getArea()
+- [x] getCentroid2D() / getBoundingBox()
+- [x] getClosestPoint() / inside()
+- [x] simplify()
+- [x] getResampledBySpacing() / getResampledByCount()
+- [x] getSmoothed()
 
 ### 5.6 ofPath
 - [ ] moveTo() / lineTo()
@@ -650,7 +650,7 @@
 | 2 | Core システム | 完了 | 100% |
 | 3 | 数学ライブラリ | 完了 | 100% |
 | 4 | レンダリング基盤 | 完了 | 100% |
-| 5 | 2D 描画 API | 進行中 | 42% |
+| 5 | 2D 描画 API | 進行中 | 65% |
 | 6 | 色 | 未着手 | 0% |
 | 7 | 画像・テクスチャ | 未着手 | 0% |
 | 8 | 3D 描画 | 未着手 | 0% |
@@ -668,8 +668,8 @@
 ---
 
 **総タスク数**: 約 350 項目
-**完了**: 103 項目
-**全体進捗**: 29.4%
+**完了**: 116 項目
+**全体進捗**: 33.1%
 
 ---
 
