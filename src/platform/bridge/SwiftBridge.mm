@@ -254,4 +254,19 @@
     }
 }
 
+// MARK: - Drag and Drop Events
+
+- (void)dragEventX:(float)x y:(float)y {
+    @autoreleasepool {
+        if (!isSetup_) {
+            return;
+        }
+
+        // Phase 13.3: Forward drag event to C++ app
+        if (testApp_) {
+            testApp_->dragEvent((int)x, (int)y);
+        }
+    }
+}
+
 @end

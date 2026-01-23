@@ -43,4 +43,9 @@
 - (void)keyPressed:(int)key;
 - (void)keyReleased:(int)key;
 
+/// Drag and drop event
+/// @param x Drop position x in pixels
+/// @param y Drop position y in pixels
+- (void)dragEventX:(float)x y:(float)y;
+
 @end

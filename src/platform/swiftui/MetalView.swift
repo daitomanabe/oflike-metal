@@ -73,6 +73,18 @@ private class MouseTrackingMTKView: MTKView {
 
     private var trackingArea: NSTrackingArea?
 
+    override init(frame frameRect: NSRect, device: MTLDevice?) {
+        super.init(frame: frameRect, device: device)
+        // Register for file drag and drop
+        registerForDraggedTypes([.fileURL])
+    }
+
+    required init(coder: NSCoder) {
+        super.init(coder: coder)
+        // Register for file drag and drop
+        registerForDraggedTypes([.fileURL])
+    }
+
     override func updateTrackingAreas() {
         super.updateTrackingAreas()
 
@@ -193,6 +205,18 @@ private class MouseTrackingMTKView: MTKView {
         let keyCode = Int(event.keyCode)
         mouseEventReceiver?.keyReleased(key: keyCode)
     }
+
+    // MARK: - Drag and Drop
+
+    override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
+        return .copy
+    }
+
+    override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        let location = convert(sender.draggingLocation, from: nil)
+        mouseEventReceiver?.dragEvent(x: Float(location.x), y: Float(location.y))
+        return true
+    }
 }
 
 /// Protocol for receiving mouse and keyboard events from MouseTrackingMTKView
@@ -206,6 +230,7 @@ protocol MouseEventReceiver: AnyObject {
     func mouseExited(x: Float, y: Float)
     func keyPressed(key: Int)
     func keyReleased(key: Int)
+    func dragEvent(x: Float, y: Float)
 }
 
 /// Coordinator that implements MTKViewDelegate and MouseEventReceiver
@@ -522,5 +547,12 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject, MouseEv
     func keyReleased(key: Int) {
         // Forward to C++ bridge
         bridge?.keyReleased(Int32(key))
+    }
+
+    // MARK: - Drag and Drop Events (Phase 13.3)
+
+    func dragEvent(x: Float, y: Float) {
+        // Forward to C++ bridge
+        bridge?.dragEventX(x, y: y)
     }
 }
