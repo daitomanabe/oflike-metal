@@ -7,9 +7,23 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		051BCA56DEDAA6C95326E093 /* libutf8-cpp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E9D22025894F5286393CBF0 /* libutf8-cpp.a */; };
+		0249182C04E7124880E6CC62 /* bucketalloc.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = A02D512CAF05A64C4144FB6D /* bucketalloc.h */; };
+		1C309C1154D0D25BCBDF0630 /* priorityq.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = D0FB4B3C269BBCB908F29C42 /* priorityq.h */; };
+		1D1A22B9DD82B485F1BAE986 /* sweep.c in Sources */ = {isa = PBXBuildFile; fileRef = 0366290585029AE4D911F450 /* sweep.c */; };
+		35168A85908DF1A4D29A0C31 /* mesh.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 4E950E8DC7A838FE2F748D28 /* mesh.h */; };
+		457733A4A97890C05EFF68A7 /* geom.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = C99AE41C0E0256FFF79EE90F /* geom.h */; };
+		463D2499A5D36DECEB08E21E /* tess.c in Sources */ = {isa = PBXBuildFile; fileRef = A8491101D82BE9B65FE97E2C /* tess.c */; };
+		48AD52905B50F117ABF44261 /* sweep.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DC5646086D4BDABF265AC598 /* sweep.h */; };
+		50CBD9621F2463F3AE0872B2 /* dict.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = EFD83A160624D875A72FB761 /* dict.h */; };
+		6A4FB06C259CAA9E16F976FD /* dict.c in Sources */ = {isa = PBXBuildFile; fileRef = 6E8721CEA82525313FA568C0 /* dict.c */; };
+		8F2EF72F4E6FA59529A49875 /* tess.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = FB491D598AAA9970B65C05A4 /* tess.h */; };
 		96439999608CB49E682ACE3C /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = B47B2F4987FC7F3C8DC766B4 /* Info.plist */; };
 		B47E2B9ED725F0E6D90EC6A6 /* libtess2.a in Frameworks */ = {isa = PBXBuildFile; fileRef = F7D87676E50FD559A3289712 /* libtess2.a */; };
+		C799BEF4A50960C1976614AB /* geom.c in Sources */ = {isa = PBXBuildFile; fileRef = F7DDAF7D435405D76D21A57F /* geom.c */; };
+		CEBD94F6AD1346C9D5AA3AEB /* tesselator.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 021A006664BEF3493B8E239F /* tesselator.h */; };
+		DB62D9A705F2B1F6A86B62D0 /* priorityq.c in Sources */ = {isa = PBXBuildFile; fileRef = 3D4B7C285DCD7BB2D0772F5D /* priorityq.c */; };
+		E94E4E5EF4FEACF080DFC7E7 /* mesh.c in Sources */ = {isa = PBXBuildFile; fileRef = 769BC55D23AEC969FD283FCD /* mesh.c */; };
+		F89E661CED1CEFAC5B6E5EEF /* bucketalloc.c in Sources */ = {isa = PBXBuildFile; fileRef = F2208344D230DA3226148D4B /* bucketalloc.c */; };
 		F9399D9F5270C5ED7DD19E08 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A1645174B6E903DD3D21BBF /* App.swift */; };
 /* End PBXBuildFile section */
 
@@ -28,22 +42,49 @@
 			remoteGlobalIDString = 3D94248A673CCD34F21FE16A;
 			remoteInfo = tess2;
 		};
-		79E77C56DC0D5A66DCAB840B /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 0B7EA354488F34BED0DF2CEA /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 91ED22BE69D0B183C1A4DD3C;
-			remoteInfo = "utf8-cpp";
-		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		81FB30C3B3CE03EDDCBCCC09 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "include/$(PRODUCT_NAME)";
+			dstSubfolderSpec = 16;
+			files = (
+				0249182C04E7124880E6CC62 /* bucketalloc.h in CopyFiles */,
+				50CBD9621F2463F3AE0872B2 /* dict.h in CopyFiles */,
+				457733A4A97890C05EFF68A7 /* geom.h in CopyFiles */,
+				35168A85908DF1A4D29A0C31 /* mesh.h in CopyFiles */,
+				1C309C1154D0D25BCBDF0630 /* priorityq.h in CopyFiles */,
+				48AD52905B50F117ABF44261 /* sweep.h in CopyFiles */,
+				8F2EF72F4E6FA59529A49875 /* tess.h in CopyFiles */,
+				CEBD94F6AD1346C9D5AA3AEB /* tesselator.h in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
-		1E9D22025894F5286393CBF0 /* libutf8-cpp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libutf8-cpp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		021A006664BEF3493B8E239F /* tesselator.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tesselator.h; sourceTree = "<group>"; };
+		0366290585029AE4D911F450 /* sweep.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = sweep.c; sourceTree = "<group>"; };
+		3D4B7C285DCD7BB2D0772F5D /* priorityq.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = priorityq.c; sourceTree = "<group>"; };
 		4A1645174B6E903DD3D21BBF /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
+		4E950E8DC7A838FE2F748D28 /* mesh.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = mesh.h; sourceTree = "<group>"; };
 		591D3AF24B61B3F205F7DA81 /* oflike-metal.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "oflike-metal.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		6E8721CEA82525313FA568C0 /* dict.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = dict.c; sourceTree = "<group>"; };
+		769BC55D23AEC969FD283FCD /* mesh.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = mesh.c; sourceTree = "<group>"; };
 		7E1D6C08E598F6BF8244DB7C /* oflike-metalTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "oflike-metalTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A02D512CAF05A64C4144FB6D /* bucketalloc.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bucketalloc.h; sourceTree = "<group>"; };
+		A8491101D82BE9B65FE97E2C /* tess.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = tess.c; sourceTree = "<group>"; };
 		B47B2F4987FC7F3C8DC766B4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		C99AE41C0E0256FFF79EE90F /* geom.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = geom.h; sourceTree = "<group>"; };
+		D0FB4B3C269BBCB908F29C42 /* priorityq.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = priorityq.h; sourceTree = "<group>"; };
+		DC5646086D4BDABF265AC598 /* sweep.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sweep.h; sourceTree = "<group>"; };
+		EFD83A160624D875A72FB761 /* dict.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = dict.h; sourceTree = "<group>"; };
+		F2208344D230DA3226148D4B /* bucketalloc.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = bucketalloc.c; sourceTree = "<group>"; };
 		F7D87676E50FD559A3289712 /* libtess2.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libtess2.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		F7DDAF7D435405D76D21A57F /* geom.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = geom.c; sourceTree = "<group>"; };
+		FB491D598AAA9970B65C05A4 /* tess.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tess.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -52,7 +93,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				B47E2B9ED725F0E6D90EC6A6 /* libtess2.a in Frameworks */,
-				051BCA56DEDAA6C95326E093 /* libutf8-cpp.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -71,7 +111,6 @@
 			isa = PBXGroup;
 			children = (
 				F7D87676E50FD559A3289712 /* libtess2.a */,
-				1E9D22025894F5286393CBF0 /* libutf8-cpp.a */,
 				591D3AF24B61B3F205F7DA81 /* oflike-metal.app */,
 				7E1D6C08E598F6BF8244DB7C /* oflike-metalTests.xctest */,
 			);
@@ -81,12 +120,12 @@
 		40E3A5A89C849356DBBB4AB4 = {
 			isa = PBXGroup;
 			children = (
+				885F7EDB633C85E2697BDE21 /* Include */,
 				CE650EF9C9DEBB9AF8F4F3B7 /* resources */,
 				DA9365C406144FDA64141440 /* shaders */,
+				CD4ABBFF34A6812BF7BAA855 /* Source */,
 				BB91FEF6D781526279876E03 /* src */,
-				CDAC58CDB594A02755904F9E /* tess2 */,
 				6558959071E992D580E3EB90 /* tests */,
-				926F736478FFF1863487A641 /* utf8 */,
 				3A39F38C269B34C10D09EE85 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -98,12 +137,13 @@
 			path = tests;
 			sourceTree = "<group>";
 		};
-		926F736478FFF1863487A641 /* utf8 */ = {
+		885F7EDB633C85E2697BDE21 /* Include */ = {
 			isa = PBXGroup;
 			children = (
+				021A006664BEF3493B8E239F /* tesselator.h */,
 			);
-			name = utf8;
-			path = third_party/utf8;
+			name = Include;
+			path = third_party/tess2/Include;
 			sourceTree = "<group>";
 		};
 		AEDC406C03CACC3D9100E84E /* platform */ = {
@@ -122,12 +162,26 @@
 			path = src;
 			sourceTree = "<group>";
 		};
-		CDAC58CDB594A02755904F9E /* tess2 */ = {
+		CD4ABBFF34A6812BF7BAA855 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				F2208344D230DA3226148D4B /* bucketalloc.c */,
+				A02D512CAF05A64C4144FB6D /* bucketalloc.h */,
+				6E8721CEA82525313FA568C0 /* dict.c */,
+				EFD83A160624D875A72FB761 /* dict.h */,
+				F7DDAF7D435405D76D21A57F /* geom.c */,
+				C99AE41C0E0256FFF79EE90F /* geom.h */,
+				769BC55D23AEC969FD283FCD /* mesh.c */,
+				4E950E8DC7A838FE2F748D28 /* mesh.h */,
+				3D4B7C285DCD7BB2D0772F5D /* priorityq.c */,
+				D0FB4B3C269BBCB908F29C42 /* priorityq.h */,
+				0366290585029AE4D911F450 /* sweep.c */,
+				DC5646086D4BDABF265AC598 /* sweep.h */,
+				A8491101D82BE9B65FE97E2C /* tess.c */,
+				FB491D598AAA9970B65C05A4 /* tess.h */,
 			);
-			name = tess2;
-			path = third_party/tess2;
+			name = Source;
+			path = third_party/tess2/Source;
 			sourceTree = "<group>";
 		};
 		CE650EF9C9DEBB9AF8F4F3B7 /* resources */ = {
@@ -145,14 +199,14 @@
 			path = shaders;
 			sourceTree = "<group>";
 		};
-		"TEMP_827FDED8-69B4-463E-A109-507B1C70F84C" /* oflike */ = {
+		"TEMP_3325E4FC-BFA8-449B-9666-163164D86B3D" /* oflike */ = {
 			isa = PBXGroup;
 			children = (
 			);
 			path = oflike;
 			sourceTree = "<group>";
 		};
-		"TEMP_8BA3DE8D-5269-40BF-9005-2374F2775992" /* render */ = {
+		"TEMP_3FD92CA5-2F95-4473-8D23-85FFCC8DEB3C" /* render */ = {
 			isa = PBXGroup;
 			children = (
 			);
@@ -184,6 +238,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 7F67B6B2FA13D780088869DD /* Build configuration list for PBXNativeTarget "tess2" */;
 			buildPhases = (
+				81FB30C3B3CE03EDDCBCCC09 /* CopyFiles */,
 				085CA7CF5C2AB22E3F54C979 /* Sources */,
 			);
 			buildRules = (
@@ -209,7 +264,6 @@
 			);
 			dependencies = (
 				8402E8CA5E7902350AE9677C /* PBXTargetDependency */,
-				E7EA8114C3C0F60213725273 /* PBXTargetDependency */,
 			);
 			name = "oflike-metal";
 			packageProductDependencies = (
@@ -217,23 +271,6 @@
 			productName = "oflike-metal";
 			productReference = 591D3AF24B61B3F205F7DA81 /* oflike-metal.app */;
 			productType = "com.apple.product-type.application";
-		};
-		91ED22BE69D0B183C1A4DD3C /* utf8-cpp */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 5473411FB71C0B5D073E2BBE /* Build configuration list for PBXNativeTarget "utf8-cpp" */;
-			buildPhases = (
-				C140E09AA73AEEE8417339E5 /* Sources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = "utf8-cpp";
-			packageProductDependencies = (
-			);
-			productName = "utf8-cpp";
-			productReference = 1E9D22025894F5286393CBF0 /* libutf8-cpp.a */;
-			productType = "com.apple.product-type.library.static";
 		};
 /* End PBXNativeTarget section */
 
@@ -267,7 +304,6 @@
 				70DB66F316B637DA9D517883 /* oflike-metal */,
 				362D03CE501FA5E0D951B5E4 /* oflike-metalTests */,
 				3D94248A673CCD34F21FE16A /* tess2 */,
-				91ED22BE69D0B183C1A4DD3C /* utf8-cpp */,
 			);
 		};
 /* End PBXProject section */
@@ -288,17 +324,17 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F89E661CED1CEFAC5B6E5EEF /* bucketalloc.c in Sources */,
+				6A4FB06C259CAA9E16F976FD /* dict.c in Sources */,
+				C799BEF4A50960C1976614AB /* geom.c in Sources */,
+				E94E4E5EF4FEACF080DFC7E7 /* mesh.c in Sources */,
+				DB62D9A705F2B1F6A86B62D0 /* priorityq.c in Sources */,
+				1D1A22B9DD82B485F1BAE986 /* sweep.c in Sources */,
+				463D2499A5D36DECEB08E21E /* tess.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		5ED220A0FFC419B5A473D002 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		C140E09AA73AEEE8417339E5 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -325,11 +361,6 @@
 			isa = PBXTargetDependency;
 			target = 70DB66F316B637DA9D517883 /* oflike-metal */;
 			targetProxy = 10DEC04D77E7DE06EE6B984A /* PBXContainerItemProxy */;
-		};
-		E7EA8114C3C0F60213725273 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 91ED22BE69D0B183C1A4DD3C /* utf8-cpp */;
-			targetProxy = 79E77C56DC0D5A66DCAB840B /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -411,7 +442,8 @@
 			buildSettings = {
 				COMBINE_HIDPI_IMAGES = YES;
 				HEADER_SEARCH_PATHS = (
-					"$(SRCROOT)/third_party/tess2",
+					"$(SRCROOT)/third_party/tess2/Include",
+					"$(SRCROOT)/third_party/tess2/Source",
 				);
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -495,6 +527,11 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)/third_party/utf8",
+					"$(SRCROOT)/third_party/glm",
+					"$(SRCROOT)/third_party/tess2/Include",
+				);
 				INFOPLIST_FILE = resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -507,24 +544,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "com.oflike.oflike-metal";
 				PRODUCT_NAME = "oflike-metal";
 				SDKROOT = macosx;
-			};
-			name = Debug;
-		};
-		719BF90AB11B34026B10914F /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
-				HEADER_SEARCH_PATHS = (
-					"$(SRCROOT)/third_party/utf8",
-				);
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.oflike.utf8-cpp";
-				PRODUCT_NAME = "utf8-cpp";
-				SDKROOT = macosx;
-				SKIP_INSTALL = YES;
 			};
 			name = Debug;
 		};
@@ -536,6 +555,11 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)/third_party/utf8",
+					"$(SRCROOT)/third_party/glm",
+					"$(SRCROOT)/third_party/tess2/Include",
+				);
 				INFOPLIST_FILE = resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -551,30 +575,13 @@
 			};
 			name = Release;
 		};
-		9382B63E768AAD1BC6FC0861 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
-				HEADER_SEARCH_PATHS = (
-					"$(SRCROOT)/third_party/utf8",
-				);
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.oflike.utf8-cpp";
-				PRODUCT_NAME = "utf8-cpp";
-				SDKROOT = macosx;
-				SKIP_INSTALL = YES;
-			};
-			name = Release;
-		};
 		C6163CDC49DE0038A104814A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COMBINE_HIDPI_IMAGES = YES;
 				HEADER_SEARCH_PATHS = (
-					"$(SRCROOT)/third_party/tess2",
+					"$(SRCROOT)/third_party/tess2/Include",
+					"$(SRCROOT)/third_party/tess2/Source",
 				);
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -611,15 +618,6 @@
 			buildConfigurations = (
 				579D004C25CDCCD969441709 /* Debug */,
 				8933B4D9C467D18FAC8CC947 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug;
-		};
-		5473411FB71C0B5D073E2BBE /* Build configuration list for PBXNativeTarget "utf8-cpp" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				719BF90AB11B34026B10914F /* Debug */,
-				9382B63E768AAD1BC6FC0861 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

@@ -32,9 +32,12 @@ targets:
       CODE_SIGN_STYLE: Automatic
       ENABLE_HARDENED_RUNTIME: YES
       COMBINE_HIDPI_IMAGES: YES
+      HEADER_SEARCH_PATHS:
+        - $(SRCROOT)/third_party/utf8
+        - $(SRCROOT)/third_party/glm
+        - $(SRCROOT)/third_party/tess2/Include
     dependencies:
       - target: tess2
-      - target: utf8-cpp
     scheme:
       testTargets:
         - oflike-metalTests
@@ -44,27 +47,19 @@ targets:
     type: library.static
     platform: macOS
     sources:
-      - path: third_party/tess2
+      - path: third_party/tess2/Source
         includes:
           - "*.c"
           - "*.h"
+      - path: third_party/tess2/Include
+        includes:
+          - "*.h"
+        buildPhase: headers
     settings:
       PRODUCT_NAME: tess2
       HEADER_SEARCH_PATHS:
-        - $(SRCROOT)/third_party/tess2
-
-  utf8-cpp:
-    type: library.static
-    platform: macOS
-    sources:
-      - path: third_party/utf8
-        includes:
-          - "*.h"
-          - "utf8/*.h"
-    settings:
-      PRODUCT_NAME: utf8-cpp
-      HEADER_SEARCH_PATHS:
-        - $(SRCROOT)/third_party/utf8
+        - $(SRCROOT)/third_party/tess2/Include
+        - $(SRCROOT)/third_party/tess2/Source
 
   oflike-metalTests:
     type: bundle.unit-test
