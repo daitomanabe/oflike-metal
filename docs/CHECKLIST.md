@@ -479,7 +479,7 @@
 - [x] getStringBoundingBox()
 - [x] stringWidth() / stringHeight()
 - [x] getLineHeight() / setLineHeight()
-- [ ] getLetterSpacing() / setLetterSpacing()
+- [x] getLetterSpacing() / setLetterSpacing()
 - [ ] getCharacterAsPoints()
 - [ ] getFontSize()
 
@@ -657,7 +657,7 @@
 | 9 | カメラ | 完了 | 100% (24/24) |
 | 10 | ライティング | 完了 | 100% (23/23) |
 | 11 | FBO | 完了 | 100% (15/15) |
-| 12 | フォント | 進行中 | 70% (7/10) |
+| 12 | フォント | 進行中 | 80% (8/10) |
 | 13 | イベントシステム | 未着手 | 0% |
 | 14 | ウィンドウ管理 | 未着手 | 0% |
 | 15 | ユーティリティ | 未着手 | 0% |
@@ -668,8 +668,8 @@
 ---
 
 **総タスク数**: 399 項目
-**完了**: 307 項目
-**全体進捗**: 76.9%
+**完了**: 308 項目
+**全体進捗**: 77.2%
 
 ---
 
