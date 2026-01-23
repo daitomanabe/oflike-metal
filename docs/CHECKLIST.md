@@ -145,10 +145,10 @@
 ## Phase 4: レンダリング基盤
 
 ### 4.1 RenderTypes
-- [ ] Vertex2D 構造体
-- [ ] Vertex3D 構造体
-- [ ] PrimitiveType enum
-- [ ] BlendMode enum
+- [x] Vertex2D 構造体
+- [x] Vertex3D 構造体
+- [x] PrimitiveType enum
+- [x] BlendMode enum
 
 ### 4.2 DrawCommand
 - [ ] DrawCommand2D 構造体
@@ -649,7 +649,7 @@
 | 1 | SwiftUI + Metal 基盤 | 完了 | 100% |
 | 2 | Core システム | 完了 | 100% |
 | 3 | 数学ライブラリ | 完了 | 100% |
-| 4 | レンダリング基盤 | 未着手 | 0% |
+| 4 | レンダリング基盤 | 進行中 | 14% |
 | 5 | 2D 描画 API | 未着手 | 0% |
 | 6 | 色 | 未着手 | 0% |
 | 7 | 画像・テクスチャ | 未着手 | 0% |
@@ -668,8 +668,8 @@
 ---
 
 **総タスク数**: 約 350 項目
-**完了**: 69 項目
-**全体進捗**: 19.7%
+**完了**: 73 項目
+**全体進捗**: 20.9%
 
 ---
 
