@@ -340,9 +340,9 @@
 - [x] ofDrawRotationAxes()
 
 ### 8.3 深度・カリング
-- [ ] ofEnableDepthTest() / ofDisableDepthTest()
-- [ ] ofSetDepthWrite()
-- [ ] ofEnableCulling() / ofDisableCulling()
+- [x] ofEnableDepthTest() / ofDisableDepthTest()
+- [x] ofSetDepthWrite()
+- [x] ofEnableCulling() / ofDisableCulling()
 
 ### 8.4 ofMesh
 - [ ] コンストラクタ
@@ -653,7 +653,7 @@
 | 5 | 2D 描画 API | 完了 | 100% |
 | 6 | 色 | 完了 | 100% |
 | 7 | 画像・テクスチャ | 完了 | 100% |
-| 8 | 3D 描画 | 進行中 | 28% |
+| 8 | 3D 描画 | 進行中 | 33% |
 | 9 | カメラ | 未着手 | 0% |
 | 10 | ライティング | 未着手 | 0% |
 | 11 | FBO | 未着手 | 0% |
@@ -668,8 +668,8 @@
 ---
 
 **総タスク数**: 約 350 項目
-**完了**: 197 項目
-**全体進捗**: 56.3%
+**完了**: 200 項目
+**全体進捗**: 57.1%
 
 ---
 

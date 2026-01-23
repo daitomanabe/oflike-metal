@@ -852,3 +852,58 @@ void ofDrawArrow(const oflike::ofVec3f& start, const oflike::ofVec3f& end, float
  * @param stripWidth Width of the axis lines (default: 0.01)
  */
 void ofDrawRotationAxes(float radius, float stripWidth = 0.01f);
+
+// ============================================================================
+// Depth Testing & Culling
+// ============================================================================
+
+/**
+ * Enable depth testing.
+ * When enabled, fragments with greater depth values are discarded.
+ * This is essential for correct 3D rendering when objects overlap.
+ * Default state: disabled.
+ */
+void ofEnableDepthTest();
+
+/**
+ * Disable depth testing.
+ * All fragments are drawn regardless of depth.
+ * Useful for 2D rendering or special effects.
+ */
+void ofDisableDepthTest();
+
+/**
+ * Check if depth testing is enabled.
+ * @return true if depth testing is enabled, false otherwise
+ */
+bool ofGetDepthTestEnabled();
+
+/**
+ * Enable or disable writing to the depth buffer.
+ * When disabled, depth values are not updated even if depth testing is enabled.
+ * Useful for rendering transparent objects or skyboxes.
+ * Default state: enabled (when depth test is enabled).
+ * @param enabled If true, depth values are written to the depth buffer
+ */
+void ofSetDepthWrite(bool enabled);
+
+/**
+ * Check if depth write is enabled.
+ * @return true if depth write is enabled, false otherwise
+ */
+bool ofGetDepthWrite();
+
+/**
+ * Enable backface culling.
+ * Triangles facing away from the camera are not rendered.
+ * This improves performance and is commonly used for closed meshes.
+ * Default state: disabled.
+ */
+void ofEnableCulling();
+
+/**
+ * Disable culling.
+ * All triangles are rendered regardless of facing direction.
+ * Useful for double-sided meshes or transparent objects.
+ */
+void ofDisableCulling();

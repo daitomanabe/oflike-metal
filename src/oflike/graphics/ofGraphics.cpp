@@ -44,6 +44,11 @@ namespace {
         // Blend mode (default: alpha blending)
         int blendMode = OF_BLENDMODE_ALPHA;
 
+        // Depth testing and culling (default: disabled for 2D compatibility)
+        bool depthTestEnabled = false;
+        bool depthWriteEnabled = true;
+        bool cullingEnabled = false;
+
         // Matrix stack
         std::stack<oflike::ofMatrix4x4> matrixStack;
         oflike::ofMatrix4x4 currentMatrix;
@@ -1108,4 +1113,73 @@ void ofDrawRotationAxes(float radius, float stripWidth) {
 
     // For now, just draw standard axes
     ofDrawAxis(radius);
+}
+
+// ============================================================================
+// Depth Testing & Culling Implementation
+// ============================================================================
+
+void ofEnableDepthTest() {
+    auto& state = getGraphicsState();
+    state.depthTestEnabled = true;
+
+    // Update renderer state
+    auto* renderer = ctx().renderer();
+    if (renderer) {
+        renderer->setDepthTestEnabled(true);
+    }
+}
+
+void ofDisableDepthTest() {
+    auto& state = getGraphicsState();
+    state.depthTestEnabled = false;
+
+    // Update renderer state
+    auto* renderer = ctx().renderer();
+    if (renderer) {
+        renderer->setDepthTestEnabled(false);
+    }
+}
+
+bool ofGetDepthTestEnabled() {
+    auto& state = getGraphicsState();
+    return state.depthTestEnabled;
+}
+
+void ofSetDepthWrite(bool enabled) {
+    auto& state = getGraphicsState();
+    state.depthWriteEnabled = enabled;
+
+    // Update renderer state
+    auto* renderer = ctx().renderer();
+    if (renderer) {
+        renderer->setDepthWriteEnabled(enabled);
+    }
+}
+
+bool ofGetDepthWrite() {
+    auto& state = getGraphicsState();
+    return state.depthWriteEnabled;
+}
+
+void ofEnableCulling() {
+    auto& state = getGraphicsState();
+    state.cullingEnabled = true;
+
+    // Update renderer state (backface culling)
+    auto* renderer = ctx().renderer();
+    if (renderer) {
+        renderer->setCullingMode(true, true);  // cullBack=true, enabled=true
+    }
+}
+
+void ofDisableCulling() {
+    auto& state = getGraphicsState();
+    state.cullingEnabled = false;
+
+    // Update renderer state
+    auto* renderer = ctx().renderer();
+    if (renderer) {
+        renderer->setCullingMode(false, false);  // cullBack doesn't matter, enabled=false
+    }
 }
