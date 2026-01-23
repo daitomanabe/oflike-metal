@@ -1,5 +1,7 @@
 #include "ofGraphics.h"
 #include "../math/ofMatrix4x4.h"
+#include "../math/ofVec3f.h"
+#include "ofPath.h"
 #include <algorithm>
 #include <simd/simd.h>
 #include <vector>
@@ -10,6 +12,18 @@
 // ============================================================================
 
 namespace {
+    // Vertex type for shape building
+    enum class ShapeVertexType {
+        Vertex,       // Regular linear vertex
+        CurveVertex,  // Catmull-Rom curve vertex
+        BezierVertex  // Bezier curve control point
+    };
+
+    struct ShapeVertex {
+        oflike::ofVec3f position;
+        ShapeVertexType type;
+    };
+
     struct GraphicsState {
         // Current colors (0-255 range)
         uint8_t currentColor[4] = {255, 255, 255, 255};  // RGBA
@@ -27,6 +41,11 @@ namespace {
         // Matrix stack
         std::stack<oflike::ofMatrix4x4> matrixStack;
         oflike::ofMatrix4x4 currentMatrix;
+
+        // Shape API state
+        bool shapeBegun = false;
+        std::vector<std::vector<ShapeVertex>> shapeContours;  // Multiple contours for holes
+        std::vector<ShapeVertex> currentContour;
 
         GraphicsState() {
             // Initialize with identity matrix
@@ -619,5 +638,203 @@ void ofDrawBezier(float x0, float y0, float z0, float x1, float y1, float z1, fl
         prevX = x;
         prevY = y;
         prevZ = z;
+    }
+}
+
+// ============================================================================
+// Shape API (Immediate Mode)
+// ============================================================================
+
+void ofBeginShape() {
+    auto& state = getGraphicsState();
+
+    // Clear any previous shape data
+    state.shapeContours.clear();
+    state.currentContour.clear();
+    state.shapeBegun = true;
+}
+
+void ofEndShape(bool close) {
+    auto& state = getGraphicsState();
+
+    if (!state.shapeBegun) {
+        // No shape was begun, silently return
+        return;
+    }
+
+    // Add the current contour if it has vertices
+    if (!state.currentContour.empty()) {
+        state.shapeContours.push_back(state.currentContour);
+    }
+
+    // If no contours were created, nothing to draw
+    if (state.shapeContours.empty()) {
+        state.shapeBegun = false;
+        return;
+    }
+
+    // Use ofPath to render the shape
+    oflike::ofPath path;
+
+    // Set rendering properties
+    path.setFilled(state.fillEnabled);
+    path.setStrokeWidth(state.lineWidth);
+    path.setColor(state.currentColor[0], state.currentColor[1],
+                  state.currentColor[2], state.currentColor[3]);
+
+    // Process each contour
+    for (size_t contourIdx = 0; contourIdx < state.shapeContours.size(); ++contourIdx) {
+        const auto& contour = state.shapeContours[contourIdx];
+
+        if (contour.empty()) {
+            continue;
+        }
+
+        // Start new contour (for holes support)
+        if (contourIdx > 0) {
+            // Note: ofPath doesn't have nextContour, but we can work around this
+            // by drawing each contour separately for now
+            // TODO: Implement proper multi-contour support with holes
+        }
+
+        // Move to first vertex
+        path.moveTo(contour[0].position);
+
+        // Process vertices based on their type
+        size_t i = 1;
+        while (i < contour.size()) {
+            const auto& vertex = contour[i];
+
+            switch (vertex.type) {
+                case ShapeVertexType::Vertex:
+                    // Regular linear vertex
+                    path.lineTo(vertex.position);
+                    i++;
+                    break;
+
+                case ShapeVertexType::CurveVertex:
+                    // Catmull-Rom curve vertex
+                    // Need at least 4 vertices for a Catmull-Rom spline
+                    if (i >= 1 && i + 1 < contour.size()) {
+                        path.curveTo(vertex.position);
+                    } else {
+                        // Not enough points, fall back to line
+                        path.lineTo(vertex.position);
+                    }
+                    i++;
+                    break;
+
+                case ShapeVertexType::BezierVertex:
+                    // Bezier vertex: need 3 vertices (cp1, cp2, endpoint)
+                    if (i + 2 < contour.size()) {
+                        const auto& cp1 = contour[i].position;
+                        const auto& cp2 = contour[i + 1].position;
+                        const auto& endpoint = contour[i + 2].position;
+
+                        path.bezierTo(cp1, cp2, endpoint);
+                        i += 3;  // Skip all 3 vertices
+                    } else {
+                        // Not enough points for Bezier, fall back to line
+                        path.lineTo(vertex.position);
+                        i++;
+                    }
+                    break;
+            }
+        }
+
+        // Close the contour if requested
+        if (close) {
+            path.close();
+        }
+    }
+
+    // Draw the completed path
+    path.draw();
+
+    // Clear shape state
+    state.shapeBegun = false;
+    state.shapeContours.clear();
+    state.currentContour.clear();
+}
+
+void ofVertex(float x, float y) {
+    ofVertex(x, y, 0.0f);
+}
+
+void ofVertex(float x, float y, float z) {
+    auto& state = getGraphicsState();
+
+    if (!state.shapeBegun) {
+        // Shape not begun, silently return
+        return;
+    }
+
+    ShapeVertex vertex;
+    vertex.position = oflike::ofVec3f(x, y, z);
+    vertex.type = ShapeVertexType::Vertex;
+
+    state.currentContour.push_back(vertex);
+}
+
+void ofCurveVertex(float x, float y) {
+    ofCurveVertex(x, y, 0.0f);
+}
+
+void ofCurveVertex(float x, float y, float z) {
+    auto& state = getGraphicsState();
+
+    if (!state.shapeBegun) {
+        // Shape not begun, silently return
+        return;
+    }
+
+    ShapeVertex vertex;
+    vertex.position = oflike::ofVec3f(x, y, z);
+    vertex.type = ShapeVertexType::CurveVertex;
+
+    state.currentContour.push_back(vertex);
+}
+
+void ofBezierVertex(float cx1, float cy1, float cx2, float cy2, float x, float y) {
+    ofBezierVertex(cx1, cy1, 0.0f, cx2, cy2, 0.0f, x, y, 0.0f);
+}
+
+void ofBezierVertex(float cx1, float cy1, float cz1, float cx2, float cy2, float cz2, float x, float y, float z) {
+    auto& state = getGraphicsState();
+
+    if (!state.shapeBegun) {
+        // Shape not begun, silently return
+        return;
+    }
+
+    // Add three vertices: two control points and the endpoint
+    // All marked as BezierVertex type so ofEndShape knows to group them
+    ShapeVertex v1, v2, v3;
+    v1.position = oflike::ofVec3f(cx1, cy1, cz1);
+    v1.type = ShapeVertexType::BezierVertex;
+
+    v2.position = oflike::ofVec3f(cx2, cy2, cz2);
+    v2.type = ShapeVertexType::BezierVertex;
+
+    v3.position = oflike::ofVec3f(x, y, z);
+    v3.type = ShapeVertexType::BezierVertex;
+
+    state.currentContour.push_back(v1);
+    state.currentContour.push_back(v2);
+    state.currentContour.push_back(v3);
+}
+
+void ofNextContour() {
+    auto& state = getGraphicsState();
+
+    if (!state.shapeBegun) {
+        // Shape not begun, silently return
+        return;
+    }
+
+    // Finalize current contour and start a new one
+    if (!state.currentContour.empty()) {
+        state.shapeContours.push_back(state.currentContour);
+        state.currentContour.clear();
     }
 }

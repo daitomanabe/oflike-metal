@@ -482,3 +482,122 @@ void ofDrawBezier(float x0, float y0, float x1, float y1, float x2, float y2, fl
  * @param z3 End point Z
  */
 void ofDrawBezier(float x0, float y0, float z0, float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3);
+
+// ============================================================================
+// Shape API (Immediate Mode)
+// ============================================================================
+
+/**
+ * Begin defining a custom shape using vertices.
+ * Must be paired with ofEndShape().
+ *
+ * Usage:
+ * @code
+ * ofBeginShape();
+ *   ofVertex(100, 100);
+ *   ofVertex(200, 100);
+ *   ofVertex(200, 200);
+ * ofEndShape();
+ * @endcode
+ */
+void ofBeginShape();
+
+/**
+ * End the current shape definition and draw it.
+ * If close is true, the shape will be closed by connecting the last vertex to the first.
+ * @param close If true, close the shape
+ */
+void ofEndShape(bool close = false);
+
+/**
+ * Add a vertex to the current shape (2D).
+ * Must be called between ofBeginShape() and ofEndShape().
+ * @param x X coordinate
+ * @param y Y coordinate
+ */
+void ofVertex(float x, float y);
+
+/**
+ * Add a vertex to the current shape (3D).
+ * Must be called between ofBeginShape() and ofEndShape().
+ * @param x X coordinate
+ * @param y Y coordinate
+ * @param z Z coordinate
+ */
+void ofVertex(float x, float y, float z);
+
+/**
+ * Add a curve vertex to the current shape (2D).
+ * Creates a Catmull-Rom curve through the vertices.
+ * Must be called between ofBeginShape() and ofEndShape().
+ * @param x X coordinate
+ * @param y Y coordinate
+ */
+void ofCurveVertex(float x, float y);
+
+/**
+ * Add a curve vertex to the current shape (3D).
+ * Creates a Catmull-Rom curve through the vertices.
+ * Must be called between ofBeginShape() and ofEndShape().
+ * @param x X coordinate
+ * @param y Y coordinate
+ * @param z Z coordinate
+ */
+void ofCurveVertex(float x, float y, float z);
+
+/**
+ * Add a Bezier control point to the current shape (2D).
+ * Bezier vertices must be added in groups of 3:
+ * - First two are control points
+ * - Third is the end point
+ * Must be called between ofBeginShape() and ofEndShape().
+ * @param cx1 First control point X
+ * @param cy1 First control point Y
+ * @param cx2 Second control point X
+ * @param cy2 Second control point Y
+ * @param x End point X
+ * @param y End point Y
+ */
+void ofBezierVertex(float cx1, float cy1, float cx2, float cy2, float x, float y);
+
+/**
+ * Add a Bezier control point to the current shape (3D).
+ * Bezier vertices must be added in groups of 3:
+ * - First two are control points
+ * - Third is the end point
+ * Must be called between ofBeginShape() and ofEndShape().
+ * @param cx1 First control point X
+ * @param cy1 First control point Y
+ * @param cz1 First control point Z
+ * @param cx2 Second control point X
+ * @param cy2 Second control point Y
+ * @param cz2 Second control point Z
+ * @param x End point X
+ * @param y End point Y
+ * @param z End point Z
+ */
+void ofBezierVertex(float cx1, float cy1, float cz1, float cx2, float cy2, float cz2, float x, float y, float z);
+
+/**
+ * Start a new contour within the current shape.
+ * This allows creating shapes with holes.
+ * Must be called between ofBeginShape() and ofEndShape().
+ *
+ * Usage:
+ * @code
+ * ofBeginShape();
+ *   // Outer contour
+ *   ofVertex(0, 0);
+ *   ofVertex(100, 0);
+ *   ofVertex(100, 100);
+ *   ofVertex(0, 100);
+ *   ofNextContour();
+ *   // Inner contour (hole)
+ *   ofVertex(25, 25);
+ *   ofVertex(75, 25);
+ *   ofVertex(75, 75);
+ *   ofVertex(25, 75);
+ * ofEndShape(true);
+ * @endcode
+ */
+void ofNextContour();

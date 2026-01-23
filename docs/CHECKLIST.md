@@ -250,11 +250,11 @@
 - [x] translate() / rotate() / scale()
 
 ### 5.7 Shape API
-- [ ] ofBeginShape() / ofEndShape()
-- [ ] ofVertex()
-- [ ] ofCurveVertex()
-- [ ] ofBezierVertex()
-- [ ] ofNextContour()
+- [x] ofBeginShape() / ofEndShape()
+- [x] ofVertex()
+- [x] ofCurveVertex()
+- [x] ofBezierVertex()
+- [x] ofNextContour()
 
 ### 5.8 ブレンドモード
 - [ ] ofEnableAlphaBlending()
@@ -650,7 +650,7 @@
 | 2 | Core システム | 完了 | 100% |
 | 3 | 数学ライブラリ | 完了 | 100% |
 | 4 | レンダリング基盤 | 完了 | 100% |
-| 5 | 2D 描画 API | 進行中 | 80% |
+| 5 | 2D 描画 API | 進行中 | 87% |
 | 6 | 色 | 未着手 | 0% |
 | 7 | 画像・テクスチャ | 未着手 | 0% |
 | 8 | 3D 描画 | 未着手 | 0% |
@@ -668,8 +668,8 @@
 ---
 
 **総タスク数**: 約 350 項目
-**完了**: 127 項目
-**全体進捗**: 36.3%
+**完了**: 132 項目
+**全体進捗**: 37.7%
 
 ---
 
