@@ -279,5 +279,23 @@ std::vector<std::string> ofSplitString(const std::string& source,
 std::string ofJoinString(const std::vector<std::string>& stringElements,
                          const std::string& delimiter);
 
+/// Convert string to lowercase
+/// Converts all uppercase characters in the string to lowercase
+/// @param src Source string to convert
+/// @return Lowercase version of the string
+std::string ofToLower(const std::string& src);
+
+/// Convert string to uppercase
+/// Converts all lowercase characters in the string to uppercase
+/// @param src Source string to convert
+/// @return Uppercase version of the string
+std::string ofToUpper(const std::string& src);
+
+/// Trim whitespace from both ends of a string
+/// Removes leading and trailing whitespace characters (space, tab, newline, etc.)
+/// @param src Source string to trim
+/// @return Trimmed version of the string
+std::string ofTrim(const std::string& src);
+
 // Template implementation
 #include "ofUtilsImpl.h"

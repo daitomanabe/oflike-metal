@@ -274,3 +274,26 @@ inline std::string ofJoinString(const std::vector<std::string>& stringElements,
 
     return oss.str();
 }
+
+// MARK: - Case Conversion Functions
+
+/// Convert string to lowercase
+inline std::string ofToLower(const std::string& src) {
+    std::string result = src;
+    std::transform(result.begin(), result.end(), result.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+    return result;
+}
+
+/// Convert string to uppercase
+inline std::string ofToUpper(const std::string& src) {
+    std::string result = src;
+    std::transform(result.begin(), result.end(), result.begin(),
+                   [](unsigned char c) { return std::toupper(c); });
+    return result;
+}
+
+/// Trim whitespace from both ends of a string
+inline std::string ofTrim(const std::string& src) {
+    return trimString(src);
+}
