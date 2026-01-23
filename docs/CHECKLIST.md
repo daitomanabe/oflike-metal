@@ -44,10 +44,10 @@
 - [x] フレームループ確立（update/draw）
 
 ### 1.3 Metal 初期化
-- [ ] MTLDevice 取得
-- [ ] MTLCommandQueue 作成
-- [ ] MTLLibrary（シェーダー）読み込み
-- [ ] 基本 RenderPipelineState 作成
+- [x] MTLDevice 取得
+- [x] MTLCommandQueue 作成
+- [x] MTLLibrary（シェーダー）読み込み
+- [x] 基本 RenderPipelineState 作成
 
 ### 1.4 Swift-C++ ブリッジ
 - [ ] OFLBridge クラス作成（Obj-C++）
@@ -646,7 +646,7 @@
 | Phase | 名称 | 状態 | 完了率 |
 |-------|------|------|--------|
 | 0 | プロジェクト基盤 | 完了 | 100% |
-| 1 | SwiftUI + Metal 基盤 | 進行中 | 28% |
+| 1 | SwiftUI + Metal 基盤 | 進行中 | 50% |
 | 2 | Core システム | 未着手 | 0% |
 | 3 | 数学ライブラリ | 未着手 | 0% |
 | 4 | レンダリング基盤 | 未着手 | 0% |
@@ -668,8 +668,8 @@
 ---
 
 **総タスク数**: 約 350 項目
-**完了**: 19 項目
-**全体進捗**: 5.4%
+**完了**: 23 項目
+**全体進捗**: 6.6%
 
 ---
 

@@ -42,6 +42,8 @@ struct MetalView: NSViewRepresentable {
 class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject {
     private var device: MTLDevice?
     private var commandQueue: MTLCommandQueue?
+    private var library: MTLLibrary?
+    private var pipelineState: MTLRenderPipelineState?
     private var frameCount: UInt64 = 0
     private var startTime: CFTimeInterval = 0
 
@@ -53,6 +55,85 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject {
     func setup(device: MTLDevice) {
         self.device = device
         self.commandQueue = device.makeCommandQueue()
+
+        // Load shader library
+        guard let library = loadShaderLibrary(device: device) else {
+            print("Warning: Failed to load shader library")
+            return
+        }
+        self.library = library
+
+        // Create render pipeline state
+        guard let pipelineState = createBasic2DPipeline(device: device, library: library) else {
+            print("Warning: Failed to create render pipeline state")
+            return
+        }
+        self.pipelineState = pipelineState
+
+        print("Metal initialization complete: Device, CommandQueue, Library, PipelineState")
+    }
+
+    // MARK: - Metal Initialization
+
+    /// Load the default Metal shader library
+    private func loadShaderLibrary(device: MTLDevice) -> MTLLibrary? {
+        do {
+            // Try to load default library (compiled shaders)
+            if let library = device.makeDefaultLibrary() {
+                print("Loaded default shader library")
+                return library
+            }
+
+            // Fallback: Try to load from file
+            let shaderPath = Bundle.main.path(forResource: "default", ofType: "metallib")
+            if let path = shaderPath {
+                let library = try device.makeLibrary(filepath: path)
+                print("Loaded shader library from: \(path)")
+                return library
+            }
+
+            print("Error: Could not find shader library")
+            return nil
+        } catch {
+            print("Error loading shader library: \(error)")
+            return nil
+        }
+    }
+
+    /// Create a basic 2D render pipeline state
+    private func createBasic2DPipeline(device: MTLDevice, library: MTLLibrary) -> MTLRenderPipelineState? {
+        let vertexFunction = library.makeFunction(name: "vertex2D")
+        let fragmentFunction = library.makeFunction(name: "fragment2D")
+
+        guard vertexFunction != nil && fragmentFunction != nil else {
+            print("Error: Could not find vertex2D or fragment2D functions")
+            return nil
+        }
+
+        let pipelineDescriptor = MTLRenderPipelineDescriptor()
+        pipelineDescriptor.label = "Basic2D Pipeline"
+        pipelineDescriptor.vertexFunction = vertexFunction
+        pipelineDescriptor.fragmentFunction = fragmentFunction
+        pipelineDescriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
+        pipelineDescriptor.depthAttachmentPixelFormat = .depth32Float
+
+        // Configure blending for alpha transparency
+        pipelineDescriptor.colorAttachments[0].isBlendingEnabled = true
+        pipelineDescriptor.colorAttachments[0].rgbBlendOperation = .add
+        pipelineDescriptor.colorAttachments[0].alphaBlendOperation = .add
+        pipelineDescriptor.colorAttachments[0].sourceRGBBlendFactor = .sourceAlpha
+        pipelineDescriptor.colorAttachments[0].sourceAlphaBlendFactor = .sourceAlpha
+        pipelineDescriptor.colorAttachments[0].destinationRGBBlendFactor = .oneMinusSourceAlpha
+        pipelineDescriptor.colorAttachments[0].destinationAlphaBlendFactor = .oneMinusSourceAlpha
+
+        do {
+            let pipelineState = try device.makeRenderPipelineState(descriptor: pipelineDescriptor)
+            print("Created Basic2D render pipeline state")
+            return pipelineState
+        } catch {
+            print("Error creating pipeline state: \(error)")
+            return nil
+        }
     }
 
     // MARK: - MTKViewDelegate
