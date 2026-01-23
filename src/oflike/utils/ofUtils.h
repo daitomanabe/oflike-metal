@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 /// openFrameworks-compatible utility functions
 /// Provides time, system, and other utility functions
@@ -258,6 +259,25 @@ std::string ofToHex(const std::string& value);
 /// @param hexString Hexadecimal string to convert (e.g., "1A2B" or "0x1A2B")
 /// @return Converted integer value, or 0 if conversion fails
 int ofHexToInt(const std::string& hexString);
+
+/// Split string by delimiter into vector of strings
+/// Optionally ignore empty strings and trim whitespace
+/// @param source Source string to split
+/// @param delimiter Delimiter string to split by
+/// @param ignoreEmpty If true, exclude empty strings from result (default: false)
+/// @param trim If true, trim whitespace from each element (default: false)
+/// @return Vector of split strings
+std::vector<std::string> ofSplitString(const std::string& source,
+                                        const std::string& delimiter,
+                                        bool ignoreEmpty = false,
+                                        bool trim = false);
+
+/// Join vector of strings with delimiter
+/// @param stringElements Vector of strings to join
+/// @param delimiter Delimiter string to insert between elements
+/// @return Joined string
+std::string ofJoinString(const std::vector<std::string>& stringElements,
+                         const std::string& delimiter);
 
 // Template implementation
 #include "ofUtilsImpl.h"

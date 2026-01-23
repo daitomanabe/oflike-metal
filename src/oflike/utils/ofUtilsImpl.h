@@ -6,6 +6,7 @@
 #include <type_traits>
 #include <algorithm>
 #include <cctype>
+#include <vector>
 
 /// Template implementation for ofToString functions
 /// This file provides the implementation of ofToString templates
@@ -178,4 +179,98 @@ inline int ofHexToInt(const std::string& hexString) {
         // Return 0 for out-of-range values (oF behavior)
         return 0;
     }
+}
+
+// MARK: - String Splitting and Joining Functions
+
+/// Helper function to trim whitespace from both ends of a string
+inline std::string trimString(const std::string& str) {
+    if (str.empty()) {
+        return str;
+    }
+
+    // Find first non-whitespace character
+    size_t start = 0;
+    while (start < str.length() && std::isspace(static_cast<unsigned char>(str[start]))) {
+        ++start;
+    }
+
+    // Find last non-whitespace character
+    size_t end = str.length();
+    while (end > start && std::isspace(static_cast<unsigned char>(str[end - 1]))) {
+        --end;
+    }
+
+    return str.substr(start, end - start);
+}
+
+/// Split string by delimiter into vector of strings
+inline std::vector<std::string> ofSplitString(const std::string& source,
+                                                const std::string& delimiter,
+                                                bool ignoreEmpty,
+                                                bool trim) {
+    std::vector<std::string> result;
+
+    // Handle empty delimiter case (split every character)
+    if (delimiter.empty()) {
+        for (char c : source) {
+            result.push_back(std::string(1, c));
+        }
+        return result;
+    }
+
+    size_t start = 0;
+    size_t end = source.find(delimiter);
+
+    while (end != std::string::npos) {
+        std::string token = source.substr(start, end - start);
+
+        // Apply trim if requested
+        if (trim) {
+            token = trimString(token);
+        }
+
+        // Add to result unless it's empty and we're ignoring empty strings
+        if (!ignoreEmpty || !token.empty()) {
+            result.push_back(token);
+        }
+
+        start = end + delimiter.length();
+        end = source.find(delimiter, start);
+    }
+
+    // Add the last token
+    std::string token = source.substr(start);
+
+    // Apply trim if requested
+    if (trim) {
+        token = trimString(token);
+    }
+
+    // Add to result unless it's empty and we're ignoring empty strings
+    if (!ignoreEmpty || !token.empty()) {
+        result.push_back(token);
+    }
+
+    return result;
+}
+
+/// Join vector of strings with delimiter
+inline std::string ofJoinString(const std::vector<std::string>& stringElements,
+                                 const std::string& delimiter) {
+    if (stringElements.empty()) {
+        return "";
+    }
+
+    std::ostringstream oss;
+
+    // Add first element
+    oss << stringElements[0];
+
+    // Add remaining elements with delimiter
+    for (size_t i = 1; i < stringElements.size(); ++i) {
+        oss << delimiter << stringElements[i];
+    }
+
+    return oss.str();
 }
