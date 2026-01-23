@@ -151,7 +151,6 @@
 | pugixml | XML パース | MIT | ✅ Active |
 | Dear ImGui | デバッグUI | MIT | ✅ Optional |
 | OpenCV | 高度なCV | Apache/BSD | ✅ Optional |
-| GLM | 行列計算 | MIT | ⚠️ 非推奨 (v0.5で廃止) |
 
 ---
 

@@ -61,20 +61,6 @@ oflike-metal minimizes external dependencies by leveraging Apple's native framew
 
 ---
 
-### 2.3 GLM (Transitional - To Be Removed in Phase 18)
-
-**Purpose**: Math library (TEMPORARY until simd migration complete)
-
-| 項目 | 値 |
-|------|-----|
-| License | MIT License |
-| Source | https://github.com/g-truc/glm |
-| Version | 0.9.9.x |
-| Status | ⚠️ Transitional (remove in Phase 18) |
-| Type | Header-only |
-
----
-
 ## 3. Addon Dependencies
 
 ### 3.1 oscpack (OSC Protocol)
@@ -285,7 +271,6 @@ These libraries are **NOT** allowed in oflike-metal:
 |---------|---------|----------------|
 | tess2 | SGI FSL B | ✅ OK |
 | utf8-cpp | Boost | ✅ OK |
-| GLM | MIT | ✅ OK |
 | oscpack | MIT | ✅ OK |
 | nanosvg | Zlib | ✅ OK |
 | pugixml | MIT | ✅ OK |
@@ -370,7 +355,6 @@ thirdparty/
 |---------|---------|---------|--------|
 | tess2 | Tessellation | SGI FSL B | ✅ Active |
 | utf8-cpp | UTF-8 handling | Boost | ✅ Active |
-| GLM | Math (temp) | MIT | ⚠️ Remove Phase 18 |
 | oscpack | OSC protocol | MIT | ✅ Active |
 | nanosvg | SVG parsing | Zlib | ✅ Active |
 | pugixml | XML parsing | MIT | ✅ Active |
