@@ -609,7 +609,7 @@
 - [x] 09_mesh（メッシュ操作）
 - [x] 10_fbo（オフスクリーン描画）
 - [x] 11_events（イベント処理）
-- [ ] 12_easycam（EasyCam操作）
+- [x] 12_easycam（EasyCam操作）
 
 ### 17.2 テスト
 - [ ] 数学ライブラリテスト
@@ -1115,9 +1115,9 @@
 | Phase | 名称 | 完了率 |
 |-------|------|--------|
 | 0-16 | Core | 100% |
-| 17-18 | Samples & Polish | 67% |
+| 17-18 | Samples & Polish | 46% |
 
-**Core 全体**: 95.7% 完了
+**Core 全体**: 96.2% 完了
 
 ### Core Addons (Phase 19-24)
 
