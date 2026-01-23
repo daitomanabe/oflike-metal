@@ -138,3 +138,44 @@ inline bool ofToBool(const std::string& str) {
     // All other values are false (including "false", "0", "no", etc.)
     return false;
 }
+
+// MARK: - Hexadecimal Conversion Functions
+
+/// Convert integer to hexadecimal string (lowercase)
+inline std::string ofToHex(int value) {
+    std::ostringstream oss;
+    oss << std::hex << std::noshowbase << value;
+    return oss.str();
+}
+
+/// Convert string to hexadecimal string (byte-by-byte)
+inline std::string ofToHex(const std::string& value) {
+    std::ostringstream oss;
+    oss << std::hex << std::setfill('0');
+
+    for (unsigned char c : value) {
+        // Each byte becomes 2 hex characters (lowercase)
+        oss << std::setw(2) << static_cast<int>(c);
+    }
+
+    return oss.str();
+}
+
+/// Convert hexadecimal string to integer
+inline int ofHexToInt(const std::string& hexString) {
+    if (hexString.empty()) {
+        return 0;
+    }
+
+    try {
+        // std::stoi with base 16 handles "0x" prefix automatically
+        // It also handles both uppercase and lowercase hex digits
+        return std::stoi(hexString, nullptr, 16);
+    } catch (const std::invalid_argument&) {
+        // Return 0 for invalid input (oF behavior)
+        return 0;
+    } catch (const std::out_of_range&) {
+        // Return 0 for out-of-range values (oF behavior)
+        return 0;
+    }
+}

@@ -240,5 +240,24 @@ float ofToFloat(const std::string& str);
 /// @return Converted boolean value
 bool ofToBool(const std::string& str);
 
+/// Convert integer to hexadecimal string (lowercase)
+/// Converts signed or unsigned integers to hex string representation
+/// @param value Integer value to convert to hex
+/// @return Hexadecimal string (lowercase, no "0x" prefix)
+std::string ofToHex(int value);
+
+/// Convert string to hexadecimal string (byte-by-byte)
+/// Converts each byte of the string to 2-character hex representation
+/// @param value String to convert to hex
+/// @return Hexadecimal string (lowercase, no "0x" prefix)
+std::string ofToHex(const std::string& value);
+
+/// Convert hexadecimal string to integer
+/// Parses hex string (with or without "0x" prefix) to integer
+/// Returns 0 if conversion fails
+/// @param hexString Hexadecimal string to convert (e.g., "1A2B" or "0x1A2B")
+/// @return Converted integer value, or 0 if conversion fails
+int ofHexToInt(const std::string& hexString);
+
 // Template implementation
 #include "ofUtilsImpl.h"
