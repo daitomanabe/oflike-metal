@@ -539,7 +539,7 @@
 
 ### 14.2 カーソル
 - [x] ofHideCursor()
-- [ ] ofShowCursor()
+- [x] ofShowCursor()
 
 ---
 
