@@ -650,3 +650,118 @@ void ofDisableAlphaBlending();
  * @param blendMode The blend mode to use (see OF_BLENDMODE_* constants)
  */
 void ofEnableBlendMode(int blendMode);
+
+// ============================================================================
+// 3D Primitives
+// ============================================================================
+
+/**
+ * Draw a 3D box at specified position.
+ * @param x X position of box center
+ * @param y Y position of box center
+ * @param z Z position of box center
+ * @param size Box size (width, height, depth all equal)
+ */
+void ofDrawBox(float x, float y, float z, float size);
+
+/**
+ * Draw a 3D box at specified position with custom dimensions.
+ * @param x X position of box center
+ * @param y Y position of box center
+ * @param z Z position of box center
+ * @param width Box width (X dimension)
+ * @param height Box height (Y dimension)
+ * @param depth Box depth (Z dimension)
+ */
+void ofDrawBox(float x, float y, float z, float width, float height, float depth);
+
+/**
+ * Draw a 3D box at origin (0,0,0).
+ * @param size Box size (width, height, depth all equal)
+ */
+void ofDrawBox(float size);
+
+/**
+ * Draw a 3D sphere at specified position.
+ * @param x X position of sphere center
+ * @param y Y position of sphere center
+ * @param z Z position of sphere center
+ * @param radius Sphere radius
+ */
+void ofDrawSphere(float x, float y, float z, float radius);
+
+/**
+ * Draw a 3D sphere at origin (0,0,0).
+ * @param radius Sphere radius
+ */
+void ofDrawSphere(float radius);
+
+/**
+ * Draw a 3D cone pointing up (+Y) at specified position.
+ * @param x X position of cone base center
+ * @param y Y position of cone base center
+ * @param z Z position of cone base center
+ * @param radius Radius of cone base
+ * @param height Cone height along Y axis
+ */
+void ofDrawCone(float x, float y, float z, float radius, float height);
+
+/**
+ * Draw a 3D cone pointing up (+Y) at origin (0,0,0).
+ * @param radius Radius of cone base
+ * @param height Cone height along Y axis
+ */
+void ofDrawCone(float radius, float height);
+
+/**
+ * Draw a 3D cylinder along Y axis at specified position.
+ * @param x X position of cylinder center
+ * @param y Y position of cylinder center (bottom)
+ * @param z Z position of cylinder center
+ * @param radius Cylinder radius
+ * @param height Cylinder height along Y axis
+ */
+void ofDrawCylinder(float x, float y, float z, float radius, float height);
+
+/**
+ * Draw a 3D cylinder along Y axis at origin (0,0,0).
+ * @param radius Cylinder radius
+ * @param height Cylinder height along Y axis
+ */
+void ofDrawCylinder(float radius, float height);
+
+/**
+ * Draw a 3D plane on XY plane at specified position.
+ * @param x X position of plane center
+ * @param y Y position of plane center
+ * @param z Z position (depth)
+ * @param width Plane width along X axis
+ * @param height Plane height along Y axis
+ */
+void ofDrawPlane(float x, float y, float z, float width, float height);
+
+/**
+ * Draw a 3D plane on XY plane at origin (0,0,0).
+ * @param width Plane width along X axis
+ * @param height Plane height along Y axis
+ */
+void ofDrawPlane(float width, float height);
+
+/**
+ * Draw an icosphere (geodesic sphere) at specified position.
+ * An icosphere is a sphere made of triangles with more uniform distribution
+ * than a UV sphere.
+ * @param x X position of icosphere center
+ * @param y Y position of icosphere center
+ * @param z Z position of icosphere center
+ * @param radius Icosphere radius
+ * @param subdivisions Number of subdivision iterations (default: 2)
+ */
+void ofDrawIcoSphere(float x, float y, float z, float radius, int subdivisions = 2);
+
+/**
+ * Draw an icosphere at origin (0,0,0).
+ * @param radius Icosphere radius
+ * @param subdivisions Number of subdivision iterations (default: 2)
+ */
+void ofDrawIcoSphere(float radius, int subdivisions = 2);

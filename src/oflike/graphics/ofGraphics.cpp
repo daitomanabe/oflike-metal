@@ -875,3 +875,118 @@ void ofEnableBlendMode(int blendMode) {
         renderer->setBlendMode(renderBlendMode);
     }
 }
+
+// ============================================================================
+// 3D Primitives Implementation
+// ============================================================================
+
+void ofDrawBox(float x, float y, float z, float size) {
+    ofDrawBox(x, y, z, size, size, size);
+}
+
+void ofDrawBox(float x, float y, float z, float width, float height, float depth) {
+    // TODO: Implement 3D box rendering using DrawList
+    // For now, this is a placeholder that will be integrated with the 3D rendering pipeline
+
+    // Box vertices (8 corners)
+    // Front face: CCW from bottom-left
+    // Back face: CCW from bottom-left
+    // Will be implemented with proper vertex buffer and index buffer
+
+    (void)x; (void)y; (void)z;
+    (void)width; (void)height; (void)depth;
+}
+
+void ofDrawBox(float size) {
+    ofDrawBox(0.0f, 0.0f, 0.0f, size, size, size);
+}
+
+void ofDrawSphere(float x, float y, float z, float radius) {
+    auto& state = getGraphicsState();
+    uint32_t resolution = state.sphereResolution;
+
+    // TODO: Implement 3D sphere rendering using DrawList
+    // UV sphere tessellation:
+    // - Latitude rings: resolution
+    // - Longitude segments: resolution * 2
+    // - Generate vertices with normals for lighting
+    // - Use triangle strips or indexed triangles for efficiency
+
+    (void)x; (void)y; (void)z;
+    (void)radius; (void)resolution;
+}
+
+void ofDrawSphere(float radius) {
+    ofDrawSphere(0.0f, 0.0f, 0.0f, radius);
+}
+
+void ofDrawCone(float x, float y, float z, float radius, float height) {
+    auto& state = getGraphicsState();
+    uint32_t resolution = state.circleResolution;
+
+    // TODO: Implement 3D cone rendering using DrawList
+    // Cone structure:
+    // - Base: circle at y position with given radius
+    // - Apex: point at y + height
+    // - Side: triangle fan from apex to base circle
+    // - Bottom: optional filled circle (if fillEnabled)
+
+    (void)x; (void)y; (void)z;
+    (void)radius; (void)height; (void)resolution;
+}
+
+void ofDrawCone(float radius, float height) {
+    ofDrawCone(0.0f, 0.0f, 0.0f, radius, height);
+}
+
+void ofDrawCylinder(float x, float y, float z, float radius, float height) {
+    auto& state = getGraphicsState();
+    uint32_t resolution = state.circleResolution;
+
+    // TODO: Implement 3D cylinder rendering using DrawList
+    // Cylinder structure:
+    // - Top circle: at y + height
+    // - Bottom circle: at y
+    // - Side: quad strip connecting top and bottom circles
+    // - Caps: optional filled circles at top/bottom (if fillEnabled)
+
+    (void)x; (void)y; (void)z;
+    (void)radius; (void)height; (void)resolution;
+}
+
+void ofDrawCylinder(float radius, float height) {
+    ofDrawCylinder(0.0f, 0.0f, 0.0f, radius, height);
+}
+
+void ofDrawPlane(float x, float y, float z, float width, float height) {
+    // TODO: Implement 3D plane rendering using DrawList
+    // Plane structure:
+    // - Two triangles forming a quad on XY plane at z depth
+    // - Centered at (x, y, z)
+    // - Extends ±width/2 along X, ±height/2 along Y
+    // - Normal pointing toward +Z (0, 0, 1)
+
+    (void)x; (void)y; (void)z;
+    (void)width; (void)height;
+}
+
+void ofDrawPlane(float width, float height) {
+    ofDrawPlane(0.0f, 0.0f, 0.0f, width, height);
+}
+
+void ofDrawIcoSphere(float x, float y, float z, float radius, int subdivisions) {
+    // TODO: Implement icosphere rendering using DrawList
+    // Icosphere algorithm:
+    // 1. Start with icosahedron (20 triangular faces, 12 vertices)
+    // 2. Subdivide each triangle into 4 smaller triangles
+    // 3. Project new vertices onto sphere surface (normalize + scale by radius)
+    // 4. Repeat subdivision 'subdivisions' times
+    // Result: more uniform triangle distribution than UV sphere
+
+    (void)x; (void)y; (void)z;
+    (void)radius; (void)subdivisions;
+}
+
+void ofDrawIcoSphere(float radius, int subdivisions) {
+    ofDrawIcoSphere(0.0f, 0.0f, 0.0f, radius, subdivisions);
+}

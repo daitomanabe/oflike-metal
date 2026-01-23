@@ -325,12 +325,12 @@
 ## Phase 8: 3D 描画
 
 ### 8.1 3D プリミティブ
-- [ ] ofDrawBox()
-- [ ] ofDrawSphere()
-- [ ] ofDrawCone()
-- [ ] ofDrawCylinder()
-- [ ] ofDrawPlane()
-- [ ] ofDrawIcoSphere()
+- [x] ofDrawBox()
+- [x] ofDrawSphere()
+- [x] ofDrawCone()
+- [x] ofDrawCylinder()
+- [x] ofDrawPlane()
+- [x] ofDrawIcoSphere()
 
 ### 8.2 3D ヘルパー
 - [ ] ofDrawAxis()
@@ -653,7 +653,7 @@
 | 5 | 2D 描画 API | 完了 | 100% |
 | 6 | 色 | 完了 | 100% |
 | 7 | 画像・テクスチャ | 完了 | 100% |
-| 8 | 3D 描画 | 未着手 | 0% |
+| 8 | 3D 描画 | 進行中 | 15% |
 | 9 | カメラ | 未着手 | 0% |
 | 10 | ライティング | 未着手 | 0% |
 | 11 | FBO | 未着手 | 0% |
@@ -668,8 +668,8 @@
 ---
 
 **総タスク数**: 約 350 項目
-**完了**: 186 項目
-**全体進捗**: 53.1%
+**完了**: 192 項目
+**全体進捗**: 54.9%
 
 ---
 
