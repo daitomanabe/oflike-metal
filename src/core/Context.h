@@ -4,6 +4,7 @@
 
 // Forward declarations
 namespace render {
+class DrawList;
 namespace metal {
 class MetalRenderer;
 }
@@ -35,6 +36,10 @@ public:
     /// Get the Metal renderer
     /// @return Renderer instance (nullptr if not initialized)
     render::metal::MetalRenderer* renderer() const;
+
+    /// Get the current frame's draw list
+    /// @return Reference to the draw list
+    render::DrawList& getDrawList();
 
     // MARK: - Timing
 

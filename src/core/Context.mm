@@ -2,6 +2,7 @@
 #import <Metal/Metal.h>
 #import <QuartzCore/QuartzCore.h>
 #include "Context.h"
+#include "../render/DrawList.h"
 // #include "../render/metal/MetalRenderer.h"  // TODO: Phase 4.4
 #include <iostream>
 #include <mutex>
@@ -14,6 +15,9 @@ struct Context::Impl {
 
     // Renderer (TODO: Phase 4.4)
     // std::unique_ptr<render::metal::MetalRenderer> renderer;
+
+    // Draw list for current frame
+    render::DrawList drawList;
 
     // Timing
     CFTimeInterval startTime = 0.0;
@@ -126,6 +130,10 @@ render::metal::MetalRenderer* Context::renderer() const {
     // }
     // return impl_->renderer.get();
     return nullptr;
+}
+
+render::DrawList& Context::getDrawList() {
+    return impl_->drawList;
 }
 
 // MARK: - Timing

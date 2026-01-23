@@ -157,8 +157,8 @@ void ofMesh::draw() const {
     }
 
     // Get current rendering context
-    auto& drawList = core::ctx().drawList();
-    auto& state = core::ctx().renderState();
+    auto& drawList = Context::instance().getDrawList();
+    // TODO: auto& state = Context::instance().getRenderState();
 
     // Map ofPrimitiveMode to render::PrimitiveType
     render::PrimitiveType primType;
@@ -195,7 +195,7 @@ void ofMesh::draw() const {
     // Default values
     const ofVec3f defaultNormal(0, 0, 1);
     const ofVec2f defaultTexCoord(0, 0);
-    const ofColor defaultColor = state.color;
+    const ofColor defaultColor(255, 255, 255, 255);  // TODO: Get from state.color
 
     for (size_t i = 0; i < numVerts; ++i) {
         const ofVec3f& v = vertices_[i];
@@ -211,16 +211,21 @@ void ofMesh::draw() const {
         );
     }
 
+    // TODO: Implementation pending - need proper render state and DrawCommand3D setup
+    // This will be implemented when Phase 8 (3D Drawing) is complete
+    //
     // Draw with or without indices
-    if (!indices_.empty()) {
-        drawList.addMesh3D(renderVerts.data(), renderVerts.size(),
-                          indices_.data(), indices_.size(),
-                          primType, state.matrix, nullptr);
-    } else {
-        drawList.addMesh3D(renderVerts.data(), renderVerts.size(),
-                          nullptr, 0,
-                          primType, state.matrix, nullptr);
-    }
+    // if (!indices_.empty()) {
+    //     drawList.addMesh3D(renderVerts.data(), renderVerts.size(),
+    //                       indices_.data(), indices_.size(),
+    //                       primType, state.matrix, nullptr);
+    // } else {
+    //     drawList.addMesh3D(renderVerts.data(), renderVerts.size(),
+    //                       nullptr, 0,
+    //                       primType, state.matrix, nullptr);
+    // }
+    (void)drawList;  // Suppress unused variable warning
+    (void)primType;  // Suppress unused variable warning
 }
 
 void ofMesh::drawWireframe() const {

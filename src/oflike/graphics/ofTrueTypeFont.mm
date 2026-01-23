@@ -2,9 +2,12 @@
 #include "ofPath.h"
 #include "ofTexture.h"
 #include "ofPixels.h"
+#include "../utils/ofLog.h"
+#include "../utils/ofUtils.h"
 #include "../../core/Context.h"
-#include "../../utils/ofLog.h"
-#include "../../utils/ofUtils.h"
+#include "../../render/DrawList.h"
+#include "../../render/RenderTypes.h"
+#include "../../render/DrawCommand.h"
 #include <CoreText/CoreText.h>
 #include <CoreGraphics/CoreGraphics.h>
 #include <Foundation/Foundation.h>
@@ -19,7 +22,7 @@ namespace {
         try {
             return converter.from_bytes(utf8);
         } catch (...) {
-            ofLogError("ofTrueTypeFont") << "UTF-8 conversion failed";
+            oflike::ofLogError("ofTrueTypeFont") << "UTF-8 conversion failed";
             return U"";
         }
     }
@@ -107,7 +110,7 @@ bool ofTrueTypeFont::Impl::loadFont(const std::string& fontPath, float size, flo
             CFArrayRef descriptors = CTFontManagerCreateFontDescriptorsFromURL((__bridge CFURLRef)fontURL);
             if (!descriptors || CFArrayGetCount(descriptors) == 0) {
                 if (descriptors) CFRelease(descriptors);
-                ofLogError("ofTrueTypeFont") << "Failed to load font: " << fontPath;
+                oflike::ofLogError("ofTrueTypeFont") << "Failed to load font: " << fontPath;
                 return false;
             }
 
@@ -117,7 +120,7 @@ bool ofTrueTypeFont::Impl::loadFont(const std::string& fontPath, float size, flo
         }
 
         if (!ctFont) {
-            ofLogError("ofTrueTypeFont") << "Failed to create CTFont: " << fontPath;
+            oflike::ofLogError("ofTrueTypeFont") << "Failed to create CTFont: " << fontPath;
             return false;
         }
 
@@ -128,7 +131,7 @@ bool ofTrueTypeFont::Impl::loadFont(const std::string& fontPath, float size, flo
         atlasTexture = std::make_unique<ofTexture>();
         atlasTexture->allocate(atlasWidth, atlasHeight, 1);  // Single channel (alpha)
 
-        ofLogVerbose("ofTrueTypeFont") << "Loaded font: " << fontPath << " (" << size << "pt)";
+        oflike::ofLogVerbose("ofTrueTypeFont") << "Loaded font: " << fontPath << " (" << size << "pt)";
         return true;
     }
 }
@@ -142,7 +145,7 @@ ofPixels ofTrueTypeFont::Impl::renderGlyphBitmap(char32_t ch, ofRectangle& bound
         CGGlyph glyph;
         UniChar unichar = (UniChar)ch;
         if (!CTFontGetGlyphsForCharacters(ctFont, &unichar, &glyph, 1)) {
-            ofLogWarning("ofTrueTypeFont") << "Glyph not found for character: " << (int)ch;
+            oflike::ofLogWarning("ofTrueTypeFont") << "Glyph not found for character: " << (int)ch;
             return ofPixels();
         }
 
@@ -183,7 +186,7 @@ ofPixels ofTrueTypeFont::Impl::renderGlyphBitmap(char32_t ch, ofRectangle& bound
         CGColorSpaceRelease(colorSpace);
 
         if (!context) {
-            ofLogError("ofTrueTypeFont") << "Failed to create CGContext";
+            oflike::ofLogError("ofTrueTypeFont") << "Failed to create CGContext";
             return ofPixels();
         }
 
@@ -253,7 +256,7 @@ bool ofTrueTypeFont::Impl::cacheGlyph(char32_t ch) {
 
     // Check if atlas is full
     if (atlasCursorY + glyphHeight > atlasHeight) {
-        ofLogWarning("ofTrueTypeFont") << "Atlas texture full, cannot cache more glyphs";
+        oflike::ofLogWarning("ofTrueTypeFont") << "Atlas texture full, cannot cache more glyphs";
         return false;
     }
 
@@ -398,7 +401,7 @@ bool ofTrueTypeFont::isLoaded() const {
 
 void ofTrueTypeFont::drawString(const std::string& text, float x, float y) const {
     if (!impl_->loaded) {
-        ofLogWarning("ofTrueTypeFont") << "Font not loaded";
+        oflike::ofLogWarning("ofTrueTypeFont") << "Font not loaded";
         return;
     }
 
@@ -415,16 +418,23 @@ void ofTrueTypeFont::drawString(const std::string& text, float x, float y) const
     float cursorX = x;
     float cursorY = y;
 
-    // TODO: Integration with DrawList system for actual rendering
-    // This is a placeholder implementation that demonstrates the rendering logic
-    // When the graphics system is fully integrated (Phase 12.2), this will:
-    // 1. Batch all glyph quads into a single draw call
-    // 2. Bind the atlas texture
-    // 3. Submit textured quads to DrawList
-    // 4. Use the current color and transform matrix from graphics state
-    //
-    // For Phase 12.1, we implement the glyph layout and quad generation logic
-    // The actual GPU rendering will be connected in Phase 12.2
+    // Phase 12.2: Batch drawing optimization
+    // Collect all glyph quads and submit as a single draw call
+
+    if (!impl_->atlasTexture) {
+        oflike::ofLogWarning("ofTrueTypeFont") << "Atlas texture not initialized";
+        return;
+    }
+
+    // Get draw list from context
+    auto& drawList = Context::instance().getDrawList();
+
+    // Collect vertices for all glyphs
+    std::vector<render::Vertex2D> vertices;
+    vertices.reserve(utf32.size() * 6);  // 6 vertices per glyph (2 triangles)
+
+    // Default color (white) - TODO: integrate with graphics state color
+    simd_float4 color = simd_make_float4(1.0f, 1.0f, 1.0f, 1.0f);
 
     for (char32_t ch : utf32) {
         const GlyphInfo* info = impl_->getGlyphInfo(ch);
@@ -444,34 +454,75 @@ void ofTrueTypeFont::drawString(const std::string& text, float x, float y) const
             float u1 = u0 + info->texCoords.width;
             float v1 = v0 + info->texCoords.height;
 
-            // TODO: Create textured quad and add to DrawList
-            // Vertex2D vertices[4] = {
-            //     Vertex2D(glyphX, glyphY, u0, v0, currentColor),
-            //     Vertex2D(glyphX + glyphW, glyphY, u1, v0, currentColor),
-            //     Vertex2D(glyphX + glyphW, glyphY + glyphH, u1, v1, currentColor),
-            //     Vertex2D(glyphX, glyphY + glyphH, u0, v1, currentColor),
-            // };
-            //
-            // DrawCommand2D cmd;
-            // cmd.primitiveType = PrimitiveType::Triangle;
-            // cmd.texture = atlasTexture->getNativeHandle();
-            // cmd.vertices = vertices;
-            // cmd.vertexCount = 4;
-            // cmd.indices = {0, 1, 2, 0, 2, 3};
-            // Context::instance().getDrawList().addCommand(cmd);
+            // Create 6 vertices for 2 triangles (quad)
+            // Triangle 1: top-left, top-right, bottom-right
+            vertices.push_back(render::Vertex2D(
+                simd_make_float2(glyphX, glyphY),
+                simd_make_float2(u0, v0),
+                color
+            ));
+            vertices.push_back(render::Vertex2D(
+                simd_make_float2(glyphX + glyphW, glyphY),
+                simd_make_float2(u1, v0),
+                color
+            ));
+            vertices.push_back(render::Vertex2D(
+                simd_make_float2(glyphX + glyphW, glyphY + glyphH),
+                simd_make_float2(u1, v1),
+                color
+            ));
+
+            // Triangle 2: top-left, bottom-right, bottom-left
+            vertices.push_back(render::Vertex2D(
+                simd_make_float2(glyphX, glyphY),
+                simd_make_float2(u0, v0),
+                color
+            ));
+            vertices.push_back(render::Vertex2D(
+                simd_make_float2(glyphX + glyphW, glyphY + glyphH),
+                simd_make_float2(u1, v1),
+                color
+            ));
+            vertices.push_back(render::Vertex2D(
+                simd_make_float2(glyphX, glyphY + glyphH),
+                simd_make_float2(u0, v1),
+                color
+            ));
         }
 
         // Advance cursor
         cursorX += info->advance + impl_->letterSpacing;
     }
 
-    ofLogVerbose("ofTrueTypeFont") << "drawString layout complete: \"" << text
-                                    << "\" at (" << x << ", " << y << ")";
+    // If we have vertices, submit as a single batched draw call
+    if (!vertices.empty()) {
+        // Add all vertices to draw list
+        uint32_t vtxOffset = drawList.addVertices2D(vertices);
+
+        // Create draw command for the entire string
+        render::DrawCommand2D cmd;
+        cmd.vertexOffset = vtxOffset;
+        cmd.vertexCount = static_cast<uint32_t>(vertices.size());
+        cmd.primitiveType = render::PrimitiveType::Triangle;
+        cmd.blendMode = render::BlendMode::Alpha;
+        cmd.texture = impl_->atlasTexture->getNativeHandle();
+
+        // TODO: Get transform matrix from graphics state
+        // For now, use identity matrix
+        cmd.transform = matrix_identity_float4x4;
+
+        // Add command to draw list
+        drawList.addCommand(cmd);
+
+        oflike::ofLogVerbose("ofTrueTypeFont") << "Batched " << utf32.size()
+                                       << " glyphs into " << vertices.size()
+                                       << " vertices (single draw call)";
+    }
 }
 
 void ofTrueTypeFont::drawStringAsShapes(const std::string& text, float x, float y) const {
     if (!impl_->loaded) {
-        ofLogWarning("ofTrueTypeFont") << "Font not loaded";
+        oflike::ofLogWarning("ofTrueTypeFont") << "Font not loaded";
         return;
     }
 
@@ -525,7 +576,7 @@ void ofTrueTypeFont::drawStringAsShapes(const std::string& text, float x, float 
         cursorX += advance + impl_->letterSpacing;
     }
 
-    ofLogVerbose("ofTrueTypeFont") << "drawStringAsShapes complete: \"" << text
+    oflike::ofLogVerbose("ofTrueTypeFont") << "drawStringAsShapes complete: \"" << text
                                     << "\" at (" << x << ", " << y << ")";
 }
 
