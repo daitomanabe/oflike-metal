@@ -158,3 +158,8 @@ int ofGetWindowHeight();
 /// @param width New window width in pixels
 /// @param height New window height in pixels
 void ofSetWindowShape(int width, int height);
+
+/// Set window position on screen
+/// @param x New window x position in screen coordinates
+/// @param y New window y position in screen coordinates
+void ofSetWindowPosition(int x, int y);

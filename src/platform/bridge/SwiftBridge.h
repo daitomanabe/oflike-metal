@@ -52,4 +52,8 @@
 /// @param callback C function pointer for window resize requests
 - (void)setWindowResizeCallback:(void (*)(int width, int height))callback;
 
+/// Set window position callback
+/// @param callback C function pointer for window position change requests
+- (void)setWindowPositionCallback:(void (*)(int x, int y))callback;
+
 @end

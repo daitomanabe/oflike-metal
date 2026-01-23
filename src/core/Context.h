@@ -83,6 +83,15 @@ public:
     /// @param callback Function pointer to call when resize is requested
     void setWindowResizeCallback(void (*callback)(int width, int height));
 
+    /// Request window position change (calls back to Swift layer)
+    /// @param x Requested window x position
+    /// @param y Requested window y position
+    void requestWindowPosition(int x, int y);
+
+    /// Set callback for window position requests (called by Swift layer)
+    /// @param callback Function pointer to call when position change is requested
+    void setWindowPositionCallback(void (*callback)(int x, int y));
+
     /// Get window width (alias for getWindowWidth)
     int getWidth() const { return getWindowWidth(); }
 

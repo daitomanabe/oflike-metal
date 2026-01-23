@@ -73,3 +73,7 @@ int ofGetWindowHeight() {
 void ofSetWindowShape(int width, int height) {
     ctx().requestWindowResize(width, height);
 }
+
+void ofSetWindowPosition(int x, int y) {
+    ctx().requestWindowPosition(x, y);
+}

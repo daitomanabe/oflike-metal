@@ -264,4 +264,11 @@
     }
 }
 
+- (void)setWindowPositionCallback:(void (*)(int x, int y))callback {
+    @autoreleasepool {
+        // Phase 14.1: Register callback in Context
+        Context::instance().setWindowPositionCallback(callback);
+    }
+}
+
 @end
