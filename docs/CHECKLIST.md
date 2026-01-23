@@ -181,10 +181,10 @@
 - [x] サンプラー管理
 
 ### 4.7 シェーダー
-- [ ] Common.h（共通定義）
-- [ ] Basic2D.metal
-- [ ] Basic3D.metal
-- [ ] Textured.metal
+- [x] Common.h（共通定義）
+- [x] Basic2D.metal
+- [x] Basic3D.metal
+- [x] Textured.metal
 
 ---
 
