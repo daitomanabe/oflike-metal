@@ -606,7 +606,7 @@
 - [x] 06_3d_primitives（3Dプリミティブ）
 - [x] 07_camera（カメラ操作）
 - [x] 08_lighting（ライティング）
-- [ ] 09_mesh（メッシュ操作）
+- [x] 09_mesh（メッシュ操作）
 - [ ] 10_fbo（オフスクリーン描画）
 - [ ] 11_events（イベント処理）
 - [ ] 12_easycam（EasyCam操作）
@@ -1115,9 +1115,9 @@
 | Phase | 名称 | 完了率 |
 |-------|------|--------|
 | 0-16 | Core | 100% |
-| 17-18 | Samples & Polish | 47% |
+| 17-18 | Samples & Polish | 53% |
 
-**Core 全体**: 95.2% 完了
+**Core 全体**: 95.4% 完了
 
 ### Core Addons (Phase 19-24)
 

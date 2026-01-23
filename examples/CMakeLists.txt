@@ -28,6 +28,7 @@ add_oflike_example(05_typography)
 add_oflike_example(06_3d_primitives)
 add_oflike_example(07_camera)
 add_oflike_example(08_lighting)
+add_oflike_example(09_mesh)
 # etc.
 
 # Standalone test programs (not full apps)
