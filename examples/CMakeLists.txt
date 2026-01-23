@@ -26,6 +26,7 @@ add_oflike_example(03_color)
 add_oflike_example(04_image)
 add_oflike_example(05_typography)
 add_oflike_example(06_3d_primitives)
+add_oflike_example(07_camera)
 # etc.
 
 # Standalone test programs (not full apps)

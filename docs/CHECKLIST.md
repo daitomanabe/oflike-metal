@@ -604,7 +604,7 @@
 - [x] 04_image（画像読み込み）
 - [x] 05_typography（フォント描画）
 - [x] 06_3d_primitives（3Dプリミティブ）
-- [ ] 07_camera（カメラ操作）
+- [x] 07_camera（カメラ操作）
 - [ ] 08_lighting（ライティング）
 - [ ] 09_mesh（メッシュ操作）
 - [ ] 10_fbo（オフスクリーン描画）
@@ -1115,9 +1115,9 @@
 | Phase | 名称 | 完了率 |
 |-------|------|--------|
 | 0-16 | Core | 100% |
-| 17-18 | Samples & Polish | 33% |
+| 17-18 | Samples & Polish | 40% |
 
-**Core 全体**: 94.7% 完了
+**Core 全体**: 94.9% 完了
 
 ### Core Addons (Phase 19-24)
 
