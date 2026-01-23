@@ -449,23 +449,23 @@
 ## Phase 11: FBO
 
 ### 11.1 ofFbo
-- [ ] allocate()
-- [ ] allocateWithSettings()
-- [ ] begin() / end()
-- [ ] draw()
-- [ ] getTexture()
-- [ ] getDepthTexture()
-- [ ] readToPixels()
-- [ ] getWidth() / getHeight()
-- [ ] setActiveDrawBuffer()
-- [ ] getNumTextures()
+- [x] allocate()
+- [x] allocateWithSettings()
+- [x] begin() / end()
+- [x] draw()
+- [x] getTexture()
+- [x] getDepthTexture()
+- [x] readToPixels()
+- [x] getWidth() / getHeight()
+- [x] setActiveDrawBuffer()
+- [x] getNumTextures()
 - [x] clear()
 
 ### 11.2 FBO 設定
-- [ ] ofFboSettings 構造体
-- [ ] マルチサンプル対応
-- [ ] 深度バッファ設定
-- [ ] 複数カラーアタッチメント
+- [x] ofFboSettings 構造体
+- [x] マルチサンプル対応
+- [x] 深度バッファ設定
+- [x] 複数カラーアタッチメント
 
 ---
 
@@ -656,7 +656,7 @@
 | 8 | 3D 描画 | 完了 | 100% |
 | 9 | カメラ | 完了 | 100% (24/24) |
 | 10 | ライティング | 完了 | 100% (23/23) |
-| 11 | FBO | 未着手 | 0% |
+| 11 | FBO | 完了 | 100% (15/15) |
 | 12 | フォント | 未着手 | 0% |
 | 13 | イベントシステム | 未着手 | 0% |
 | 14 | ウィンドウ管理 | 未着手 | 0% |
@@ -668,8 +668,8 @@
 ---
 
 **総タスク数**: 399 項目
-**完了**: 286 項目
-**全体進捗**: 71.7%
+**完了**: 300 項目
+**全体進捗**: 75.2%
 
 ---
 
