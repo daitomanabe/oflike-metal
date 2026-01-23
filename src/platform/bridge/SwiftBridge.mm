@@ -3,6 +3,7 @@
 #include <iostream>
 #include "../../core/TestApp.h"
 #include "../../core/Context.h"
+#include "../../core/EventDispatcher.h"
 
 @interface OFLBridge() {
     // C++ test app instance for Phase 1.4 verification
@@ -52,6 +53,10 @@
 
         // Phase 1.4: Test C++ integration
         testApp_ = std::make_unique<TestApp>();
+
+        // Phase 13.4: Register app with EventDispatcher
+        EventDispatcher::instance().setApp(testApp_.get());
+
         testApp_->setup();
 
         isSetup_ = true;
@@ -102,6 +107,9 @@
             testApp_.reset();
         }
 
+        // Phase 13.4: Clear EventDispatcher app reference
+        EventDispatcher::instance().setApp(nullptr);
+
         // Phase 2.1: Shutdown global context
         Context::instance().shutdown();
 
@@ -120,10 +128,8 @@
         // Phase 2.1: Update global context window size
         Context::instance().setWindowSize((int)width, (int)height);
 
-        // Phase 1.4: Test C++ callback
-        if (testApp_) {
-            testApp_->windowResized((int)width, (int)height);
-        }
+        // Phase 13.4: Dispatch through EventDispatcher
+        EventDispatcher::instance().dispatchWindowResized((int)width, (int)height);
     }
 }
 
@@ -135,10 +141,8 @@
             return;
         }
 
-        // Phase 13.1: Forward to C++ app
-        if (testApp_) {
-            testApp_->mouseMoved((int)x, (int)y);
-        }
+        // Phase 13.4: Dispatch through EventDispatcher
+        EventDispatcher::instance().dispatchMouseMoved((int)x, (int)y);
     }
 }
 
@@ -148,10 +152,8 @@
             return;
         }
 
-        // Phase 13.1: Forward to C++ app
-        if (testApp_) {
-            testApp_->mouseDragged((int)x, (int)y, button);
-        }
+        // Phase 13.4: Dispatch through EventDispatcher
+        EventDispatcher::instance().dispatchMouseDragged((int)x, (int)y, button);
     }
 }
 
@@ -161,10 +163,8 @@
             return;
         }
 
-        // Phase 13.1: Forward to C++ app
-        if (testApp_) {
-            testApp_->mousePressed((int)x, (int)y, button);
-        }
+        // Phase 13.4: Dispatch through EventDispatcher
+        EventDispatcher::instance().dispatchMousePressed((int)x, (int)y, button);
     }
 }
 
@@ -174,10 +174,8 @@
             return;
         }
 
-        // Phase 13.1: Forward to C++ app
-        if (testApp_) {
-            testApp_->mouseReleased((int)x, (int)y, button);
-        }
+        // Phase 13.4: Dispatch through EventDispatcher
+        EventDispatcher::instance().dispatchMouseReleased((int)x, (int)y, button);
     }
 }
 
@@ -187,10 +185,8 @@
             return;
         }
 
-        // Phase 13.1: Forward to C++ app
-        if (testApp_) {
-            testApp_->mouseScrolled((int)x, (int)y, scrollX, scrollY);
-        }
+        // Phase 13.4: Dispatch through EventDispatcher
+        EventDispatcher::instance().dispatchMouseScrolled((int)x, (int)y, scrollX, scrollY);
     }
 }
 
@@ -200,10 +196,8 @@
             return;
         }
 
-        // Phase 13.1: Forward to C++ app
-        if (testApp_) {
-            testApp_->mouseEntered((int)x, (int)y);
-        }
+        // Phase 13.4: Dispatch through EventDispatcher
+        EventDispatcher::instance().dispatchMouseEntered((int)x, (int)y);
     }
 }
 
@@ -213,10 +207,8 @@
             return;
         }
 
-        // Phase 13.1: Forward to C++ app
-        if (testApp_) {
-            testApp_->mouseExited((int)x, (int)y);
-        }
+        // Phase 13.4: Dispatch through EventDispatcher
+        EventDispatcher::instance().dispatchMouseExited((int)x, (int)y);
     }
 }
 
@@ -231,10 +223,8 @@
         // Phase 13.2: Update keyboard state in Context
         Context::instance().setKeyState(key, true);
 
-        // Phase 13.2: Forward to C++ app
-        if (testApp_) {
-            testApp_->keyPressed(key);
-        }
+        // Phase 13.4: Dispatch through EventDispatcher
+        EventDispatcher::instance().dispatchKeyPressed(key);
     }
 }
 
@@ -247,10 +237,8 @@
         // Phase 13.2: Update keyboard state in Context
         Context::instance().setKeyState(key, false);
 
-        // Phase 13.2: Forward to C++ app
-        if (testApp_) {
-            testApp_->keyReleased(key);
-        }
+        // Phase 13.4: Dispatch through EventDispatcher
+        EventDispatcher::instance().dispatchKeyReleased(key);
     }
 }
 
@@ -262,10 +250,8 @@
             return;
         }
 
-        // Phase 13.3: Forward drag event to C++ app
-        if (testApp_) {
-            testApp_->dragEvent((int)x, (int)y);
-        }
+        // Phase 13.4: Dispatch through EventDispatcher
+        EventDispatcher::instance().dispatchDragEvent((int)x, (int)y);
     }
 }
 

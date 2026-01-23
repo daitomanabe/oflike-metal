@@ -24,6 +24,7 @@
 		61F51974B8928E488275CA71 /* MetalBuffer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5A9F8BD8AB1339C84E2FB2A3 /* MetalBuffer.mm */; };
 		6251B98E114DEF1D98AC8C98 /* MetalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC218826FD2A9E665095551D /* MetalView.swift */; };
 		68B3722D50B2FD4B711D3313 /* Context.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7618AFDB216D865D038C7B07 /* Context.mm */; };
+		AB88AB1081415B80641E0A7A /* EventDispatcher.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1C2B2709852AEC7AAEA22353 /* EventDispatcher.mm */; };
 		694504CE24152E66CC2414E8 /* MetalRenderer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 35D562BFB30233A4778E9451 /* MetalRenderer.mm */; };
 		6A4FB06C259CAA9E16F976FD /* dict.c in Sources */ = {isa = PBXBuildFile; fileRef = 6E8721CEA82525313FA568C0 /* dict.c */; };
 		78FCA6028FBCAC5320B5D3BC /* ofUtilsImage.mm in Sources */ = {isa = PBXBuildFile; fileRef = ED8C098B608556ED517F4FE5 /* ofUtilsImage.mm */; };
@@ -99,6 +100,8 @@
 		0366290585029AE4D911F450 /* sweep.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = sweep.c; sourceTree = "<group>"; };
 		1147F0D63794CACEDA21613B /* ofPolyline.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ofPolyline.cpp; sourceTree = "<group>"; };
 		11A1E59985D08197F639D221 /* Context.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Context.h; sourceTree = "<group>"; };
+		1C2B2709852AEC7AAEA22353 /* EventDispatcher.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = EventDispatcher.mm; sourceTree = "<group>"; };
+		8EE19B9BC07743499B1A0D37 /* EventDispatcher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EventDispatcher.h; sourceTree = "<group>"; };
 		14D0E56B9BA3FBE6D0F4FBCE /* ofUtils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ofUtils.h; sourceTree = "<group>"; };
 		18B7EE091AF099A66AC99E2D /* ofCamera.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ofCamera.h; sourceTree = "<group>"; };
 		1A4917CCA67723F588588185 /* DrawList.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = DrawList.cpp; sourceTree = "<group>"; };
@@ -354,6 +357,8 @@
 				7618AFDB216D865D038C7B07 /* Context.mm */,
 				D9C6201088BDF2E2BE2BDDA9 /* Engine.h */,
 				E53E46E26A5F498DADE1DF26 /* Engine.mm */,
+				8EE19B9BC07743499B1A0D37 /* EventDispatcher.h */,
+				1C2B2709852AEC7AAEA22353 /* EventDispatcher.mm */,
 				30F318EC7E1EFD6807D4AFF2 /* TestApp.h */,
 			);
 			path = core;
@@ -606,6 +611,7 @@
 			files = (
 				F9399D9F5270C5ED7DD19E08 /* App.swift in Sources */,
 				68B3722D50B2FD4B711D3313 /* Context.mm in Sources */,
+				AB88AB1081415B80641E0A7A /* EventDispatcher.mm in Sources */,
 				55972D533D8552D8A417F3B2 /* DrawCommand.cpp in Sources */,
 				888B61D4900CCABCF8302FD6 /* DrawList.cpp in Sources */,
 				88869EF71ADAE71FC57F24E6 /* Engine.mm in Sources */,
