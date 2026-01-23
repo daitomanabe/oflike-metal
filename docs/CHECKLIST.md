@@ -355,7 +355,7 @@
 - [x] setMode()
 - [x] draw() / drawWireframe() / drawVertices() / drawFaces()
 - [x] getVertices() / getNormals() / getTexCoords() / getColors()
-- [ ] getIndices()
+- [x] getIndices()
 - [ ] clear()
 - [ ] mergeDuplicateVertices()
 - [ ] setupIndicesAuto()
