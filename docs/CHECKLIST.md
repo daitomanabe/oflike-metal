@@ -356,7 +356,7 @@
 - [x] draw() / drawWireframe() / drawVertices() / drawFaces()
 - [x] getVertices() / getNormals() / getTexCoords() / getColors()
 - [x] getIndices()
-- [ ] clear()
+- [x] clear()
 - [ ] mergeDuplicateVertices()
 - [ ] setupIndicesAuto()
 - [ ] smoothNormals() / flatNormals()
@@ -459,7 +459,7 @@
 - [ ] getWidth() / getHeight()
 - [ ] setActiveDrawBuffer()
 - [ ] getNumTextures()
-- [ ] clear()
+- [x] clear()
 
 ### 11.2 FBO 設定
 - [ ] ofFboSettings 構造体
