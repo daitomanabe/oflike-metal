@@ -347,8 +347,8 @@
 ### 8.4 ofMesh
 - [x] コンストラクタ
 - [x] addVertex() / addVertices()
-- [ ] addNormal() / addNormals()
-- [ ] addTexCoord() / addTexCoords()
+- [x] addNormal() / addNormals()
+- [x] addTexCoord() / addTexCoords()
 - [ ] addColor() / addColors()
 - [ ] addIndex() / addIndices()
 - [ ] addTriangle()
@@ -653,7 +653,7 @@
 | 5 | 2D 描画 API | 完了 | 100% |
 | 6 | 色 | 完了 | 100% |
 | 7 | 画像・テクスチャ | 完了 | 100% |
-| 8 | 3D 描画 | 進行中 | 39% |
+| 8 | 3D 描画 | 進行中 | 41% |
 | 9 | カメラ | 未着手 | 0% |
 | 10 | ライティング | 未着手 | 0% |
 | 11 | FBO | 未着手 | 0% |
@@ -668,8 +668,8 @@
 ---
 
 **総タスク数**: 399 項目
-**完了**: 216 項目
-**全体進捗**: 54.1%
+**完了**: 217 項目
+**全体進捗**: 54.4%
 
 ---
 
