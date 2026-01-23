@@ -323,3 +323,97 @@ oflike::ofMatrix4x4 ofGetCurrentMatrix();
  * @return Stack depth
  */
 int ofGetMatrixStackDepth();
+
+// ============================================================================
+// Basic Shape Drawing
+// ============================================================================
+
+/**
+ * Draw a line between two points.
+ * @param x1 Starting X coordinate
+ * @param y1 Starting Y coordinate
+ * @param x2 Ending X coordinate
+ * @param y2 Ending Y coordinate
+ */
+void ofDrawLine(float x1, float y1, float x2, float y2);
+
+/**
+ * Draw a line between two points in 3D space.
+ * @param x1 Starting X coordinate
+ * @param y1 Starting Y coordinate
+ * @param z1 Starting Z coordinate
+ * @param x2 Ending X coordinate
+ * @param y2 Ending Y coordinate
+ * @param z2 Ending Z coordinate
+ */
+void ofDrawLine(float x1, float y1, float z1, float x2, float y2, float z2);
+
+/**
+ * Draw a rectangle.
+ * @param x X coordinate of top-left corner
+ * @param y Y coordinate of top-left corner
+ * @param w Width of rectangle
+ * @param h Height of rectangle
+ */
+void ofDrawRectangle(float x, float y, float w, float h);
+
+/**
+ * Draw a rectangle with rounded corners.
+ * @param x X coordinate of top-left corner
+ * @param y Y coordinate of top-left corner
+ * @param w Width of rectangle
+ * @param h Height of rectangle
+ * @param r Corner radius
+ */
+void ofDrawRectRounded(float x, float y, float w, float h, float r);
+
+/**
+ * Draw a circle.
+ * @param x X coordinate of center
+ * @param y Y coordinate of center
+ * @param radius Circle radius
+ */
+void ofDrawCircle(float x, float y, float radius);
+
+/**
+ * Draw a circle in 3D space.
+ * @param x X coordinate of center
+ * @param y Y coordinate of center
+ * @param z Z coordinate of center
+ * @param radius Circle radius
+ */
+void ofDrawCircle(float x, float y, float z, float radius);
+
+/**
+ * Draw an ellipse.
+ * @param x X coordinate of center
+ * @param y Y coordinate of center
+ * @param width Ellipse width (diameter)
+ * @param height Ellipse height (diameter)
+ */
+void ofDrawEllipse(float x, float y, float width, float height);
+
+/**
+ * Draw a triangle.
+ * @param x1 First vertex X coordinate
+ * @param y1 First vertex Y coordinate
+ * @param x2 Second vertex X coordinate
+ * @param y2 Second vertex Y coordinate
+ * @param x3 Third vertex X coordinate
+ * @param y3 Third vertex Y coordinate
+ */
+void ofDrawTriangle(float x1, float y1, float x2, float y2, float x3, float y3);
+
+/**
+ * Draw a triangle in 3D space.
+ * @param x1 First vertex X coordinate
+ * @param y1 First vertex Y coordinate
+ * @param z1 First vertex Z coordinate
+ * @param x2 Second vertex X coordinate
+ * @param y2 Second vertex Y coordinate
+ * @param z2 Second vertex Z coordinate
+ * @param x3 Third vertex X coordinate
+ * @param y3 Third vertex Y coordinate
+ * @param z3 Third vertex Z coordinate
+ */
+void ofDrawTriangle(float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3);

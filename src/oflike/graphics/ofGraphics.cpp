@@ -322,3 +322,209 @@ oflike::ofMatrix4x4 ofGetCurrentMatrix() {
 int ofGetMatrixStackDepth() {
     return static_cast<int>(getGraphicsState().matrixStack.size());
 }
+
+// ============================================================================
+// Basic Shape Drawing
+// ============================================================================
+
+void ofDrawLine(float x1, float y1, float x2, float y2) {
+    ofDrawLine(x1, y1, 0.0f, x2, y2, 0.0f);
+}
+
+void ofDrawLine(float x1, float y1, float z1, float x2, float y2, float z2) {
+    auto& state = getGraphicsState();
+
+    // Apply current transformation matrix
+    simd_float4 p1 = simd_make_float4(x1, y1, z1, 1.0f);
+    simd_float4 p2 = simd_make_float4(x2, y2, z2, 1.0f);
+
+    // TODO: Transform points by currentMatrix
+    // TODO: Issue line draw command via graphics system
+    // For now, this is a placeholder for when DrawList is integrated
+}
+
+void ofDrawRectangle(float x, float y, float w, float h) {
+    auto& state = getGraphicsState();
+
+    if (state.fillEnabled) {
+        // Draw filled rectangle (2 triangles)
+        // Vertices: (x,y), (x+w,y), (x+w,y+h), (x,y+h)
+        simd_float4 v1 = simd_make_float4(x, y, 0.0f, 1.0f);
+        simd_float4 v2 = simd_make_float4(x + w, y, 0.0f, 1.0f);
+        simd_float4 v3 = simd_make_float4(x + w, y + h, 0.0f, 1.0f);
+        simd_float4 v4 = simd_make_float4(x, y + h, 0.0f, 1.0f);
+
+        // TODO: Transform vertices by currentMatrix
+        // TODO: Issue draw command via graphics system
+        // Triangles: (v1, v2, v3) and (v1, v3, v4)
+    } else {
+        // Draw rectangle outline (4 lines)
+        ofDrawLine(x, y, x + w, y);           // Top
+        ofDrawLine(x + w, y, x + w, y + h);   // Right
+        ofDrawLine(x + w, y + h, x, y + h);   // Bottom
+        ofDrawLine(x, y + h, x, y);           // Left
+    }
+}
+
+void ofDrawRectRounded(float x, float y, float w, float h, float r) {
+    auto& state = getGraphicsState();
+
+    // Clamp radius to not exceed half of smaller dimension
+    r = std::min(r, std::min(w, h) / 2.0f);
+
+    if (r <= 0.0f) {
+        // No rounding, draw regular rectangle
+        ofDrawRectangle(x, y, w, h);
+        return;
+    }
+
+    // Calculate corner centers
+    float x1 = x + r;
+    float y1 = y + r;
+    float x2 = x + w - r;
+    float y2 = y + h - r;
+
+    if (state.fillEnabled) {
+        // Draw filled rounded rectangle
+        // Center rectangle
+        ofDrawRectangle(x1, y, x2 - x1, h);
+        ofDrawRectangle(x, y1, r, y2 - y1);
+        ofDrawRectangle(x2, y1, r, y2 - y1);
+
+        // Draw 4 corner arcs (simplified - will need proper arc implementation)
+        // TODO: Implement proper arc drawing for rounded corners
+        // For now, draw quarter circles at each corner
+        uint32_t resolution = state.circleResolution / 4;
+
+        // Top-left corner
+        for (uint32_t i = 0; i < resolution; i++) {
+            float angle1 = M_PI + i * M_PI_2 / resolution;
+            float angle2 = M_PI + (i + 1) * M_PI_2 / resolution;
+            float cx1 = x1 + r * std::cos(angle1);
+            float cy1 = y1 + r * std::sin(angle1);
+            float cx2 = x1 + r * std::cos(angle2);
+            float cy2 = y1 + r * std::sin(angle2);
+            // TODO: Draw triangle fan segment
+        }
+        // Similar for other 3 corners (top-right, bottom-right, bottom-left)
+    } else {
+        // Draw outline with rounded corners
+        // Top edge
+        ofDrawLine(x1, y, x2, y);
+        // Right edge
+        ofDrawLine(x + w, y1, x + w, y2);
+        // Bottom edge
+        ofDrawLine(x2, y + h, x1, y + h);
+        // Left edge
+        ofDrawLine(x, y2, x, y1);
+
+        // Draw corner arcs
+        // TODO: Implement proper arc drawing
+    }
+}
+
+void ofDrawCircle(float x, float y, float radius) {
+    ofDrawCircle(x, y, 0.0f, radius);
+}
+
+void ofDrawCircle(float x, float y, float z, float radius) {
+    auto& state = getGraphicsState();
+    uint32_t resolution = state.circleResolution;
+
+    if (state.fillEnabled) {
+        // Draw filled circle using triangle fan
+        std::vector<simd_float4> vertices;
+        vertices.reserve(resolution + 2);
+
+        // Center vertex
+        vertices.push_back(simd_make_float4(x, y, z, 1.0f));
+
+        // Perimeter vertices
+        for (uint32_t i = 0; i <= resolution; i++) {
+            float angle = (2.0f * M_PI * i) / resolution;
+            float vx = x + radius * std::cos(angle);
+            float vy = y + radius * std::sin(angle);
+            vertices.push_back(simd_make_float4(vx, vy, z, 1.0f));
+        }
+
+        // TODO: Transform vertices by currentMatrix
+        // TODO: Issue triangle fan draw command via graphics system
+    } else {
+        // Draw circle outline using line loop
+        for (uint32_t i = 0; i < resolution; i++) {
+            float angle1 = (2.0f * M_PI * i) / resolution;
+            float angle2 = (2.0f * M_PI * (i + 1)) / resolution;
+
+            float x1 = x + radius * std::cos(angle1);
+            float y1 = y + radius * std::sin(angle1);
+            float x2 = x + radius * std::cos(angle2);
+            float y2 = y + radius * std::sin(angle2);
+
+            ofDrawLine(x1, y1, z, x2, y2, z);
+        }
+    }
+}
+
+void ofDrawEllipse(float x, float y, float width, float height) {
+    auto& state = getGraphicsState();
+    uint32_t resolution = state.circleResolution;
+
+    float radiusX = width / 2.0f;
+    float radiusY = height / 2.0f;
+
+    if (state.fillEnabled) {
+        // Draw filled ellipse using triangle fan
+        std::vector<simd_float4> vertices;
+        vertices.reserve(resolution + 2);
+
+        // Center vertex
+        vertices.push_back(simd_make_float4(x, y, 0.0f, 1.0f));
+
+        // Perimeter vertices
+        for (uint32_t i = 0; i <= resolution; i++) {
+            float angle = (2.0f * M_PI * i) / resolution;
+            float vx = x + radiusX * std::cos(angle);
+            float vy = y + radiusY * std::sin(angle);
+            vertices.push_back(simd_make_float4(vx, vy, 0.0f, 1.0f));
+        }
+
+        // TODO: Transform vertices by currentMatrix
+        // TODO: Issue triangle fan draw command via graphics system
+    } else {
+        // Draw ellipse outline
+        for (uint32_t i = 0; i < resolution; i++) {
+            float angle1 = (2.0f * M_PI * i) / resolution;
+            float angle2 = (2.0f * M_PI * (i + 1)) / resolution;
+
+            float x1 = x + radiusX * std::cos(angle1);
+            float y1 = y + radiusY * std::sin(angle1);
+            float x2 = x + radiusX * std::cos(angle2);
+            float y2 = y + radiusY * std::sin(angle2);
+
+            ofDrawLine(x1, y1, x2, y2);
+        }
+    }
+}
+
+void ofDrawTriangle(float x1, float y1, float x2, float y2, float x3, float y3) {
+    ofDrawTriangle(x1, y1, 0.0f, x2, y2, 0.0f, x3, y3, 0.0f);
+}
+
+void ofDrawTriangle(float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3) {
+    auto& state = getGraphicsState();
+
+    if (state.fillEnabled) {
+        // Draw filled triangle
+        simd_float4 v1 = simd_make_float4(x1, y1, z1, 1.0f);
+        simd_float4 v2 = simd_make_float4(x2, y2, z2, 1.0f);
+        simd_float4 v3 = simd_make_float4(x3, y3, z3, 1.0f);
+
+        // TODO: Transform vertices by currentMatrix
+        // TODO: Issue triangle draw command via graphics system
+    } else {
+        // Draw triangle outline (3 lines)
+        ofDrawLine(x1, y1, z1, x2, y2, z2);
+        ofDrawLine(x2, y2, z2, x3, y3, z3);
+        ofDrawLine(x3, y3, z3, x1, y1, z1);
+    }
+}

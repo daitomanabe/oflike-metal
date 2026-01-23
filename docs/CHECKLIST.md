@@ -210,12 +210,12 @@
 - [x] ofMultMatrix()
 
 ### 5.3 基本図形
-- [ ] ofDrawLine()
-- [ ] ofDrawRectangle()
-- [ ] ofDrawRectRounded()
-- [ ] ofDrawCircle()
-- [ ] ofDrawEllipse()
-- [ ] ofDrawTriangle()
+- [x] ofDrawLine()
+- [x] ofDrawRectangle()
+- [x] ofDrawRectRounded()
+- [x] ofDrawCircle()
+- [x] ofDrawEllipse()
+- [x] ofDrawTriangle()
 
 ### 5.4 曲線
 - [ ] ofDrawCurve()
@@ -650,7 +650,7 @@
 | 2 | Core システム | 完了 | 100% |
 | 3 | 数学ライブラリ | 完了 | 100% |
 | 4 | レンダリング基盤 | 完了 | 100% |
-| 5 | 2D 描画 API | 進行中 | 15% |
+| 5 | 2D 描画 API | 進行中 | 23% |
 | 6 | 色 | 未着手 | 0% |
 | 7 | 画像・テクスチャ | 未着手 | 0% |
 | 8 | 3D 描画 | 未着手 | 0% |
@@ -668,8 +668,8 @@
 ---
 
 **総タスク数**: 約 350 項目
-**完了**: 95 項目
-**全体進捗**: 27.1%
+**完了**: 101 項目
+**全体進捗**: 28.9%
 
 ---
 
