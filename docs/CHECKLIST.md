@@ -350,7 +350,7 @@
 - [x] addNormal() / addNormals()
 - [x] addTexCoord() / addTexCoords()
 - [x] addColor() / addColors()
-- [ ] addIndex() / addIndices()
+- [x] addIndex() / addIndices()
 - [ ] addTriangle()
 - [ ] setMode()
 - [ ] draw() / drawWireframe() / drawVertices() / drawFaces()
