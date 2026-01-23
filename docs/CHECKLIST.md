@@ -151,11 +151,11 @@
 - [x] BlendMode enum
 
 ### 4.2 DrawCommand
-- [ ] DrawCommand2D 構造体
-- [ ] DrawCommand3D 構造体
-- [ ] SetViewport / SetScissor
-- [ ] Clear コマンド
-- [ ] SetRenderTarget コマンド
+- [x] DrawCommand2D 構造体
+- [x] DrawCommand3D 構造体
+- [x] SetViewport / SetScissor
+- [x] Clear コマンド
+- [x] SetRenderTarget コマンド
 
 ### 4.3 DrawList
 - [ ] コマンドバッファ管理
@@ -649,7 +649,7 @@
 | 1 | SwiftUI + Metal 基盤 | 完了 | 100% |
 | 2 | Core システム | 完了 | 100% |
 | 3 | 数学ライブラリ | 完了 | 100% |
-| 4 | レンダリング基盤 | 進行中 | 14% |
+| 4 | レンダリング基盤 | 進行中 | 29% |
 | 5 | 2D 描画 API | 未着手 | 0% |
 | 6 | 色 | 未着手 | 0% |
 | 7 | 画像・テクスチャ | 未着手 | 0% |
@@ -668,8 +668,8 @@
 ---
 
 **総タスク数**: 約 350 項目
-**完了**: 73 項目
-**全体進捗**: 20.9%
+**完了**: 78 項目
+**全体進捗**: 22.3%
 
 ---
 
