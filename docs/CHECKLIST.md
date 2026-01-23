@@ -191,14 +191,14 @@
 ## Phase 5: 2D 描画 API
 
 ### 5.1 描画状態
-- [ ] ofSetColor()
-- [ ] ofSetBackgroundColor()
-- [ ] ofBackground()
-- [ ] ofClear()
-- [ ] ofNoFill() / ofFill()
-- [ ] ofSetLineWidth()
-- [ ] ofSetCircleResolution()
-- [ ] ofSetCurveResolution()
+- [x] ofSetColor()
+- [x] ofSetBackgroundColor()
+- [x] ofBackground()
+- [x] ofClear()
+- [x] ofNoFill() / ofFill()
+- [x] ofSetLineWidth()
+- [x] ofSetCircleResolution()
+- [x] ofSetCurveResolution()
 
 ### 5.2 行列スタック
 - [ ] ofPushMatrix() / ofPopMatrix()
