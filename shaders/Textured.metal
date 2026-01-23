@@ -102,8 +102,8 @@ fragment float4 fragment2DGrayscale(
 ) {
     float4 texColor = colorTexture.sample(textureSampler, in.texCoord);
 
-    // Convert to grayscale using luminance weights
-    float gray = dot(texColor.rgb, float3(0.299, 0.587, 0.114));
+    // Convert to grayscale using luminance weights from Common.h
+    float gray = dot(texColor.rgb, LUMA_WEIGHTS);
 
     // Tint with vertex color
     return float4(gray * in.color.rgb, texColor.a * in.color.a);

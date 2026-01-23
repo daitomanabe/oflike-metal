@@ -53,11 +53,8 @@ struct LightingUniforms {
 /// \param distance Distance from light to fragment
 /// \return Attenuation factor (0.0 to 1.0)
 float calculateAttenuation(float3 attenuation, float distance) {
-    float constantAtt = attenuation.x;
-    float linearAtt = attenuation.y;
-    float quadraticAtt = attenuation.z;
-
-    float denom = constantAtt + linearAtt * distance + quadraticAtt * distance * distance;
+    // Optimized: fused multiply-add for better performance
+    float denom = fma(distance, fma(distance, attenuation.z, attenuation.y), attenuation.x);
     return 1.0 / max(denom, 1.0); // Prevent division by zero
 }
 
@@ -68,15 +65,15 @@ float calculateAttenuation(float3 attenuation, float distance) {
 float calculateSpotlightEffect(constant LightData& light, float3 lightDir) {
     float3 spotDir = normalize(light.direction);
     float spotCos = dot(-lightDir, spotDir);
-    // Convert degrees to radians: radians = degrees * (pi / 180)
-    float cutoffCos = cos(light.spotCutoff * 0.017453292519943295);
+    // Convert degrees to radians using constant from Common.h
+    float cutoffCos = fast::cos(light.spotCutoff * DEG_TO_RAD);
 
     if (spotCos < cutoffCos) {
         return 0.0; // Outside cone
     }
 
     // Smooth falloff using spotlight concentration
-    return pow(spotCos, light.spotConcentration);
+    return fast::powr(spotCos, light.spotConcentration); // powr is faster for positive base
 }
 
 /// Calculate Phong lighting contribution from a single light
@@ -134,8 +131,9 @@ float3 calculatePhongLight(
     float3 specular = float3(0.0);
     if (diffuseIntensity > 0.0) {
         // Use Blinn-Phong halfway vector for better performance
-        float3 halfwayDir = normalize(lightDir + viewDir);
-        float specularIntensity = pow(max(dot(normal, halfwayDir), 0.0), material.shininess);
+        float3 halfwayDir = fast::normalize(lightDir + viewDir); // fast math for normalization
+        float specAngle = max(dot(normal, halfwayDir), 0.0);
+        float specularIntensity = fast::powr(specAngle, material.shininess); // powr faster than pow
         specular = light.specularColor * material.specularColor * specularIntensity;
     }
 
@@ -194,6 +192,8 @@ fragment float4 fragmentPhongLighting(
     float3 finalColor = material.emissiveColor;
 
     // Accumulate lighting from all active lights
+    // Note: Metal compiler will unroll small loops automatically
+    [[unroll_count(8)]] // Hint for typical light count
     for (int i = 0; i < uniforms.numLights; ++i) {
         finalColor += calculatePhongLight(lights[i], material, in.worldPosition, normal, viewDir);
     }
@@ -227,6 +227,8 @@ fragment float4 fragmentPhongLightingTextured(
     float3 finalColor = material.emissiveColor;
 
     // Accumulate lighting from all active lights
+    // Note: Metal compiler will unroll small loops automatically
+    [[unroll_count(8)]] // Hint for typical light count
     for (int i = 0; i < uniforms.numLights; ++i) {
         finalColor += calculatePhongLight(lights[i], material, in.worldPosition, normal, viewDir);
     }
@@ -263,6 +265,8 @@ fragment float4 fragmentFlatLighting(
     float3 finalColor = material.emissiveColor;
 
     // Accumulate lighting from all active lights
+    // Note: Metal compiler will unroll small loops automatically
+    [[unroll_count(8)]] // Hint for typical light count
     for (int i = 0; i < uniforms.numLights; ++i) {
         finalColor += calculatePhongLight(lights[i], material, in.worldPosition, normal, viewDir);
     }

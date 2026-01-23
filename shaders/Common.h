@@ -4,6 +4,14 @@
 #include <metal_stdlib>
 using namespace metal;
 
+// MARK: - Optimization Constants
+
+/// Degree to radian conversion factor (pi / 180)
+constant float DEG_TO_RAD = 0.017453292519943295;
+
+/// Luminance weights for grayscale conversion (Rec. 709)
+constant float3 LUMA_WEIGHTS = float3(0.299, 0.587, 0.114);
+
 // MARK: - Vertex Definitions
 
 /// 2D vertex with position, texture coordinates, and color
