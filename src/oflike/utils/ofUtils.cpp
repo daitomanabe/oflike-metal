@@ -1,5 +1,6 @@
 #include "ofUtils.h"
 #include "../../core/Context.h"
+#include "../../core/EventDispatcher.h"
 
 // MARK: - Time Functions
 
@@ -27,4 +28,44 @@ void ofSetFrameRate(float targetRate) {
 
 bool ofGetKeyPressed(int key) {
     return ctx().getKeyPressed(key);
+}
+
+// MARK: - Mouse State Functions
+
+int ofGetMouseX() {
+    return EventDispatcher::instance().getMouseX();
+}
+
+int ofGetMouseY() {
+    return EventDispatcher::instance().getMouseY();
+}
+
+int ofGetPreviousMouseX() {
+    return EventDispatcher::instance().getPreviousMouseX();
+}
+
+int ofGetPreviousMouseY() {
+    return EventDispatcher::instance().getPreviousMouseY();
+}
+
+bool ofGetMousePressed(int button) {
+    return EventDispatcher::instance().getMousePressed(button);
+}
+
+// MARK: - Window Functions
+
+int ofGetWidth() {
+    return ctx().getWidth();
+}
+
+int ofGetHeight() {
+    return ctx().getHeight();
+}
+
+int ofGetWindowWidth() {
+    return ctx().getWindowWidth();
+}
+
+int ofGetWindowHeight() {
+    return ctx().getWindowHeight();
 }

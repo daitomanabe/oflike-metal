@@ -519,17 +519,17 @@
 - [x] SwiftUI → C++ イベント伝達
 
 ### 13.5 マウス・キーボード状態
-- [ ] ofGetMouseX() / ofGetMouseY()
-- [ ] ofGetPreviousMouseX() / ofGetPreviousMouseY()
-- [ ] ofGetMousePressed()
+- [x] ofGetMouseX() / ofGetMouseY()
+- [x] ofGetPreviousMouseX() / ofGetPreviousMouseY()
+- [x] ofGetMousePressed()
 
 ---
 
 ## Phase 14: ウィンドウ管理
 
 ### 14.1 ウィンドウ関数
-- [ ] ofGetWidth() / ofGetHeight()
-- [ ] ofGetWindowWidth() / ofGetWindowHeight()
+- [x] ofGetWidth() / ofGetHeight()
+- [x] ofGetWindowWidth() / ofGetWindowHeight()
 - [ ] ofSetWindowShape()
 - [ ] ofSetWindowPosition()
 - [ ] ofSetWindowTitle()
@@ -658,8 +658,8 @@
 | 10 | ライティング | 完了 | 100% (23/23) |
 | 11 | FBO | 完了 | 100% (15/15) |
 | 12 | フォント | 完了 | 100% (10/10) |
-| 13 | イベントシステム | 進行中 | 82.4% (14/17) |
-| 14 | ウィンドウ管理 | 未着手 | 0% |
+| 13 | イベントシステム | 完了 | 100% (17/17) |
+| 14 | ウィンドウ管理 | 進行中 | 22% (2/9) |
 | 15 | ユーティリティ | 未着手 | 0% |
 | 16 | デバッグ機能 | 未着手 | 0% |
 | 17 | サンプル・テスト | 未着手 | 0% |
@@ -668,8 +668,8 @@
 ---
 
 **総タスク数**: 398 項目
-**完了**: 329 項目
-**全体進捗**: 82.7%
+**完了**: 334 項目
+**全体進捗**: 83.9%
 
 ---
 

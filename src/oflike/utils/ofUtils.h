@@ -110,3 +110,46 @@ bool ofSaveImage(const ofFloatPixels& pixels, const std::string& path, float qua
 /// @param key Key character or key code to check
 /// @return true if the key is currently pressed, false otherwise
 bool ofGetKeyPressed(int key);
+
+// MARK: - Mouse State Functions (Phase 13.5)
+
+/// Get current mouse x position (in pixels)
+/// @return Current mouse x position
+int ofGetMouseX();
+
+/// Get current mouse y position (in pixels)
+/// @return Current mouse y position
+int ofGetMouseY();
+
+/// Get previous mouse x position before last event (in pixels)
+/// @return Previous mouse x position
+int ofGetPreviousMouseX();
+
+/// Get previous mouse y position before last event (in pixels)
+/// @return Previous mouse y position
+int ofGetPreviousMouseY();
+
+/// Check if a mouse button is currently pressed
+/// @param button Mouse button index (0=left, 1=right, 2=middle)
+/// @return true if the button is pressed, false otherwise
+bool ofGetMousePressed(int button = 0);
+
+// MARK: - Window Functions (Phase 14.1)
+
+/// Get window width in pixels
+/// Alias for ofGetWindowWidth()
+/// @return Current window width
+int ofGetWidth();
+
+/// Get window height in pixels
+/// Alias for ofGetWindowHeight()
+/// @return Current window height
+int ofGetHeight();
+
+/// Get window width in pixels
+/// @return Current window width
+int ofGetWindowWidth();
+
+/// Get window height in pixels
+/// @return Current window height
+int ofGetWindowHeight();
