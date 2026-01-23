@@ -357,7 +357,7 @@
 - [x] getVertices() / getNormals() / getTexCoords() / getColors()
 - [x] getIndices()
 - [x] clear()
-- [ ] mergeDuplicateVertices()
+- [x] mergeDuplicateVertices()
 - [ ] setupIndicesAuto()
 - [ ] smoothNormals() / flatNormals()
 - [ ] append()
