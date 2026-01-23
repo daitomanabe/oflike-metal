@@ -48,4 +48,8 @@
 /// @param y Drop position y in pixels
 - (void)dragEventX:(float)x y:(float)y;
 
+/// Set window resize callback
+/// @param callback C function pointer for window resize requests
+- (void)setWindowResizeCallback:(void (*)(int width, int height))callback;
+
 @end

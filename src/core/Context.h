@@ -74,6 +74,15 @@ public:
     /// Set window size (called internally when window resizes)
     void setWindowSize(int width, int height);
 
+    /// Request window resize (calls back to Swift layer)
+    /// @param width Requested window width
+    /// @param height Requested window height
+    void requestWindowResize(int width, int height);
+
+    /// Set callback for window resize requests (called by Swift layer)
+    /// @param callback Function pointer to call when resize is requested
+    void setWindowResizeCallback(void (*callback)(int width, int height));
+
     /// Get window width (alias for getWindowWidth)
     int getWidth() const { return getWindowWidth(); }
 

@@ -153,3 +153,8 @@ int ofGetWindowWidth();
 /// Get window height in pixels
 /// @return Current window height
 int ofGetWindowHeight();
+
+/// Set window size
+/// @param width New window width in pixels
+/// @param height New window height in pixels
+void ofSetWindowShape(int width, int height);

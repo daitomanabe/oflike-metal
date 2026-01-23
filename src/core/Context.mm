@@ -34,6 +34,7 @@ struct Context::Impl {
     // Window
     int windowWidth = 0;
     int windowHeight = 0;
+    void (*windowResizeCallback)(int width, int height) = nullptr;
 
     // Keyboard state (Phase 13.2)
     std::unordered_map<int, bool> keyStates;
@@ -203,6 +204,26 @@ void Context::setWindowSize(int width, int height) {
 
     std::cout << "[Context] Window size set to " << width << "x" << height
               << std::endl;
+}
+
+void Context::requestWindowResize(int width, int height) {
+    std::cout << "[Context] Window resize requested: " << width << "x" << height
+              << std::endl;
+
+    if (impl_->windowResizeCallback) {
+        impl_->windowResizeCallback(width, height);
+    } else {
+        std::cerr << "[Context] Warning: No window resize callback set (SwiftUI doesn't support programmatic window resizing yet)" << std::endl;
+        // TODO Phase 14.1: Implement full window resize through NSWindow access
+        // For now, just store the requested size
+        impl_->windowWidth = width;
+        impl_->windowHeight = height;
+    }
+}
+
+void Context::setWindowResizeCallback(void (*callback)(int width, int height)) {
+    impl_->windowResizeCallback = callback;
+    std::cout << "[Context] Window resize callback registered" << std::endl;
 }
 
 // MARK: - Matrix Stack

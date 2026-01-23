@@ -255,4 +255,13 @@
     }
 }
 
+// MARK: - Window Control
+
+- (void)setWindowResizeCallback:(void (*)(int width, int height))callback {
+    @autoreleasepool {
+        // Phase 14.1: Register callback in Context
+        Context::instance().setWindowResizeCallback(callback);
+    }
+}
+
 @end
