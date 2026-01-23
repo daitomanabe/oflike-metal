@@ -425,13 +425,13 @@
 - [x] setSpotlightCutOff() / setSpotConcentration()
 
 ### 10.2 ofMaterial
-- [ ] コンストラクタ
-- [ ] begin() / end()
-- [ ] setAmbientColor()
-- [ ] setDiffuseColor()
-- [ ] setSpecularColor()
-- [ ] setEmissiveColor()
-- [ ] setShininess()
+- [x] コンストラクタ
+- [x] begin() / end()
+- [x] setAmbientColor()
+- [x] setDiffuseColor()
+- [x] setSpecularColor()
+- [x] setEmissiveColor()
+- [x] setShininess()
 
 ### 10.3 ライティングシステム
 - [ ] グローバルライト配列管理（最大8灯）
@@ -655,7 +655,7 @@
 | 7 | 画像・テクスチャ | 完了 | 100% |
 | 8 | 3D 描画 | 完了 | 100% |
 | 9 | カメラ | 完了 | 100% (24/24) |
-| 10 | ライティング | 進行中 | 32% (9/28) |
+| 10 | ライティング | 進行中 | 57% (16/28) |
 | 11 | FBO | 未着手 | 0% |
 | 12 | フォント | 未着手 | 0% |
 | 13 | イベントシステム | 未着手 | 0% |
@@ -668,8 +668,8 @@
 ---
 
 **総タスク数**: 399 項目
-**完了**: 272 項目
-**全体進捗**: 68.2%
+**完了**: 279 項目
+**全体進捗**: 69.9%
 
 ---
 
