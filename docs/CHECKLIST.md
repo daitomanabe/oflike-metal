@@ -172,8 +172,8 @@
 - [x] Triple Buffering
 
 ### 4.5 MetalBuffer
-- [ ] 動的バッファ管理
-- [ ] バッファプール
+- [x] 動的バッファ管理
+- [x] バッファプール
 
 ### 4.6 MetalTexture
 - [ ] MTKTextureLoader ラッパー
