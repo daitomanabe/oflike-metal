@@ -4,6 +4,7 @@
 #include "../../core/TestApp.h"
 #include "../../core/Context.h"
 #include "../../core/EventDispatcher.h"
+#include "../../render/metal/MetalRenderer.h"  // Phase 16.2: For performance stats
 
 @interface OFLBridge() {
     // C++ test app instance for Phase 1.4 verification
@@ -289,6 +290,25 @@
     @autoreleasepool {
         // Phase 14.1: Update fullscreen state in Context
         Context::instance().setFullscreenState(fullscreen);
+    }
+}
+
+- (void)getPerformanceStats:(uint32_t*)outDrawCalls
+                   vertices:(uint32_t*)outVertices
+                    gpuTime:(double*)outGPUTime {
+    @autoreleasepool {
+        // Phase 16.2: Get performance statistics from renderer
+        if (outDrawCalls && outVertices && outGPUTime) {
+            auto* renderer = Context::instance().renderer();
+            if (renderer) {
+                renderer->getStatistics(*outDrawCalls, *outVertices);
+                *outGPUTime = renderer->getLastGPUTime();
+            } else {
+                *outDrawCalls = 0;
+                *outVertices = 0;
+                *outGPUTime = 0.0;
+            }
+        }
     }
 }
 

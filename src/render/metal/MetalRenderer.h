@@ -92,6 +92,9 @@ public:
     uint32_t getViewportHeight() const override;
     void getStatistics(uint32_t& outDrawCalls, uint32_t& outVertices) const override;
 
+    // Performance monitoring
+    double getLastGPUTime() const;  // Returns GPU time in milliseconds
+
 private:
     struct Impl;
     std::unique_ptr<Impl> impl_;

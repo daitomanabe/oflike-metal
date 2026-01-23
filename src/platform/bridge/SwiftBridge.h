@@ -68,4 +68,12 @@
 /// @param fullscreen true if fullscreen mode is active, false otherwise
 - (void)setFullscreenState:(bool)fullscreen;
 
+/// Get performance statistics for current frame
+/// @param outDrawCalls Pointer to receive draw call count
+/// @param outVertices Pointer to receive vertex count
+/// @param outGPUTime Pointer to receive GPU time in milliseconds
+- (void)getPerformanceStats:(uint32_t*)outDrawCalls
+                   vertices:(uint32_t*)outVertices
+                    gpuTime:(double*)outGPUTime;
+
 @end

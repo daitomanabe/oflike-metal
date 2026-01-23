@@ -63,6 +63,8 @@ struct MetalRenderer::Impl {
     // Statistics
     uint32_t frameDrawCalls = 0;
     uint32_t frameVertices = 0;
+    double lastGPUTime = 0.0;  // Last measured GPU time in milliseconds
+    CFTimeInterval frameStartTime = 0.0;  // CPU frame start time
 
     // Initialization flag
     bool initialized = false;
@@ -284,6 +286,7 @@ bool MetalRenderer::Impl::beginFrame() {
         // Reset frame statistics
         frameDrawCalls = 0;
         frameVertices = 0;
+        frameStartTime = CACurrentMediaTime();
 
         // Create command buffer
         currentCommandBuffer = [commandQueue commandBuffer];
@@ -294,9 +297,21 @@ bool MetalRenderer::Impl::beginFrame() {
         }
         currentCommandBuffer.label = @"FrameCommandBuffer";
 
+        // Capture GPU timing info
+        __block double* gpuTimePtr = &lastGPUTime;
+        __block CFTimeInterval startTime = frameStartTime;
+
         // Signal semaphore when frame completes
         __block dispatch_semaphore_t blockSemaphore = frameSemaphore;
         [currentCommandBuffer addCompletedHandler:^(id<MTLCommandBuffer> buffer) {
+            // Calculate GPU time (kernel + GPU time)
+            CFTimeInterval gpuStart = buffer.GPUStartTime;
+            CFTimeInterval gpuEnd = buffer.GPUEndTime;
+
+            if (gpuStart > 0 && gpuEnd > 0) {
+                *gpuTimePtr = (gpuEnd - gpuStart) * 1000.0;  // Convert to milliseconds
+            }
+
             dispatch_semaphore_signal(blockSemaphore);
         }];
 
@@ -727,6 +742,10 @@ uint32_t MetalRenderer::getViewportHeight() const {
 void MetalRenderer::getStatistics(uint32_t& outDrawCalls, uint32_t& outVertices) const {
     outDrawCalls = impl_->frameDrawCalls;
     outVertices = impl_->frameVertices;
+}
+
+double MetalRenderer::getLastGPUTime() const {
+    return impl_->lastGPUTime;
 }
 
 } // namespace metal

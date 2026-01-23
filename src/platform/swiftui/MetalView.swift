@@ -1,5 +1,70 @@
 import SwiftUI
 import MetalKit
+import QuartzCore
+
+// MARK: - Phase 16.2: Performance Statistics
+
+/// Performance statistics for monitoring rendering performance
+class PerformanceStats: ObservableObject {
+    static let shared = PerformanceStats()
+
+    @Published var fps: Double = 0.0
+    @Published var frameTime: Double = 0.0  // milliseconds
+    @Published var drawCalls: UInt32 = 0
+    @Published var vertexCount: UInt32 = 0
+    @Published var gpuTime: Double = 0.0    // milliseconds
+
+    private var lastUpdateTime: CFTimeInterval = 0
+    private var frameCount: Int = 0
+    private var fpsAccumulator: Double = 0.0
+    private let fpsUpdateInterval: CFTimeInterval = 0.5  // Update every 0.5 seconds
+
+    private init() {
+        lastUpdateTime = CACurrentMediaTime()
+    }
+
+    /// Update frame statistics (called every frame)
+    func updateFrame(drawCalls: UInt32, vertices: UInt32, gpuTime: Double) {
+        let currentTime = CACurrentMediaTime()
+        let deltaTime = currentTime - lastUpdateTime
+
+        frameCount += 1
+
+        // Calculate instantaneous FPS
+        let instantFPS = 1.0 / deltaTime
+        fpsAccumulator += instantFPS
+
+        // Update published values every interval
+        if deltaTime >= fpsUpdateInterval {
+            self.fps = fpsAccumulator / Double(frameCount)
+            self.frameTime = (deltaTime / Double(frameCount)) * 1000.0  // Convert to ms
+
+            // Reset for next interval
+            fpsAccumulator = 0.0
+            frameCount = 0
+            lastUpdateTime = currentTime
+        }
+
+        // Always update per-frame stats
+        self.drawCalls = drawCalls
+        self.vertexCount = vertices
+        self.gpuTime = gpuTime
+    }
+
+    /// Reset all statistics
+    func reset() {
+        fps = 0.0
+        frameTime = 0.0
+        drawCalls = 0
+        vertexCount = 0
+        gpuTime = 0.0
+        frameCount = 0
+        fpsAccumulator = 0.0
+        lastUpdateTime = CACurrentMediaTime()
+    }
+}
+
+// MARK: - MetalView
 
 /// SwiftUI wrapper for MTKView with FPS overlay (Phase 1.5)
 struct MetalView: View {
@@ -391,6 +456,9 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject, MouseEv
             framesSinceLastUpdate = 0
             lastFPSUpdate = currentTime
         }
+
+        // Phase 16.2: Update performance statistics
+        updatePerformanceStats()
     }
 
     // MARK: - Frame Loop
@@ -616,5 +684,25 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject, MouseEv
         bridge?.setWindowPositionCallback(windowPositionCallback)
         bridge?.setWindowTitleCallback(windowTitleCallback)
         bridge?.setFullscreenCallback(fullscreenCallback)
+    }
+
+    // MARK: - Phase 16.2: Performance Monitoring
+
+    /// Update performance statistics from C++ renderer
+    private func updatePerformanceStats() {
+        autoreleasepool {
+            var drawCalls: UInt32 = 0
+            var vertices: UInt32 = 0
+            var gpuTime: Double = 0.0
+
+            bridge?.getPerformanceStats(&drawCalls, vertices: &vertices, gpuTime: &gpuTime)
+
+            // Update global PerformanceStats
+            PerformanceStats.shared.updateFrame(
+                drawCalls: drawCalls,
+                vertices: vertices,
+                gpuTime: gpuTime
+            )
+        }
     }
 }
