@@ -297,5 +297,22 @@ std::string ofToUpper(const std::string& src);
 /// @return Trimmed version of the string
 std::string ofTrim(const std::string& src);
 
+// System utilities (Phase 15.4)
+
+/// Execute system command
+/// @param command Shell command to execute
+/// @return Command output as string
+std::string ofSystem(const std::string& command);
+
+/// Open URL in default browser
+/// @param url URL to open
+/// @return True if successful
+bool ofLaunchBrowser(const std::string& url);
+
+/// Get timestamp string
+/// @param format Date format string (strftime format, optional)
+/// @return Formatted timestamp string (default: "YYYY-MM-DD-HH-MM-SS")
+std::string ofGetTimestampString(const std::string& format = "");
+
 // Template implementation
 #include "ofUtilsImpl.h"
