@@ -10,6 +10,11 @@
 /// Initialize the bridge
 - (instancetype)init;
 
+/// Initialize the global context with Metal device (Phase 2.1)
+/// Must be called before setup()
+/// @param device The MTLDevice instance
+- (void)initializeContextWithDevice:(id)device;
+
 /// Setup the C++ engine and user app
 - (void)setup;
 

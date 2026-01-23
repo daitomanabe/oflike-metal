@@ -107,6 +107,9 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject {
 
         print("Metal initialization complete: Device, CommandQueue, Library, PipelineState")
 
+        // Phase 2.1: Initialize global context with Metal device
+        bridge?.initializeContext(withDevice: device)
+
         // Initialize C++ bridge
         bridge?.setup()
     }

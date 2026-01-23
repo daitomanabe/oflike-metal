@@ -2,6 +2,7 @@
 #include <memory>
 #include <iostream>
 #include "../../core/TestApp.h"
+#include "../../core/Context.h"
 
 @interface OFLBridge() {
     // C++ test app instance for Phase 1.4 verification
@@ -20,6 +21,21 @@
         std::cout << "[OFLBridge] Initialized" << std::endl;
     }
     return self;
+}
+
+- (void)initializeContextWithDevice:(id)device {
+    @autoreleasepool {
+        std::cout << "[OFLBridge] Initializing global context with Metal device" << std::endl;
+
+        // Initialize global Context singleton with Metal device
+        Context::instance().initialize((__bridge void*)device);
+
+        if (Context::instance().isInitialized()) {
+            std::cout << "[OFLBridge] Context initialization successful" << std::endl;
+        } else {
+            std::cerr << "[OFLBridge] Context initialization failed!" << std::endl;
+        }
+    }
 }
 
 - (void)dealloc {
@@ -48,6 +64,9 @@
         if (!isSetup_) {
             return;
         }
+
+        // Phase 2.1: Increment frame counter in context
+        Context::instance().incrementFrame();
 
         // Phase 1.4: Test C++ update
         if (testApp_) {
@@ -83,6 +102,9 @@
             testApp_.reset();
         }
 
+        // Phase 2.1: Shutdown global context
+        Context::instance().shutdown();
+
         isSetup_ = false;
     }
 }
@@ -94,6 +116,9 @@
         if (!isSetup_) {
             return;
         }
+
+        // Phase 2.1: Update global context window size
+        Context::instance().setWindowSize((int)width, (int)height);
 
         // Phase 1.4: Test C++ callback
         if (testApp_) {
