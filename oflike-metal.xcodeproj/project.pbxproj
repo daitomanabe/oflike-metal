@@ -830,7 +830,8 @@
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
-				);
+				"-framework",
+				Accelerate,				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.oflike.oflike-metal";
 				PRODUCT_NAME = "oflike-metal";
 				SDKROOT = macosx;
@@ -858,7 +859,8 @@
 				);
 				OTHER_LDFLAGS = (
 					"$(inherited)",
-					"-ObjC",
+				"-framework",
+				Accelerate,					"-ObjC",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.oflike.oflike-metal";
 				PRODUCT_NAME = "oflike-metal";

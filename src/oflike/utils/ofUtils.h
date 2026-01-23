@@ -196,3 +196,30 @@ void ofHideCursor();
 /// Show the mouse cursor
 /// Makes the cursor visible if it was previously hidden with ofHideCursor()
 void ofShowCursor();
+
+// MARK: - String Utility Functions (Phase 15.1)
+
+/// Convert value to string
+/// Template function that converts numbers, booleans, and other types to strings
+/// @param value Value to convert to string
+/// @return String representation of the value
+template<typename T>
+std::string ofToString(const T& value);
+
+/// Convert value to string with precision control (for floating-point types)
+/// @param value Value to convert to string
+/// @param precision Number of decimal places (for floating-point types)
+/// @return String representation with specified precision
+template<typename T>
+std::string ofToString(const T& value, int precision);
+
+/// Convert value to string with width and fill character
+/// @param value Value to convert to string
+/// @param width Minimum width of the output string
+/// @param fill Fill character for padding
+/// @return String representation with specified width and padding
+template<typename T>
+std::string ofToString(const T& value, int width, char fill);
+
+// Template implementation
+#include "ofUtilsImpl.h"
