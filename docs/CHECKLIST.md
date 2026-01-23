@@ -266,20 +266,20 @@
 ## Phase 6: 色
 
 ### 6.1 ofColor
-- [ ] コンストラクタ（r,g,b,a）
-- [ ] set() / setHex()
-- [ ] getHex()
-- [ ] setHsb() / getHue() / getSaturation() / getBrightness()
-- [ ] lerp()
-- [ ] getClamped() / getInverted() / getNormalized()
-- [ ] limit()
-- [ ] ofColor::fromHex() / ofColor::fromHsb()
+- [x] コンストラクタ（r,g,b,a）
+- [x] set() / setHex()
+- [x] getHex()
+- [x] setHsb() / getHue() / getSaturation() / getBrightness()
+- [x] lerp()
+- [x] getClamped() / getInverted() / getNormalized()
+- [x] limit()
+- [x] ofColor::fromHex() / ofColor::fromHsb()
 
 ### 6.2 ofFloatColor
-- [ ] 上記と同等（float 0.0-1.0）
+- [x] 上記と同等（float 0.0-1.0）
 
 ### 6.3 ofShortColor
-- [ ] 上記と同等（unsigned short）
+- [x] 上記と同等（unsigned short）
 
 ---
 
@@ -651,7 +651,7 @@
 | 3 | 数学ライブラリ | 完了 | 100% |
 | 4 | レンダリング基盤 | 完了 | 100% |
 | 5 | 2D 描画 API | 完了 | 100% |
-| 6 | 色 | 未着手 | 0% |
+| 6 | 色 | 完了 | 100% |
 | 7 | 画像・テクスチャ | 未着手 | 0% |
 | 8 | 3D 描画 | 未着手 | 0% |
 | 9 | カメラ | 未着手 | 0% |
@@ -668,8 +668,8 @@
 ---
 
 **総タスク数**: 約 350 項目
-**完了**: 135 項目
-**全体進捗**: 38.6%
+**完了**: 159 項目
+**全体進捗**: 45.4%
 
 ---
 
