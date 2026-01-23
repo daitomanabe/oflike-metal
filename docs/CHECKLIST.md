@@ -363,12 +363,12 @@
 - [x] append()
 
 ### 8.5 ofMesh ジェネレータ
-- [ ] ofMesh::plane()
-- [ ] ofMesh::sphere()
-- [ ] ofMesh::box()
-- [ ] ofMesh::cone()
-- [ ] ofMesh::cylinder()
-- [ ] ofMesh::icosphere()
+- [x] ofMesh::plane()
+- [x] ofMesh::sphere()
+- [x] ofMesh::box()
+- [x] ofMesh::cone()
+- [x] ofMesh::cylinder()
+- [x] ofMesh::icosphere()
 
 ### 8.6 ofMesh I/O
 - [ ] load()（PLY / OBJ）
