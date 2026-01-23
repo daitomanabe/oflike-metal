@@ -414,15 +414,15 @@
 ## Phase 10: ライティング
 
 ### 10.1 ofLight
-- [ ] コンストラクタ
-- [ ] enable() / disable()
-- [ ] setPointLight()
-- [ ] setDirectional()
-- [ ] setSpotlight()
-- [ ] setPosition()
-- [ ] setAmbientColor() / setDiffuseColor() / setSpecularColor()
-- [ ] setAttenuation()
-- [ ] setSpotlightCutOff() / setSpotConcentration()
+- [x] コンストラクタ
+- [x] enable() / disable()
+- [x] setPointLight()
+- [x] setDirectional()
+- [x] setSpotlight()
+- [x] setPosition()
+- [x] setAmbientColor() / setDiffuseColor() / setSpecularColor()
+- [x] setAttenuation()
+- [x] setSpotlightCutOff() / setSpotConcentration()
 
 ### 10.2 ofMaterial
 - [ ] コンストラクタ
@@ -654,8 +654,8 @@
 | 6 | 色 | 完了 | 100% |
 | 7 | 画像・テクスチャ | 完了 | 100% |
 | 8 | 3D 描画 | 完了 | 100% |
-| 9 | カメラ | ほぼ完了 | 92% (22/24) |
-| 10 | ライティング | 未着手 | 0% |
+| 9 | カメラ | 完了 | 100% (24/24) |
+| 10 | ライティング | 進行中 | 32% (9/28) |
 | 11 | FBO | 未着手 | 0% |
 | 12 | フォント | 未着手 | 0% |
 | 13 | イベントシステム | 未着手 | 0% |
@@ -668,8 +668,8 @@
 ---
 
 **総タスク数**: 399 項目
-**完了**: 263 項目
-**全体進捗**: 65.9%
+**完了**: 272 項目
+**全体進捗**: 68.2%
 
 ---
 
