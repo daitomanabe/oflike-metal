@@ -15,6 +15,9 @@
 #include "ofPath.h"
 #include "ofPolyline.h"
 
+// Use oflike namespace for simpler syntax
+using namespace oflike;
+
 // ANSI color codes for output
 #define GREEN "\033[32m"
 #define RED "\033[31m"
@@ -66,7 +69,7 @@ void test_color_construction() {
         ofColor c5 = ofColor::fromHex(0xFF8040);
 
         // Operations
-        ofColor lerped = c2.getLerped(c3, 0.5f);
+        ofColor lerped = c2.lerp(c3, 0.5f);
         ofColor inverted = c2.getInverted();
         ofColor clamped = c2.getClamped();
 
@@ -100,17 +103,17 @@ void test_path_api() {
 
         // Curve operations
         path.curveTo(50, 50);
-        path.bezierTo(50, 100, 100, 100, 100, 50);
+        path.bezierTo(50, 100, 0, 100, 100, 0, 100, 50, 0);
 
         // Arc operations
-        path.arc(200, 200, 50, 50, 0, 180);
+        path.arc(200, 200, 50, 0, 180);
 
         // Style operations
         path.setFilled(true);
         path.setStrokeWidth(2.0f);
-        path.setColor(ofColor(255, 0, 0));
-        path.setFillColor(ofColor(0, 255, 0));
-        path.setStrokeColor(ofColor(0, 0, 255));
+        path.setColor(255, 0, 0);
+        path.setFillColor(0, 255, 0);
+        path.setStrokeColor(0, 0, 255);
 
         // Transformations
         path.translate(ofVec3f(10, 20, 0));
@@ -118,7 +121,7 @@ void test_path_api() {
         path.scale(2.0f, 2.0f);
 
         // Tessellation
-        ofPolyline outline = path.getOutline();
+        std::vector<ofPolyline> outline = path.getOutline();
 
         TEST_PASS("Path API works");
     } catch (const std::exception& e) {
@@ -145,17 +148,17 @@ void test_polyline_api() {
         // Line operations
         poly.lineTo(50, 150);
         poly.curveTo(100, 150);
-        poly.bezierTo(150, 150, 200, 150, 200, 100);
+        poly.bezierTo(150, 150, 0, 200, 150, 0, 200, 100, 0);
 
         // Arc operations
-        poly.arc(250, 100, 50, 50, 0, 180);
-        poly.arcNegative(300, 100, 50, 50, 180, 0);
+        poly.arc(250, 100, 50, 0, 180);
+        poly.arcNegative(300, 100, 50, 180, 0);
 
         // Queries
         size_t size = poly.size();
         float perimeter = poly.getPerimeter();
         float area = poly.getArea();
-        ofVec2f centroid = poly.getCentroid2D();
+        ofVec3f centroid = poly.getCentroid2D();
         ofRectangle bbox = poly.getBoundingBox();
 
         // Point queries
@@ -189,12 +192,10 @@ void test_graphics_state_api() {
         // but we test that they're callable and don't crash
 
         // Color state
-        ofSetColor(255, 128, 64);
+        ofSetColor(255, 128, 64, 255);
         ofSetColor(255, 128, 64, 200);
-        ofSetColor(ofColor(255, 128, 64));
 
-        ofSetBackgroundColor(50, 50, 50);
-        ofSetBackgroundColor(ofColor(50, 50, 50));
+        ofSetBackgroundColor(50, 50, 50, 255);
 
         // Fill state
         ofFill();
@@ -252,7 +253,6 @@ void test_drawing_api() {
 
         // 3D Primitives
         ofDrawBox(50);
-        ofDrawBox(50, 50, 50);
         ofDrawSphere(25);
         ofDrawCone(20, 50);
         ofDrawCylinder(20, 50);

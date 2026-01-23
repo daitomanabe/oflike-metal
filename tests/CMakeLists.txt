@@ -37,6 +37,7 @@ target_include_directories(rendering_test PRIVATE
     ${CMAKE_SOURCE_DIR}/src/oflike/lighting
     ${CMAKE_SOURCE_DIR}/src/oflike/types
     ${CMAKE_SOURCE_DIR}/src/oflike/utils
+    ${CMAKE_SOURCE_DIR}/src/oflike/math
 )
 
 target_link_libraries(rendering_test PRIVATE
@@ -102,3 +103,27 @@ set_target_properties(batching_test PROPERTIES
 
 # Add batching test to CTest
 add_test(NAME BatchingTests COMMAND batching_test)
+
+# Buffer Pool Tests (Phase 18.1)
+add_executable(buffer_pool_test
+    test_buffer_pool.mm
+)
+
+target_include_directories(buffer_pool_test PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+)
+
+target_link_libraries(buffer_pool_test PRIVATE
+    oflike-metal
+    "-framework Metal"
+    "-framework Foundation"
+)
+
+# Set C++ standard
+set_target_properties(buffer_pool_test PROPERTIES
+    CXX_STANDARD 20
+    CXX_STANDARD_REQUIRED YES
+)
+
+# Add buffer pool test to CTest
+add_test(NAME BufferPoolTests COMMAND buffer_pool_test)

@@ -1,9 +1,17 @@
 # Third-party libraries for oflike-metal
 
 # tess2 - Polygon tessellation library
-add_library(tess2 INTERFACE)
-target_include_directories(tess2 INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/tess2)
-# Note: tess2 implementation will be added when we integrate the library
+file(GLOB TESS2_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/tess2/Source/*.c
+)
+add_library(tess2 STATIC ${TESS2_SOURCES})
+target_include_directories(tess2 PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/tess2/Include
+)
+set_target_properties(tess2 PROPERTIES
+    C_STANDARD 99
+    C_STANDARD_REQUIRED YES
+)
 
 # utf8-cpp - UTF-8 processing library
 add_library(utf8 INTERFACE)
