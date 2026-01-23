@@ -554,11 +554,11 @@
 - [x] ofTrim()
 
 ### 15.2 ログ
-- [ ] ofLog()
-- [ ] ofLogVerbose() / ofLogNotice() / ofLogWarning()
-- [ ] ofLogError() / ofLogFatalError()
-- [ ] ofSetLogLevel()
-- [ ] os_log 統合
+- [x] ofLog()
+- [x] ofLogVerbose() / ofLogNotice() / ofLogWarning()
+- [x] ofLogError() / ofLogFatalError()
+- [x] ofSetLogLevel()
+- [x] os_log 統合
 
 ### 15.3 ファイル
 - [ ] ofFile クラス
@@ -660,7 +660,7 @@
 | 12 | フォント | 完了 | 100% (10/10) |
 | 13 | イベントシステム | 完了 | 100% (17/17) |
 | 14 | ウィンドウ管理 | 完了 | 100% (9/9) |
-| 15 | ユーティリティ | 進行中 | 22% (5/23) |
+| 15 | ユーティリティ | 進行中 | 43% (10/23) |
 | 16 | デバッグ機能 | 未着手 | 0% |
 | 17 | サンプル・テスト | 未着手 | 0% |
 | 18 | 最適化・仕上げ | 未着手 | 0% |
@@ -668,8 +668,8 @@
 ---
 
 **総タスク数**: 399 項目
-**完了**: 347 項目
-**全体進捗**: 87.0%
+**完了**: 353 項目
+**全体進捗**: 88.5%
 
 ---
 
