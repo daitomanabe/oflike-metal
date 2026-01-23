@@ -15,17 +15,20 @@
 		463D2499A5D36DECEB08E21E /* tess.c in Sources */ = {isa = PBXBuildFile; fileRef = A8491101D82BE9B65FE97E2C /* tess.c */; };
 		48AD52905B50F117ABF44261 /* sweep.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DC5646086D4BDABF265AC598 /* sweep.h */; };
 		50CBD9621F2463F3AE0872B2 /* dict.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = EFD83A160624D875A72FB761 /* dict.h */; };
+		6251B98E114DEF1D98AC8C98 /* MetalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC218826FD2A9E665095551D /* MetalView.swift */; };
 		6A4FB06C259CAA9E16F976FD /* dict.c in Sources */ = {isa = PBXBuildFile; fileRef = 6E8721CEA82525313FA568C0 /* dict.c */; };
+		8C6DC7234AA1DE4A2BD7AFD9 /* SwiftBridge.mm in Sources */ = {isa = PBXBuildFile; fileRef = 730BC9EEC5E1C10F0051939D /* SwiftBridge.mm */; };
 		8F2EF72F4E6FA59529A49875 /* tess.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = FB491D598AAA9970B65C05A4 /* tess.h */; };
 		96439999608CB49E682ACE3C /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = B47B2F4987FC7F3C8DC766B4 /* Info.plist */; };
+		A5D75505464683EBE6A0CAFA /* Common.h in Resources */ = {isa = PBXBuildFile; fileRef = 592C5AFD5DC2D16406DED829 /* Common.h */; };
 		B47E2B9ED725F0E6D90EC6A6 /* libtess2.a in Frameworks */ = {isa = PBXBuildFile; fileRef = F7D87676E50FD559A3289712 /* libtess2.a */; };
 		C799BEF4A50960C1976614AB /* geom.c in Sources */ = {isa = PBXBuildFile; fileRef = F7DDAF7D435405D76D21A57F /* geom.c */; };
 		CEBD94F6AD1346C9D5AA3AEB /* tesselator.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 021A006664BEF3493B8E239F /* tesselator.h */; };
+		D4FCE96FCAD786CC28005314 /* Basic2D.metal in Resources */ = {isa = PBXBuildFile; fileRef = 553E271026981F33B798A051 /* Basic2D.metal */; };
 		DB62D9A705F2B1F6A86B62D0 /* priorityq.c in Sources */ = {isa = PBXBuildFile; fileRef = 3D4B7C285DCD7BB2D0772F5D /* priorityq.c */; };
 		E94E4E5EF4FEACF080DFC7E7 /* mesh.c in Sources */ = {isa = PBXBuildFile; fileRef = 769BC55D23AEC969FD283FCD /* mesh.c */; };
 		F89E661CED1CEFAC5B6E5EEF /* bucketalloc.c in Sources */ = {isa = PBXBuildFile; fileRef = F2208344D230DA3226148D4B /* bucketalloc.c */; };
 		F9399D9F5270C5ED7DD19E08 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A1645174B6E903DD3D21BBF /* App.swift */; };
-		A1B2C3D4E5F6789012345678 /* MetalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2C3D4E5F67890123456789A /* MetalView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -68,20 +71,26 @@
 /* Begin PBXFileReference section */
 		021A006664BEF3493B8E239F /* tesselator.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tesselator.h; sourceTree = "<group>"; };
 		0366290585029AE4D911F450 /* sweep.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = sweep.c; sourceTree = "<group>"; };
+		30F318EC7E1EFD6807D4AFF2 /* TestApp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TestApp.h; sourceTree = "<group>"; };
 		3D4B7C285DCD7BB2D0772F5D /* priorityq.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = priorityq.c; sourceTree = "<group>"; };
 		4A1645174B6E903DD3D21BBF /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
 		4E950E8DC7A838FE2F748D28 /* mesh.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = mesh.h; sourceTree = "<group>"; };
-		B2C3D4E5F67890123456789A /* MetalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalView.swift; sourceTree = "<group>"; };
+		553E271026981F33B798A051 /* Basic2D.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Basic2D.metal; sourceTree = "<group>"; };
 		591D3AF24B61B3F205F7DA81 /* oflike-metal.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "oflike-metal.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		592C5AFD5DC2D16406DED829 /* Common.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Common.h; sourceTree = "<group>"; };
 		6E8721CEA82525313FA568C0 /* dict.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = dict.c; sourceTree = "<group>"; };
+		730BC9EEC5E1C10F0051939D /* SwiftBridge.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = SwiftBridge.mm; sourceTree = "<group>"; };
+		74CF6894D53C84B9EF450FDB /* oflike-metal-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "oflike-metal-Bridging-Header.h"; sourceTree = "<group>"; };
 		769BC55D23AEC969FD283FCD /* mesh.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = mesh.c; sourceTree = "<group>"; };
 		7E1D6C08E598F6BF8244DB7C /* oflike-metalTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "oflike-metalTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A02D512CAF05A64C4144FB6D /* bucketalloc.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bucketalloc.h; sourceTree = "<group>"; };
 		A8491101D82BE9B65FE97E2C /* tess.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = tess.c; sourceTree = "<group>"; };
+		AC218826FD2A9E665095551D /* MetalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalView.swift; sourceTree = "<group>"; };
 		B47B2F4987FC7F3C8DC766B4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		C99AE41C0E0256FFF79EE90F /* geom.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = geom.h; sourceTree = "<group>"; };
 		D0FB4B3C269BBCB908F29C42 /* priorityq.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = priorityq.h; sourceTree = "<group>"; };
 		DC5646086D4BDABF265AC598 /* sweep.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sweep.h; sourceTree = "<group>"; };
+		E301E3DA19966BA563A520FB /* SwiftBridge.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SwiftBridge.h; sourceTree = "<group>"; };
 		EFD83A160624D875A72FB761 /* dict.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = dict.h; sourceTree = "<group>"; };
 		F2208344D230DA3226148D4B /* bucketalloc.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = bucketalloc.c; sourceTree = "<group>"; };
 		F7D87676E50FD559A3289712 /* libtess2.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libtess2.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -105,7 +114,7 @@
 			isa = PBXGroup;
 			children = (
 				4A1645174B6E903DD3D21BBF /* App.swift */,
-				B2C3D4E5F67890123456789A /* MetalView.swift */,
+				AC218826FD2A9E665095551D /* MetalView.swift */,
 			);
 			path = swiftui;
 			sourceTree = "<group>";
@@ -149,9 +158,18 @@
 			path = third_party/tess2/Include;
 			sourceTree = "<group>";
 		};
+		A5AFFD59292BB5C3F1FFC4E7 /* core */ = {
+			isa = PBXGroup;
+			children = (
+				30F318EC7E1EFD6807D4AFF2 /* TestApp.h */,
+			);
+			path = core;
+			sourceTree = "<group>";
+		};
 		AEDC406C03CACC3D9100E84E /* platform */ = {
 			isa = PBXGroup;
 			children = (
+				F5BA7C0DED26C24AE0A20139 /* bridge */,
 				306BBA31961828A2D371B2F4 /* swiftui */,
 			);
 			path = platform;
@@ -160,6 +178,7 @@
 		BB91FEF6D781526279876E03 /* src */ = {
 			isa = PBXGroup;
 			children = (
+				A5AFFD59292BB5C3F1FFC4E7 /* core */,
 				AEDC406C03CACC3D9100E84E /* platform */,
 			);
 			path = src;
@@ -198,22 +217,34 @@
 		DA9365C406144FDA64141440 /* shaders */ = {
 			isa = PBXGroup;
 			children = (
+				553E271026981F33B798A051 /* Basic2D.metal */,
+				592C5AFD5DC2D16406DED829 /* Common.h */,
 			);
 			path = shaders;
 			sourceTree = "<group>";
 		};
-		"TEMP_3325E4FC-BFA8-449B-9666-163164D86B3D" /* oflike */ = {
+		F5BA7C0DED26C24AE0A20139 /* bridge */ = {
 			isa = PBXGroup;
 			children = (
+				74CF6894D53C84B9EF450FDB /* oflike-metal-Bridging-Header.h */,
+				E301E3DA19966BA563A520FB /* SwiftBridge.h */,
+				730BC9EEC5E1C10F0051939D /* SwiftBridge.mm */,
 			);
-			path = oflike;
+			path = bridge;
 			sourceTree = "<group>";
 		};
-		"TEMP_3FD92CA5-2F95-4473-8D23-85FFCC8DEB3C" /* render */ = {
+		"TEMP_7800BA17-2F41-47FC-AE26-123535106AE2" /* render */ = {
 			isa = PBXGroup;
 			children = (
 			);
 			path = render;
+			sourceTree = "<group>";
+		};
+		"TEMP_84BD783F-8065-4407-94AF-4F34DBD658B4" /* oflike */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = oflike;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -316,6 +347,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D4FCE96FCAD786CC28005314 /* Basic2D.metal in Resources */,
+				A5D75505464683EBE6A0CAFA /* Common.h in Resources */,
 				96439999608CB49E682ACE3C /* Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -349,7 +382,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				F9399D9F5270C5ED7DD19E08 /* App.swift in Sources */,
-				A1B2C3D4E5F6789012345678 /* MetalView.swift in Sources */,
+				6251B98E114DEF1D98AC8C98 /* MetalView.swift in Sources */,
+				8C6DC7234AA1DE4A2BD7AFD9 /* SwiftBridge.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -548,6 +582,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "com.oflike.oflike-metal";
 				PRODUCT_NAME = "oflike-metal";
 				SDKROOT = macosx;
+				SWIFT_OBJC_BRIDGING_HEADER = "src/platform/bridge/oflike-metal-Bridging-Header.h";
 			};
 			name = Debug;
 		};
@@ -576,6 +611,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "com.oflike.oflike-metal";
 				PRODUCT_NAME = "oflike-metal";
 				SDKROOT = macosx;
+				SWIFT_OBJC_BRIDGING_HEADER = "src/platform/bridge/oflike-metal-Bridging-Header.h";
 			};
 			name = Release;
 		};

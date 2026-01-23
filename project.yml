@@ -32,6 +32,7 @@ targets:
       CODE_SIGN_STYLE: Automatic
       ENABLE_HARDENED_RUNTIME: YES
       COMBINE_HIDPI_IMAGES: YES
+      SWIFT_OBJC_BRIDGING_HEADER: src/platform/bridge/oflike-metal-Bridging-Header.h
       HEADER_SEARCH_PATHS:
         - $(SRCROOT)/third_party/utf8
         - $(SRCROOT)/third_party/glm

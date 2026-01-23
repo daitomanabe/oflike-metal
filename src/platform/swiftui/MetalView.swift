@@ -1,9 +1,38 @@
 import SwiftUI
 import MetalKit
 
-/// SwiftUI wrapper for MTKView
-struct MetalView: NSViewRepresentable {
+/// SwiftUI wrapper for MTKView with FPS overlay (Phase 1.5)
+struct MetalView: View {
     @StateObject private var coordinator = MetalViewCoordinator()
+
+    var body: some View {
+        ZStack(alignment: .topLeading) {
+            // Metal rendering view
+            MetalViewRepresentable(coordinator: coordinator)
+
+            // FPS overlay (Phase 1.5)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("FPS: \(Int(coordinator.currentFPS))")
+                    .font(.system(size: 14, weight: .medium, design: .monospaced))
+                    .foregroundColor(.white)
+                Text("Frame: \(coordinator.frameCount)")
+                    .font(.system(size: 12, design: .monospaced))
+                    .foregroundColor(.white.opacity(0.8))
+                Text("Elapsed: \(Int(coordinator.getElapsedTime()))s")
+                    .font(.system(size: 12, design: .monospaced))
+                    .foregroundColor(.white.opacity(0.8))
+            }
+            .padding(12)
+            .background(Color.black.opacity(0.6))
+            .cornerRadius(8)
+            .padding(12)
+        }
+    }
+}
+
+/// Internal NSViewRepresentable for MTKView
+private struct MetalViewRepresentable: NSViewRepresentable {
+    @ObservedObject var coordinator: MetalViewCoordinator
 
     func makeNSView(context: Context) -> MTKView {
         let mtkView = MTKView()
@@ -14,7 +43,7 @@ struct MetalView: NSViewRepresentable {
         }
 
         mtkView.device = device
-        mtkView.delegate = context.coordinator
+        mtkView.delegate = coordinator
         mtkView.clearColor = MTLClearColor(red: 0.0, green: 0.0, blue: 0.0, alpha: 1.0)
         mtkView.colorPixelFormat = .bgra8Unorm
         mtkView.depthStencilPixelFormat = .depth32Float
@@ -24,17 +53,13 @@ struct MetalView: NSViewRepresentable {
         mtkView.preferredFramesPerSecond = 60
 
         // Initialize coordinator with device
-        context.coordinator.setup(device: device)
+        coordinator.setup(device: device)
 
         return mtkView
     }
 
     func updateNSView(_ nsView: MTKView, context: Context) {
         // Update view if needed
-    }
-
-    func makeCoordinator() -> MetalViewCoordinator {
-        return coordinator
     }
 }
 
@@ -44,8 +69,13 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject {
     private var commandQueue: MTLCommandQueue?
     private var library: MTLLibrary?
     private var pipelineState: MTLRenderPipelineState?
-    private var frameCount: UInt64 = 0
+
+    // Phase 1.5: Frame tracking for FPS display
+    @Published var frameCount: UInt64 = 0
+    @Published var currentFPS: Double = 0.0
     private var startTime: CFTimeInterval = 0
+    private var lastFPSUpdate: CFTimeInterval = 0
+    private var framesSinceLastUpdate: Int = 0
 
     // C++ Bridge
     private var bridge: OFLBridge?
@@ -53,6 +83,7 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject {
     override init() {
         super.init()
         startTime = CACurrentMediaTime()
+        lastFPSUpdate = startTime
         bridge = OFLBridge()
     }
 
@@ -151,7 +182,7 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject {
         print("MetalView resized to: \(size.width) x \(size.height)")
 
         // Notify C++ layer through bridge
-        bridge?.windowResized(width: Float(size.width), height: Float(size.height))
+        bridge?.windowResizedWidth(Float(size.width), height: Float(size.height))
     }
 
     /// Called whenever the view needs to render a frame
@@ -162,7 +193,19 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject {
         // Render frame
         render(view: view)
 
+        // Phase 1.5: Update frame count and FPS
         frameCount += 1
+        framesSinceLastUpdate += 1
+
+        let currentTime = CACurrentMediaTime()
+        let elapsed = currentTime - lastFPSUpdate
+
+        // Update FPS every 0.5 seconds
+        if elapsed >= 0.5 {
+            currentFPS = Double(framesSinceLastUpdate) / elapsed
+            framesSinceLastUpdate = 0
+            lastFPSUpdate = currentTime
+        }
     }
 
     // MARK: - Frame Loop
@@ -180,7 +223,9 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject {
         autoreleasepool {
             guard let drawable = view.currentDrawable,
                   let renderPassDescriptor = view.currentRenderPassDescriptor,
-                  let commandQueue = commandQueue else {
+                  let commandQueue = commandQueue,
+                  let pipelineState = pipelineState,
+                  let device = device else {
                 return
             }
 
@@ -199,6 +244,9 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject {
             // Execute C++ draw commands through bridge
             bridge?.draw()
 
+            // Phase 1.5: Render test triangle
+            renderTestTriangle(encoder: renderEncoder, device: device, pipelineState: pipelineState)
+
             // End encoding
             renderEncoder.endEncoding()
 
@@ -208,6 +256,65 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject {
             // Commit command buffer
             commandBuffer.commit()
         }
+    }
+
+    // MARK: - Phase 1.5 Triangle Test
+
+    /// Render a simple test triangle (Phase 1.5 verification)
+    private func renderTestTriangle(
+        encoder: MTLRenderCommandEncoder,
+        device: MTLDevice,
+        pipelineState: MTLRenderPipelineState
+    ) {
+        // Define triangle vertices (Vertex2D structure from Common.h)
+        // position (float2), texCoord (float2), color (float4)
+        let vertices: [Float] = [
+            // Position      TexCoord    Color (RGBA)
+            0.0,  0.5,      0.5, 0.0,   1.0, 0.0, 0.0, 1.0,  // Top (red)
+           -0.5, -0.5,      0.0, 1.0,   0.0, 1.0, 0.0, 1.0,  // Bottom-left (green)
+            0.5, -0.5,      1.0, 1.0,   0.0, 0.0, 1.0, 1.0,  // Bottom-right (blue)
+        ]
+
+        // Create vertex buffer
+        guard let vertexBuffer = device.makeBuffer(
+            bytes: vertices,
+            length: vertices.count * MemoryLayout<Float>.stride,
+            options: .cpuCacheModeWriteCombined
+        ) else {
+            return
+        }
+
+        // Create identity uniforms (Uniforms2D from Common.h)
+        var uniforms: [Float] = [
+            // Projection matrix (identity)
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1,
+            // ModelView matrix (identity)
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1,
+        ]
+
+        guard let uniformBuffer = device.makeBuffer(
+            bytes: &uniforms,
+            length: uniforms.count * MemoryLayout<Float>.stride,
+            options: .cpuCacheModeWriteCombined
+        ) else {
+            return
+        }
+
+        // Set render pipeline state
+        encoder.setRenderPipelineState(pipelineState)
+
+        // Set vertex buffers
+        encoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
+        encoder.setVertexBuffer(uniformBuffer, offset: 0, index: 1)
+
+        // Draw triangle
+        encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
     }
 
     // MARK: - Public API
