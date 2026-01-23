@@ -60,4 +60,8 @@
 /// @param callback C function pointer for window title change requests
 - (void)setWindowTitleCallback:(void (*)(const char* title))callback;
 
+/// Set fullscreen callback
+/// @param callback C function pointer for fullscreen change requests
+- (void)setFullscreenCallback:(void (*)(bool fullscreen))callback;
+
 @end

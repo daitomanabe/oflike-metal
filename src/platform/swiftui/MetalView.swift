@@ -249,6 +249,7 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject, MouseEv
 
     // Phase 14.1: Window state
     @Published var windowTitle: String = "oflike-metal"
+    @Published var isFullscreen: Bool = false
 
     // C++ Bridge
     private var bridge: OFLBridge?
@@ -565,28 +566,46 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject, MouseEv
     // MARK: - Window Callbacks (Phase 14.1)
 
     private func setupWindowCallbacks() {
-        // Window resize callback
-        bridge?.setWindowResizeCallback { [weak self] width, height in
-            guard let self = self else { return }
-            // Note: Window resize is handled by SwiftUI's frame modifiers
+        // Create static function pointer for window resize callback
+        func windowResizeCallback(width: Int32, height: Int32) {
             print("[Swift] Window resize requested: \(width)x\(height)")
+            // Note: Window resize is handled by SwiftUI's frame modifiers
         }
 
-        // Window position callback
-        bridge?.setWindowPositionCallback { [weak self] x, y in
-            guard let self = self else { return }
-            // Note: Window position is managed by SwiftUI/AppKit
+        // Create static function pointer for window position callback
+        func windowPositionCallback(x: Int32, y: Int32) {
             print("[Swift] Window position change requested: \(x),\(y)")
+            // Note: Window position is managed by SwiftUI/AppKit
         }
 
-        // Window title callback
-        bridge?.setWindowTitleCallback { [weak self] titlePtr in
-            guard let self = self, let titlePtr = titlePtr else { return }
+        // Create static function pointer for window title callback
+        func windowTitleCallback(titlePtr: UnsafePointer<Int8>?) {
+            guard let titlePtr = titlePtr else { return }
             let title = String(cString: titlePtr)
             DispatchQueue.main.async {
-                self.windowTitle = title
                 print("[Swift] Window title changed to: \(title)")
             }
         }
+
+        // Create static function pointer for fullscreen callback
+        func fullscreenCallback(fullscreen: Bool) {
+            DispatchQueue.main.async {
+                print("[Swift] Fullscreen mode requested: \(fullscreen ? "ON" : "OFF")")
+                // Toggle fullscreen using NSApp.mainWindow
+                if let window = NSApp.mainWindow {
+                    if fullscreen && !window.styleMask.contains(.fullScreen) {
+                        window.toggleFullScreen(nil)
+                    } else if !fullscreen && window.styleMask.contains(.fullScreen) {
+                        window.toggleFullScreen(nil)
+                    }
+                }
+            }
+        }
+
+        // Register callbacks (these are now non-capturing closures that can convert to C function pointers)
+        bridge?.setWindowResizeCallback(windowResizeCallback)
+        bridge?.setWindowPositionCallback(windowPositionCallback)
+        bridge?.setWindowTitleCallback(windowTitleCallback)
+        bridge?.setFullscreenCallback(fullscreenCallback)
     }
 }

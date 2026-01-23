@@ -167,3 +167,7 @@ void ofSetWindowPosition(int x, int y);
 /// Set window title
 /// @param title New window title string
 void ofSetWindowTitle(const std::string& title);
+
+/// Set fullscreen mode
+/// @param fullscreen true to enter fullscreen, false to exit fullscreen
+void ofSetFullscreen(bool fullscreen);

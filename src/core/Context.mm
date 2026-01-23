@@ -37,6 +37,7 @@ struct Context::Impl {
     void (*windowResizeCallback)(int width, int height) = nullptr;
     void (*windowPositionCallback)(int x, int y) = nullptr;
     void (*windowTitleCallback)(const char* title) = nullptr;
+    void (*fullscreenCallback)(bool fullscreen) = nullptr;
 
     // Keyboard state (Phase 13.2)
     std::unordered_map<int, bool> keyStates;
@@ -259,6 +260,22 @@ void Context::requestWindowTitle(const std::string& title) {
 void Context::setWindowTitleCallback(void (*callback)(const char* title)) {
     impl_->windowTitleCallback = callback;
     std::cout << "[Context] Window title callback registered" << std::endl;
+}
+
+void Context::requestFullscreen(bool fullscreen) {
+    std::cout << "[Context] Fullscreen mode requested: " << (fullscreen ? "ON" : "OFF") << std::endl;
+
+    if (impl_->fullscreenCallback) {
+        impl_->fullscreenCallback(fullscreen);
+    } else {
+        std::cout << "[Context] Warning: No fullscreen callback registered"
+                  << std::endl;
+    }
+}
+
+void Context::setFullscreenCallback(void (*callback)(bool fullscreen)) {
+    impl_->fullscreenCallback = callback;
+    std::cout << "[Context] Fullscreen callback registered" << std::endl;
 }
 
 // MARK: - Matrix Stack

@@ -81,3 +81,7 @@ void ofSetWindowPosition(int x, int y) {
 void ofSetWindowTitle(const std::string& title) {
     ctx().requestWindowTitle(title);
 }
+
+void ofSetFullscreen(bool fullscreen) {
+    ctx().requestFullscreen(fullscreen);
+}

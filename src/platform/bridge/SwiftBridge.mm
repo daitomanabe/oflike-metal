@@ -278,4 +278,11 @@
     }
 }
 
+- (void)setFullscreenCallback:(void (*)(bool fullscreen))callback {
+    @autoreleasepool {
+        // Phase 14.1: Register fullscreen callback in Context
+        Context::instance().setFullscreenCallback(callback);
+    }
+}
+
 @end

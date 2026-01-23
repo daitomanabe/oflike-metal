@@ -100,6 +100,14 @@ public:
     /// @param callback Function pointer to call when title change is requested
     void setWindowTitleCallback(void (*callback)(const char* title));
 
+    /// Request fullscreen mode change (calls back to Swift layer)
+    /// @param fullscreen true to enter fullscreen, false to exit
+    void requestFullscreen(bool fullscreen);
+
+    /// Set callback for fullscreen requests (called by Swift layer)
+    /// @param callback Function pointer to call when fullscreen change is requested
+    void setFullscreenCallback(void (*callback)(bool fullscreen));
+
     /// Get window width (alias for getWindowWidth)
     int getWidth() const { return getWindowWidth(); }
 
