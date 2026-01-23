@@ -333,11 +333,11 @@
 - [x] ofDrawIcoSphere()
 
 ### 8.2 3D ヘルパー
-- [ ] ofDrawAxis()
-- [ ] ofDrawGrid()
-- [ ] ofDrawGridPlane()
-- [ ] ofDrawArrow()
-- [ ] ofDrawRotationAxes()
+- [x] ofDrawAxis()
+- [x] ofDrawGrid()
+- [x] ofDrawGridPlane()
+- [x] ofDrawArrow()
+- [x] ofDrawRotationAxes()
 
 ### 8.3 深度・カリング
 - [ ] ofEnableDepthTest() / ofDisableDepthTest()
@@ -653,7 +653,7 @@
 | 5 | 2D 描画 API | 完了 | 100% |
 | 6 | 色 | 完了 | 100% |
 | 7 | 画像・テクスチャ | 完了 | 100% |
-| 8 | 3D 描画 | 進行中 | 15% |
+| 8 | 3D 描画 | 進行中 | 28% |
 | 9 | カメラ | 未着手 | 0% |
 | 10 | ライティング | 未着手 | 0% |
 | 11 | FBO | 未着手 | 0% |
@@ -668,8 +668,8 @@
 ---
 
 **総タスク数**: 約 350 項目
-**完了**: 192 項目
-**全体進捗**: 54.9%
+**完了**: 197 項目
+**全体進捗**: 56.3%
 
 ---
 

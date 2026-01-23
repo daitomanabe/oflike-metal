@@ -1,6 +1,12 @@
 #pragma once
 
 #include <cstdint>
+#include <cstddef>  // for size_t
+
+// Forward declarations
+namespace oflike {
+    class ofVec3f;
+}
 
 // ============================================================================
 // Blend Mode Constants
@@ -765,3 +771,84 @@ void ofDrawIcoSphere(float x, float y, float z, float radius, int subdivisions =
  * @param subdivisions Number of subdivision iterations (default: 2)
  */
 void ofDrawIcoSphere(float radius, int subdivisions = 2);
+
+// ============================================================================
+// 3D Helper Functions
+// ============================================================================
+
+/**
+ * Draw 3D coordinate axes at origin.
+ * Draws three colored lines representing X (red), Y (green), and Z (blue) axes.
+ * @param size Length of each axis line (default: 1.0)
+ */
+void ofDrawAxis(float size = 1.0f);
+
+/**
+ * Draw a 3D grid on the XZ plane.
+ * Grid extends from (-width/2, 0, -height/2) to (width/2, 0, height/2).
+ * @param stepSize Spacing between grid lines
+ * @param numberOfSteps Number of steps in each direction from center
+ * @param labels If true, draw axis labels (default: false)
+ * @param x If true, draw lines parallel to X axis (default: true)
+ * @param y If true, draw horizontal center line (default: true)
+ * @param z If true, draw lines parallel to Z axis (default: true)
+ */
+void ofDrawGrid(float stepSize = 1.0f, size_t numberOfSteps = 8, bool labels = false, bool x = true, bool y = true, bool z = true);
+
+/**
+ * Draw a 3D grid on the XZ plane (simplified version).
+ * @param stepSize Spacing between grid lines
+ * @param numberOfSteps Number of steps in each direction from center
+ * @param labels If true, draw axis labels (default: false)
+ */
+void ofDrawGrid(float stepSize, size_t numberOfSteps, bool labels);
+
+/**
+ * Draw a 3D grid on the XZ plane at specified position.
+ * @param x X position of grid center
+ * @param y Y position of grid (height)
+ * @param z Z position of grid center
+ * @param stepSize Spacing between grid lines
+ * @param numberOfSteps Number of steps in each direction from center
+ * @param labels If true, draw axis labels (default: false)
+ * @param xLines If true, draw lines parallel to X axis (default: true)
+ * @param yLines If true, draw horizontal center line (default: true)
+ * @param zLines If true, draw lines parallel to Z axis (default: true)
+ */
+void ofDrawGrid(float x, float y, float z, float stepSize, size_t numberOfSteps, bool labels = false, bool xLines = true, bool yLines = true, bool zLines = true);
+
+/**
+ * Draw a simple grid plane on XZ plane.
+ * Convenience function for drawing a basic grid.
+ * @param width Total width of grid (X dimension)
+ * @param height Total depth of grid (Z dimension)
+ * @param columns Number of columns (divisions along X)
+ * @param rows Number of rows (divisions along Z)
+ */
+void ofDrawGridPlane(float width, float height, int columns, int rows);
+
+/**
+ * Draw a simple grid plane on XZ plane at origin.
+ * Grid size is 1x1 with specified divisions.
+ * @param columns Number of columns (divisions along X, default: 10)
+ * @param rows Number of rows (divisions along Z, default: 10)
+ */
+void ofDrawGridPlane(int columns = 10, int rows = 10);
+
+/**
+ * Draw a 3D arrow from start to end position.
+ * Arrow consists of a line with a cone at the end.
+ * @param start Starting position of arrow
+ * @param end Ending position of arrow (arrow head points here)
+ * @param headSize Size of arrow head cone (default: 0.05)
+ */
+void ofDrawArrow(const oflike::ofVec3f& start, const oflike::ofVec3f& end, float headSize = 0.05f);
+
+/**
+ * Draw rotation axes showing current transformation orientation.
+ * Draws three colored arrows (RGB for XYZ) at the specified position
+ * showing the orientation of the current transformation matrix.
+ * @param radius Length of each axis arrow
+ * @param stripWidth Width of the axis lines (default: 0.01)
+ */
+void ofDrawRotationAxes(float radius, float stripWidth = 0.01f);

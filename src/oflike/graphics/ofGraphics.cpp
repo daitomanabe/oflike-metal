@@ -990,3 +990,122 @@ void ofDrawIcoSphere(float x, float y, float z, float radius, int subdivisions) 
 void ofDrawIcoSphere(float radius, int subdivisions) {
     ofDrawIcoSphere(0.0f, 0.0f, 0.0f, radius, subdivisions);
 }
+
+// ============================================================================
+// 3D Helper Functions Implementation
+// ============================================================================
+
+void ofDrawAxis(float size) {
+    // TODO: Implement 3D axis drawing
+    // Draw three lines from origin:
+    // - X axis: Red line from (0,0,0) to (size,0,0)
+    // - Y axis: Green line from (0,0,0) to (0,size,0)
+    // - Z axis: Blue line from (0,0,0) to (0,0,size)
+
+    // Save current color
+    auto& state = getGraphicsState();
+    uint8_t savedColor[4];
+    std::copy(state.currentColor, state.currentColor + 4, savedColor);
+
+    // X axis - red
+    ofSetColor(255, 0, 0);
+    ofDrawLine(0.0f, 0.0f, 0.0f, size, 0.0f, 0.0f);
+
+    // Y axis - green
+    ofSetColor(0, 255, 0);
+    ofDrawLine(0.0f, 0.0f, 0.0f, 0.0f, size, 0.0f);
+
+    // Z axis - blue
+    ofSetColor(0, 0, 255);
+    ofDrawLine(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, size);
+
+    // Restore color
+    std::copy(savedColor, savedColor + 4, state.currentColor);
+}
+
+void ofDrawGrid(float stepSize, size_t numberOfSteps, bool labels, bool x, bool y, bool z) {
+    // TODO: Implement 3D grid drawing on XZ plane
+    // Grid extends from (-width/2, 0, -height/2) to (width/2, 0, height/2)
+    // where width = height = stepSize * numberOfSteps * 2
+
+    (void)stepSize; (void)numberOfSteps;
+    (void)labels; (void)x; (void)y; (void)z;
+}
+
+void ofDrawGrid(float stepSize, size_t numberOfSteps, bool labels) {
+    ofDrawGrid(stepSize, numberOfSteps, labels, true, true, true);
+}
+
+void ofDrawGrid(float x, float y, float z, float stepSize, size_t numberOfSteps, bool labels, bool xLines, bool yLines, bool zLines) {
+    // TODO: Implement 3D grid drawing at position
+    // Save current matrix, translate to (x,y,z), draw grid, restore matrix
+
+    (void)x; (void)y; (void)z;
+    (void)stepSize; (void)numberOfSteps;
+    (void)labels; (void)xLines; (void)yLines; (void)zLines;
+}
+
+void ofDrawGridPlane(float width, float height, int columns, int rows) {
+    // TODO: Implement simple grid plane on XZ
+    // Draw a grid with specified width/height and column/row divisions
+    // Grid lines parallel to X and Z axes
+
+    float columnStep = width / columns;
+    float rowStep = height / rows;
+
+    float halfWidth = width * 0.5f;
+    float halfHeight = height * 0.5f;
+
+    // Lines parallel to X axis (along Z direction)
+    for (int i = 0; i <= rows; i++) {
+        float zPos = -halfHeight + i * rowStep;
+        ofDrawLine(-halfWidth, 0.0f, zPos, halfWidth, 0.0f, zPos);
+    }
+
+    // Lines parallel to Z axis (along X direction)
+    for (int i = 0; i <= columns; i++) {
+        float xPos = -halfWidth + i * columnStep;
+        ofDrawLine(xPos, 0.0f, -halfHeight, xPos, 0.0f, halfHeight);
+    }
+}
+
+void ofDrawGridPlane(int columns, int rows) {
+    ofDrawGridPlane(1.0f, 1.0f, columns, rows);
+}
+
+void ofDrawArrow(const oflike::ofVec3f& start, const oflike::ofVec3f& end, float headSize) {
+    // TODO: Implement 3D arrow drawing
+    // 1. Draw line from start to end
+    // 2. Calculate direction vector: end - start
+    // 3. Draw cone at end position pointing in direction
+    // 4. Cone height = headSize, radius = headSize * 0.5
+
+    // Draw shaft
+    ofDrawLine(start.x, start.y, start.z, end.x, end.y, end.z);
+
+    // Calculate direction for arrow head
+    oflike::ofVec3f direction = end;
+    direction.x -= start.x;
+    direction.y -= start.y;
+    direction.z -= start.z;
+
+    // TODO: Normalize direction and position cone at end
+    // For now, just draw a small cone at end position
+    (void)direction;
+    (void)headSize;
+
+    // ofDrawCone(end.x, end.y, end.z, headSize * 0.5f, headSize);
+}
+
+void ofDrawRotationAxes(float radius, float stripWidth) {
+    // TODO: Implement rotation axes visualization
+    // Draw three colored arrows showing orientation:
+    // - Red arrow: X axis direction (1,0,0) transformed by current matrix
+    // - Green arrow: Y axis direction (0,1,0) transformed by current matrix
+    // - Blue arrow: Z axis direction (0,0,1) transformed by current matrix
+
+    (void)radius; (void)stripWidth;
+
+    // For now, just draw standard axes
+    ofDrawAxis(radius);
+}
