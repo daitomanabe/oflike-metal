@@ -181,15 +181,16 @@
     }
 }
 
-- (void)mouseScrolledX:(float)x y:(float)y {
+- (void)mouseScrolledX:(float)x y:(float)y scrollX:(float)scrollX scrollY:(float)scrollY {
     @autoreleasepool {
         if (!isSetup_) {
             return;
         }
 
-        // TODO Phase 13: Forward to C++ event system
-        // engine_->mouseScrolled(x, y);
-        // app_->mouseScrolled(x, y);
+        // Phase 13.1: Forward to C++ app
+        if (testApp_) {
+            testApp_->mouseScrolled((int)x, (int)y, scrollX, scrollY);
+        }
     }
 }
 

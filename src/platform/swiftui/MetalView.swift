@@ -162,6 +162,19 @@ private class MouseTrackingMTKView: MTKView {
         let button = Int(event.buttonNumber)
         mouseEventReceiver?.mouseReleased(x: Float(location.x), y: Float(location.y), button: button)
     }
+
+    override func scrollWheel(with event: NSEvent) {
+        let location = convert(event.locationInWindow, from: nil)
+        // NSEvent provides scroll deltas in pixels (for precise scrolling)
+        // scrollingDeltaX: horizontal scroll amount (positive = right, negative = left)
+        // scrollingDeltaY: vertical scroll amount (positive = up, negative = down)
+        mouseEventReceiver?.mouseScrolled(
+            x: Float(location.x),
+            y: Float(location.y),
+            scrollX: Float(event.scrollingDeltaX),
+            scrollY: Float(event.scrollingDeltaY)
+        )
+    }
 }
 
 /// Protocol for receiving mouse events from MouseTrackingMTKView
@@ -170,6 +183,7 @@ protocol MouseEventReceiver: AnyObject {
     func mouseDragged(x: Float, y: Float, button: Int)
     func mousePressed(x: Float, y: Float, button: Int)
     func mouseReleased(x: Float, y: Float, button: Int)
+    func mouseScrolled(x: Float, y: Float, scrollX: Float, scrollY: Float)
     func mouseEntered(x: Float, y: Float)
     func mouseExited(x: Float, y: Float)
 }
@@ -461,6 +475,11 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject, MouseEv
     func mouseReleased(x: Float, y: Float, button: Int) {
         // Forward to C++ bridge
         bridge?.mouseReleasedX(x, y: y, button: Int32(button))
+    }
+
+    func mouseScrolled(x: Float, y: Float, scrollX: Float, scrollY: Float) {
+        // Forward to C++ bridge
+        bridge?.mouseScrolledX(x, y: y, scrollX: scrollX, scrollY: scrollY)
     }
 
     func mouseEntered(x: Float, y: Float) {
