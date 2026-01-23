@@ -375,8 +375,8 @@
 - [ ] save()
 
 ### 8.7 3D シェーダー
-- [ ] Basic3D.metal（頂点色）
-- [ ] Textured3D.metal
+- [x] Basic3D.metal（頂点色）
+- [x] Textured3D.metal
 - [ ] Lighting.metal（Phong）
 
 ---
