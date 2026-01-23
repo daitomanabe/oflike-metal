@@ -1,7 +1,7 @@
 # oflike-metal Third-Party Dependencies
 
-**Version**: 1.0.0
-**Last Updated**: 2026-01-23
+**Version**: 2.0.0  
+**Last Updated**: 2026-01-23  
 **Status**: Active
 
 > This document lists all third-party libraries used in oflike-metal, their licenses, and integration guidelines.
@@ -14,64 +14,30 @@ oflike-metal minimizes external dependencies by leveraging Apple's native framew
 
 ### 1.1 Dependency Philosophy
 
-- **Prefer Apple frameworks**: Use Metal, Core Graphics, Core Text, etc.
+- **Prefer Apple frameworks**: Use Metal, Core ML, Vision, Core Text, etc.
 - **Minimize bloat**: Only add libraries when necessary
-- **License compatibility**: All dependencies must be permissive (MIT, BSD, Apache)
+- **License compatibility**: All dependencies must be permissive (MIT, BSD, Apache, Zlib)
 - **Header-only preferred**: Simplifies integration
 
 ---
 
-## 2. Required Dependencies
+## 2. Core Dependencies
 
 ### 2.1 tess2 (Tessellation)
 
 **Purpose**: Polygon tessellation for path filling
 
-**License**: SGI Free Software License B (permissive)
-
-**Source**: https://github.com/memononen/tess2
-
-**Version**: Latest stable
+| 項目 | 値 |
+|------|-----|
+| License | SGI Free Software License B (permissive) |
+| Source | https://github.com/memononen/tess2 |
+| Version | Latest stable |
+| Status | ✅ Active |
 
 **Usage**:
 - `ofPath::getTessellation()` - Convert paths to triangles
 - Shape filling with holes
 - Complex polygon rendering
-
-**Integration**:
-```cmake
-# CMakeLists.txt
-add_subdirectory(thirdparty/tess2)
-target_link_libraries(oflike-metal PRIVATE tess2)
-```
-
-**Files**:
-```
-thirdparty/tess2/
-├── Include/
-│   └── tesselator.h
-└── Source/
-    ├── bucketalloc.c
-    ├── dict.c
-    ├── geom.c
-    ├── mesh.c
-    ├── priorityq.c
-    ├── sweep.c
-    └── tess.c
-```
-
-**Example**:
-```cpp
-#include <tesselator.h>
-
-void tessellatePath(const ofPath& path) {
-    TESStesselator* tess = tessNewTess(nullptr);
-    // Add contours from path
-    tessTesselate(tess, TESS_WINDING_ODD, TESS_POLYGONS, 3, 2, nullptr);
-    // Extract triangles
-    tessDeleteTess(tess);
-}
-```
 
 ---
 
@@ -79,11 +45,13 @@ void tessellatePath(const ofPath& path) {
 
 **Purpose**: UTF-8 string processing for text rendering
 
-**License**: Boost Software License 1.0 (permissive)
-
-**Source**: https://github.com/nemtrif/utfcpp
-
-**Version**: v4.x or later
+| 項目 | 値 |
+|------|-----|
+| License | Boost Software License 1.0 (permissive) |
+| Source | https://github.com/nemtrif/utfcpp |
+| Version | v4.x or later |
+| Status | ✅ Active |
+| Type | Header-only |
 
 **Usage**:
 - String length calculation for fonts
@@ -91,378 +59,339 @@ void tessellatePath(const ofPath& path) {
 - UTF-8 validation
 - Unicode code point extraction
 
-**Integration**:
-```cmake
-# Header-only library
-target_include_directories(oflike-metal PRIVATE
-    thirdparty/utf8cpp/source)
-```
-
-**Files**:
-```
-thirdparty/utf8cpp/
-└── source/
-    └── utf8.h
-    └── utf8/
-        ├── checked.h
-        ├── core.h
-        └── unchecked.h
-```
-
-**Example**:
-```cpp
-#include <utf8.h>
-
-int getUTF8Length(const std::string& str) {
-    return utf8::distance(str.begin(), str.end());
-}
-
-std::vector<uint32_t> getCodePoints(const std::string& str) {
-    std::vector<uint32_t> result;
-    utf8::utf8to32(str.begin(), str.end(), std::back_inserter(result));
-    return result;
-}
-```
-
 ---
 
 ### 2.3 GLM (Transitional - To Be Removed in Phase 18)
 
 **Purpose**: Math library (TEMPORARY until simd migration complete)
 
-**License**: MIT License
-
-**Source**: https://github.com/g-truc/glm
-
-**Version**: 0.9.9.x
-
-**Status**: ⚠️ **TRANSITIONAL** - Will be removed in Phase 18
-
-**Usage** (LIMITED):
-- Only used in legacy code during migration
-- New code MUST use simd instead
-- Should only appear in `.cpp` files, never in `.h` headers
-
-**Migration Timeline**:
-- Phase 0-17: GLM allowed in implementation files only
-- Phase 18: Complete removal, full simd migration
-
-**Integration**:
-```cmake
-# Header-only library
-target_include_directories(oflike-metal PRIVATE
-    thirdparty/glm)
-```
-
-**Files**:
-```
-thirdparty/glm/
-├── glm/
-│   ├── glm.hpp
-│   ├── gtc/
-│   └── gtx/
-```
-
-**Migration Example**:
-```cpp
-// OLD (GLM - to be replaced)
-#include <glm/glm.hpp>
-glm::vec3 cross = glm::cross(a, b);
-
-// NEW (simd - use in all new code)
-#include <simd/simd.h>
-simd_float3 cross = simd_cross(a, b);
-```
+| 項目 | 値 |
+|------|-----|
+| License | MIT License |
+| Source | https://github.com/g-truc/glm |
+| Version | 0.9.9.x |
+| Status | ⚠️ Transitional (remove in Phase 18) |
+| Type | Header-only |
 
 ---
 
-## 3. Apple Native Frameworks (Not Third-Party)
+## 3. Addon Dependencies
+
+### 3.1 oscpack (OSC Protocol)
+
+**Purpose**: OSC protocol implementation for ofxOsc
+
+| 項目 | 値 |
+|------|-----|
+| License | MIT |
+| Source | https://github.com/RossBencina/oscpack |
+| Status | ✅ Active |
+| Used by | ofxOsc |
+
+**Usage**:
+- OSC message sending/receiving
+- Parameter synchronization with external apps (TouchOSC, Max, SuperCollider)
+
+---
+
+### 3.2 nanosvg (SVG Parsing)
+
+**Purpose**: SVG parsing for ofxSvg
+
+| 項目 | 値 |
+|------|-----|
+| License | Zlib |
+| Source | https://github.com/memononen/nanosvg |
+| Status | ✅ Active |
+| Type | Header-only (single file) |
+| Used by | ofxSvg |
+
+**Usage**:
+- SVG file loading
+- Path extraction
+- Color/style parsing
+
+---
+
+### 3.3 pugixml (XML Parsing)
+
+**Purpose**: XML parsing for ofxXmlSettings
+
+| 項目 | 値 |
+|------|-----|
+| License | MIT |
+| Source | https://github.com/zeux/pugixml |
+| Status | ✅ Active |
+| Type | Header-only option available |
+| Used by | ofxXmlSettings |
+
+**Usage**:
+- XML file reading/writing
+- Settings persistence
+- Data serialization
+
+---
+
+### 3.4 Dear ImGui (Debug GUI) - Optional
+
+**Purpose**: Debug overlay for development
+
+| 項目 | 値 |
+|------|-----|
+| License | MIT |
+| Source | https://github.com/ocornut/imgui |
+| Status | ✅ Optional |
+| Used by | ofxGui (debug mode) |
+| Note | Metal backend included |
+
+**Usage**:
+- Debug parameter adjustment
+- Performance monitoring
+- Development-time UI
+
+---
+
+### 3.5 OpenCV (Computer Vision) - Optional
+
+**Purpose**: Advanced computer vision for ofxOpenCv
+
+| 項目 | 値 |
+|------|-----|
+| License | Apache 2.0 / BSD |
+| Source | https://opencv.org |
+| Status | ✅ Optional |
+| Used by | ofxOpenCv (advanced features) |
+| Note | Use Vision.framework for basic detection |
+
+**Usage**:
+- Optical flow
+- Contour detection
+- Advanced image processing
+
+---
+
+## 4. Apple Native Frameworks (Required)
 
 These are part of the Apple SDK and do not require separate attribution:
 
-### 3.1 Metal Framework
-- GPU rendering
-- Shaders
-- Compute
+### 4.1 Core Frameworks
 
-### 3.2 MetalKit
-- MTKView for rendering surface
-- MTKTextureLoader for image loading
-- MTKMesh for model loading (future)
+| Framework | Purpose | Min Version |
+|-----------|---------|-------------|
+| **Metal** | GPU rendering, compute shaders | macOS 13.0 |
+| **MetalKit** | MTKView, texture loading | macOS 13.0 |
+| **MetalFX** | Upscaling, super resolution | macOS 13.0 |
+| **Metal Performance Shaders** | Optimized image processing | macOS 13.0 |
+| **Core ML** | Machine learning inference | macOS 13.0 |
+| **Vision** | Image analysis, detection | macOS 13.0 |
+| **VisionKit** | OCR, Live Text | macOS 13.0 |
 
-### 3.3 QuartzCore
-- CAMetalLayer
-- Animation timing
+### 4.2 Media Frameworks
 
-### 3.4 Core Graphics
-- Image decoding
-- Color spaces
-- PDF rendering (future)
+| Framework | Purpose | Min Version |
+|-----------|---------|-------------|
+| **AVFoundation** | Video playback/capture | macOS 13.0 |
+| **VideoToolbox** | Hardware video encoding | macOS 13.0 |
+| **PHASE** | Spatial audio | macOS 13.0 |
+| **AVAudioEngine** | Audio processing | macOS 13.0 |
 
-### 3.5 Core Text
-- Font rendering
-- Text layout
-- Glyph extraction
+### 4.3 Graphics & UI Frameworks
 
-### 3.6 ImageIO
-- Image file format support
-- PNG, JPEG, TIFF, etc.
+| Framework | Purpose | Min Version |
+|-----------|---------|-------------|
+| **SwiftUI** | Window management, UI | macOS 13.0 |
+| **Core Graphics** | 2D rendering, PDF | macOS 13.0 |
+| **Core Text** | Font rendering | macOS 13.0 |
+| **ImageIO** | Image file I/O | macOS 13.0 |
+| **QuartzCore** | Animation, CAMetalLayer | macOS 13.0 |
 
-### 3.7 Accelerate
-- simd vector math
-- vDSP for audio (future)
-- BNNS for ML (future)
+### 4.4 System Frameworks
 
-### 3.8 Foundation
-- String handling
-- File I/O
-- Data structures
+| Framework | Purpose | Min Version |
+|-----------|---------|-------------|
+| **Accelerate** | simd, vDSP, BNNS | macOS 13.0 |
+| **Foundation** | String, File I/O | macOS 13.0 |
+| **Network** | TCP/UDP networking | macOS 13.0 |
+| **Model I/O** | 3D model loading | macOS 13.0 |
 
-### 3.9 AppKit
-- MTKView base class (NSView)
-- Limited usage only
+### 4.5 Apple Silicon Specific
 
-### 3.10 SwiftUI
-- Window management
-- Event handling
-- UI layout
+| Framework | Purpose | Hardware |
+|-----------|---------|----------|
+| **Neural Engine** | ML acceleration | Apple Silicon |
+| **Media Engine** | Video encode/decode | Apple Silicon |
+| **Unified Memory** | Zero-copy buffers | Apple Silicon |
 
 ---
 
-## 4. Explicitly Forbidden Libraries
+## 5. Addon → Framework Mapping
+
+### 5.1 Core Addons Migration
+
+| oF Addon | Original Dep | Mac Native Replacement |
+|----------|--------------|------------------------|
+| ofxGui | Custom | SwiftUI / Dear ImGui |
+| ofxNetwork | Poco | Network.framework |
+| ofxOsc | oscpack | oscpack (継続) |
+| ofxOpenCv | OpenCV | Vision.framework + OpenCV |
+| ofxSvg | svgTiny | Core Graphics + nanosvg |
+| ofxXmlSettings | Poco XML | pugixml |
+| ofxAssimpModelLoader | Assimp | Model I/O |
+| ofxThreadedImageLoader | FreeImage | GCD + ImageIO |
+| ofxVectorGraphics | Cairo | Core Graphics (PDF) |
+
+### 5.2 Apple Native Addons (New)
+
+| Addon | Apple Framework | Purpose |
+|-------|-----------------|---------|
+| **ofxSharp** | Core ML + Metal | Single image → 3D Gaussian Splatting |
+| **ofxNeuralEngine** | Core ML / Vision | ML inference, pose estimation |
+| **ofxMetalCompute** | Metal Compute | GPU compute shaders |
+| **ofxMPS** | Metal Performance Shaders | Optimized image processing |
+| **ofxVideoToolbox** | VideoToolbox | 4K/8K/ProRes encoding |
+| **ofxSpatialAudio** | PHASE | 3D spatial audio |
+| **ofxMetalFX** | MetalFX | AI upscaling |
+| **ofxUnifiedMemory** | Metal Shared Memory | Zero-copy CPU/GPU buffers |
+| **ofxLiveText** | VisionKit | OCR, text recognition |
+| **ofxObjectCapture** | Object Capture API | Photo → 3D model |
+
+---
+
+## 6. Explicitly Forbidden Libraries
 
 These libraries are **NOT** allowed in oflike-metal:
 
-### 4.1 ❌ FreeType
-**Why**: Use Core Text instead
-**Alternative**: CTFont, CTLine, CTFrame
+| Library | Reason | Alternative |
+|---------|--------|-------------|
+| ❌ FreeType | Use native | Core Text |
+| ❌ OpenGL / GLEW / GLFW | Use Metal | Metal, MetalKit |
+| ❌ SDL | Use SwiftUI | SwiftUI + MTKView |
+| ❌ stb_image | Use native | ImageIO / MTKTextureLoader |
+| ❌ stb_image_write | Use native | CGImageDestination |
+| ❌ Cairo | Use native | Core Graphics |
+| ❌ Poco | Use native | Foundation / Network.framework |
+| ❌ Boost | Use std/native | C++17 std / Foundation |
+| ❌ FBX SDK / Assimp | Use native | Model I/O |
 
-### 4.2 ❌ OpenGL / GLEW / GLFW
-**Why**: Use Metal instead
-**Alternative**: Metal, MetalKit, MTKView
-
-### 4.3 ❌ SDL
-**Why**: Use SwiftUI + MTKView instead
-**Alternative**: SwiftUI, NSViewRepresentable, MTKView
-
-### 4.4 ❌ stb_image / stb_image_write
-**Why**: Use ImageIO / MTKTextureLoader instead
-**Alternative**: CGImageSource, CGImageDestination, MTKTextureLoader
-
-### 4.5 ❌ GLFW
-**Why**: Use SwiftUI instead
-**Alternative**: SwiftUI WindowGroup, MTKView
-
-### 4.6 ❌ Boost (except Boost.Filesystem if needed)
-**Why**: Use C++17 standard library or Apple frameworks
-**Alternative**: std::filesystem, Foundation
-
-### 4.7 ❌ FBX SDK / Assimp (for now)
-**Why**: Phase 0-12 focus on 2D/3D primitives only
-**Note**: May be reconsidered for advanced 3D model support
+**Exception**: stb_image_write may be used for EXR/HDR formats only.
 
 ---
 
-## 5. License Compliance
+## 7. License Compliance
 
-### 5.1 License Texts
+### 7.1 License Summary
 
-Full license texts for all dependencies must be included:
-```
-thirdparty/
-├── tess2/
-│   └── LICENSE.txt
-├── utf8cpp/
-│   └── LICENSE
-└── glm/
-    └── copying.txt
-```
+| Library | License | Commercial Use |
+|---------|---------|----------------|
+| tess2 | SGI FSL B | ✅ OK |
+| utf8-cpp | Boost | ✅ OK |
+| GLM | MIT | ✅ OK |
+| oscpack | MIT | ✅ OK |
+| nanosvg | Zlib | ✅ OK |
+| pugixml | MIT | ✅ OK |
+| Dear ImGui | MIT | ✅ OK |
+| OpenCV | Apache 2.0/BSD | ✅ OK |
 
-### 5.2 Attribution
+### 7.2 Forbidden Licenses
 
-Include attribution in:
-- `README.md` - Credits section
-- `LICENSE` file - Combined license file
-- About dialog (if GUI is added)
-
-### 5.3 Example Attribution
-
-```markdown
-## Third-Party Libraries
-
-oflike-metal uses the following open-source libraries:
-
-- **tess2** by Mikko Mononen - SGI Free Software License B
-- **utf8-cpp** by Nemanja Trifunovic - Boost Software License 1.0
-- **GLM** by G-Truc Creation - MIT License (transitional, will be removed)
-```
+- ❌ GPL (incompatible with App Store)
+- ❌ LGPL (linking restrictions)
+- ❌ AGPL (network restrictions)
+- ❌ Any copyleft license
 
 ---
 
-## 6. Adding New Dependencies
+## 8. Adding New Dependencies
 
-### 6.1 Approval Process
+### 8.1 Approval Checklist
 
 Before adding a new dependency:
 
-1. **Check if necessary**
-   - Can Apple frameworks solve this?
-   - Can we implement it ourselves (if small)?
-   - Is it really needed now, or can it wait?
-
-2. **License check**
-   - Must be permissive (MIT, BSD, Apache, Boost, etc.)
-   - No GPL/LGPL (incompatible with App Store)
-   - No copyleft restrictions
-
-3. **Integration check**
-   - Header-only preferred
-   - No complex build systems
-   - Compatible with CMake
-   - Works on macOS 11+
-
-4. **Documentation**
-   - Add to this file (THIRDPARTY.md)
-   - Document in IMPLEMENTATION.md
-   - Update CMakeLists.txt
-   - Copy license file
-
-### 6.2 Dependency Checklist
-
-- [ ] Checked Apple frameworks first
-- [ ] License is permissive
-- [ ] Added to `thirdparty/` directory
-- [ ] Updated THIRDPARTY.md
+- [ ] Check if Apple framework can solve this
+- [ ] License is permissive (MIT, BSD, Apache, Zlib, Boost)
+- [ ] No GPL/LGPL/AGPL
+- [ ] Header-only preferred
+- [ ] Compatible with CMake
+- [ ] Works on macOS 13+
+- [ ] Documented in THIRDPARTY.md
 - [ ] Updated CMakeLists.txt
-- [ ] Copied LICENSE file
-- [ ] Tested build
-- [ ] Documented usage
+- [ ] License file copied
 
----
+### 8.2 Decision Framework
 
-## 7. Dependency Management
-
-### 7.1 Version Pinning
-
-Pin dependency versions for stability:
-```cmake
-# CMakeLists.txt
-FetchContent_Declare(
-  tess2
-  GIT_REPOSITORY https://github.com/memononen/tess2.git
-  GIT_TAG        master  # TODO: Pin to specific commit
-)
 ```
-
-### 7.2 Updating Dependencies
-
-When updating:
-1. Test thoroughly
-2. Check for API changes
-3. Update version in this document
-4. Commit with clear message
-
-### 7.3 Removing Dependencies
-
-When removing (like GLM in Phase 18):
-1. Identify all usage
-2. Replace with alternative
-3. Remove from CMakeLists.txt
-4. Remove from thirdparty/
-5. Update this document
-6. Test all examples
-
----
-
-## 8. Build Integration
-
-### 8.1 CMake Configuration
-
-```cmake
-# thirdparty/CMakeLists.txt
-add_subdirectory(tess2)
-
-# utf8cpp is header-only
-add_library(utf8cpp INTERFACE)
-target_include_directories(utf8cpp INTERFACE
-    ${CMAKE_CURRENT_SOURCE_DIR}/utf8cpp/source)
-
-# GLM is header-only (transitional)
-add_library(glm INTERFACE)
-target_include_directories(glm INTERFACE
-    ${CMAKE_CURRENT_SOURCE_DIR}/glm)
-```
-
-### 8.2 Linking
-
-```cmake
-# Main CMakeLists.txt
-target_link_libraries(oflike-metal
-    PRIVATE
-        tess2
-        utf8cpp
-        glm  # Transitional
-)
+Need functionality?
+    │
+    ├─ Apple framework available? ──► Use Apple framework
+    │
+    ├─ Can implement in < 500 lines? ──► Implement ourselves
+    │
+    └─ Must use third-party? ──► Check license ──► Add with approval
 ```
 
 ---
 
-## 9. Future Considerations
+## 9. Directory Structure
 
-### 9.1 Potential Additions
-
-Libraries being considered for future phases:
-
-- **stb_truetype** (if Core Text proves insufficient)
-  - License: Public Domain / MIT
-  - Purpose: Alternative font rendering
-
-- **nanovg** (reference implementation)
-  - License: Zlib
-  - Purpose: Study vector graphics implementation
-
-- **Dear ImGui** (debug UI)
-  - License: MIT
-  - Purpose: Phase 16 debug overlay alternative
-
-### 9.2 Not Planned
-
-Libraries we explicitly decided against:
-
-- **Poco** - Too heavy, use Foundation
-- **Qt** - Wrong UI paradigm, use SwiftUI
-- **SFML** - Wrong graphics backend, use Metal
-- **Cinder** - Similar project, but we want oF API
-
----
-
-## 10. Support and Updates
-
-### 10.1 Maintenance
-
-Each dependency should be reviewed annually for:
-- Security updates
-- API improvements
-- Breaking changes
-- Continued maintenance
-
-### 10.2 Contact
-
-For questions about dependencies:
-- Check ARCHITECTURE.md first
-- Consult IMPLEMENTATION.md
-- Create GitHub issue if unsure
+```
+thirdparty/
+├── tess2/
+│   ├── Include/
+│   ├── Source/
+│   └── LICENSE.txt
+├── utf8cpp/
+│   ├── source/
+│   └── LICENSE
+├── glm/                    # Transitional
+│   ├── glm/
+│   └── copying.txt
+├── oscpack/
+│   ├── ip/
+│   ├── osc/
+│   └── LICENSE
+├── nanosvg/
+│   ├── src/
+│   └── LICENSE.txt
+├── pugixml/
+│   ├── src/
+│   └── LICENSE.md
+└── imgui/                  # Optional
+    ├── *.cpp
+    ├── *.h
+    ├── backends/
+    └── LICENSE.txt
+```
 
 ---
 
-## Summary
+## 10. Summary Table
 
 | Library | Purpose | License | Status |
 |---------|---------|---------|--------|
-| tess2 | Tessellation | SGI FSL B | Active |
-| utf8-cpp | UTF-8 handling | Boost | Active |
-| GLM | Math (temp) | MIT | Transitional (remove Phase 18) |
+| tess2 | Tessellation | SGI FSL B | ✅ Active |
+| utf8-cpp | UTF-8 handling | Boost | ✅ Active |
+| GLM | Math (temp) | MIT | ⚠️ Remove Phase 18 |
+| oscpack | OSC protocol | MIT | ✅ Active |
+| nanosvg | SVG parsing | Zlib | ✅ Active |
+| pugixml | XML parsing | MIT | ✅ Active |
+| Dear ImGui | Debug UI | MIT | ✅ Optional |
+| OpenCV | Computer vision | Apache/BSD | ✅ Optional |
 
-**Apple Frameworks**: Metal, MetalKit, Core Text, ImageIO, simd (preferred)
+**Primary Strategy**: Apple Frameworks First
 
-**Forbidden**: FreeType, OpenGL, SDL, GLFW, stb_image
+**Fallback**: Permissive-licensed, header-only libraries
+
+---
+
+## Appendix: Framework Availability by macOS Version
+
+| Framework | macOS 13 | macOS 14 | macOS 15 |
+|-----------|----------|----------|----------|
+| Metal 3 | ✅ | ✅ | ✅ |
+| MetalFX | ✅ | ✅ | ✅ |
+| Core ML 4+ | ✅ | ✅ | ✅ |
+| Vision | ✅ | ✅ | ✅ |
+| PHASE | ✅ | ✅ | ✅ |
+| Object Capture | ✅ | ✅ | ✅ |
+| VisionKit (macOS) | - | ✅ | ✅ |
+| Apple Intelligence | - | - | ✅ |

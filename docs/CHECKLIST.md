@@ -601,7 +601,7 @@
 - [x] 01_basics（基本描画）
 - [x] 02_shapes（図形描画）
 - [x] 03_color（色操作）
-- [ ] 04_image（画像読み込み）
+- [x] 04_image（画像読み込み）
 - [ ] 05_typography（フォント描画）
 - [ ] 06_3d_primitives（3Dプリミティブ）
 - [ ] 07_camera（カメラ操作）
@@ -641,36 +641,527 @@
 
 ---
 
+## Phase 19: ofxOsc
+
+**Dependencies**: oscpack (MIT)
+
+### 19.1 Core Classes
+- [ ] ofxOscMessage 実装
+- [ ] ofxOscBundle 実装
+- [ ] ofxOscSender 実装
+- [ ] ofxOscReceiver 実装
+
+### 19.2 Message Types
+- [ ] Int32 引数
+- [ ] Float 引数
+- [ ] String 引数
+- [ ] Blob 引数
+- [ ] Int64 / Double / Char / Bool
+
+### 19.3 Features
+- [ ] マルチキャスト対応
+- [ ] Bundle タイムスタンプ
+- [ ] エラーハンドリング
+
+### 19.4 Parameter Mapping
+- [ ] ofxOscParameterSync 実装
+- [ ] ofParameter との連携
+- [ ] 双方向同期
+
+### 19.5 Examples
+- [ ] osc_sender example
+- [ ] osc_receiver example
+- [ ] osc_parameter_sync example
+
+---
+
+## Phase 20: ofxGui
+
+**Dependencies**: SwiftUI (primary), Dear ImGui (optional)
+
+### 20.1 SwiftUI Implementation
+- [ ] OFLGuiPanel.swift 作成
+- [ ] C++ → Swift ブリッジ
+- [ ] パラメータバインディング
+
+### 20.2 Widgets
+- [ ] Slider (float, int)
+- [ ] Toggle (bool)
+- [ ] Button
+- [ ] Label
+- [ ] TextField
+- [ ] ColorPicker
+- [ ] Dropdown / Picker
+
+### 20.3 Layout
+- [ ] ofxGuiGroup 実装
+- [ ] ofxPanel 実装
+- [ ] ネスト対応
+- [ ] 折りたたみ
+
+### 20.4 Styling
+- [ ] .ultraThinMaterial 背景
+- [ ] ダークモード対応
+- [ ] カスタムカラー
+
+### 20.5 ImGui Backend (Optional)
+- [ ] Metal バックエンド統合
+- [ ] DEBUG ビルドのみ有効化
+
+### 20.6 Examples
+- [ ] gui_basic example
+- [ ] gui_groups example
+
+---
+
+## Phase 21: ofxXmlSettings
+
+**Dependencies**: pugixml (MIT)
+
+### 21.1 Core
+- [ ] ofxXmlSettings クラス実装
+- [ ] load() / save()
+- [ ] pushTag() / popTag()
+
+### 21.2 Value Types
+- [ ] getValue() - int, float, string
+- [ ] setValue() - int, float, string
+- [ ] getAttribute()
+- [ ] addTag() / removeTag()
+
+### 21.3 Navigation
+- [ ] getNumTags()
+- [ ] tagExists()
+- [ ] getCurrentTag()
+
+### 21.4 Examples
+- [ ] xml_settings example
+
+---
+
+## Phase 22: ofxSvg
+
+**Dependencies**: nanosvg (Zlib), Core Graphics
+
+### 22.1 Core
+- [ ] ofxSvg クラス実装
+- [ ] load() - nanosvg パース
+- [ ] getNumPaths()
+- [ ] getPathAt()
+
+### 22.2 Path Conversion
+- [ ] NSVGpath → ofPath 変換
+- [ ] 色・スタイル変換
+- [ ] 変換行列対応
+
+### 22.3 Rendering
+- [ ] draw()
+- [ ] 個別パス描画
+
+### 22.4 Examples
+- [ ] svg_loader example
+
+---
+
+## Phase 23: ofxNetwork
+
+**Dependencies**: Network.framework (Apple)
+
+### 23.1 TCP
+- [ ] ofxTcpClient 実装
+- [ ] ofxTcpServer 実装
+- [ ] 非同期接続
+- [ ] 送受信
+
+### 23.2 UDP
+- [ ] ofxUdpManager 実装
+- [ ] bind() / connect()
+- [ ] send() / receive()
+- [ ] マルチキャスト
+
+### 23.3 Features
+- [ ] 非ブロッキングモード
+- [ ] タイムアウト設定
+- [ ] エラーハンドリング
+
+### 23.4 Examples
+- [ ] tcp_client example
+- [ ] tcp_server example
+- [ ] udp_sender example
+- [ ] udp_receiver example
+
+---
+
+## Phase 24: ofxOpenCv
+
+**Dependencies**: Vision.framework (primary), OpenCV (optional)
+
+### 24.1 Vision.framework Implementation
+- [ ] 顔検出 (VNDetectFaceRectanglesRequest)
+- [ ] 人体検出 (VNDetectHumanRectanglesRequest)
+- [ ] テキスト検出 (VNRecognizeTextRequest)
+- [ ] バーコード検出
+
+### 24.2 Image Conversion
+- [ ] ofPixels → CVPixelBuffer
+- [ ] CVPixelBuffer → ofPixels
+- [ ] ofPixels → cv::Mat (optional)
+
+### 24.3 OpenCV Features (Optional)
+- [ ] ContourFinder
+- [ ] Optical Flow
+- [ ] Background Subtraction
+
+### 24.4 Wrapper Classes
+- [ ] ofxCv namespace
+- [ ] toCv() / toOf() 変換関数
+
+### 24.5 Examples
+- [ ] face_detection example
+- [ ] contour_finder example
+
+---
+
+## Phase 25: ofxSharp ⭐ (Priority: HIGH)
+
+**Dependencies**: Core ML, Metal, Neural Engine  
+**Reference**: https://github.com/apple/ml-sharp
+
+### 25.1 Core Classes
+- [ ] Sharp::Gaussian 構造体
+- [ ] Sharp::GaussianCloud クラス
+- [ ] Sharp::SharpModel クラス
+- [ ] Sharp::GaussianRenderer クラス
+
+### 25.2 Model Integration
+- [ ] PyTorch → Core ML 変換スクリプト
+- [ ] .mlmodelc バンドル
+- [ ] Neural Engine 最適化
+
+### 25.3 Inference
+- [ ] predict(ofPixels&)
+- [ ] predict(ofTexture&)
+- [ ] predictAsync()
+- [ ] バッチ推論
+
+### 25.4 Gaussian Cloud
+- [ ] PLY 読み込み / 書き出し
+- [ ] Metal Buffer 生成
+- [ ] 変換 (translate, rotate, scale)
+- [ ] フィルタリング
+
+### 25.5 Renderer
+- [ ] 深度ソート (GPU)
+- [ ] Alpha blending
+- [ ] Covariance → 2D projection
+- [ ] Anti-aliasing
+
+### 25.6 Scene Management
+- [ ] Sharp::SharpScene クラス
+- [ ] 複数オブジェクト管理
+- [ ] シーン保存 / 読み込み
+
+### 25.7 Camera Path
+- [ ] Sharp::CameraPath クラス
+- [ ] Orbit / Dolly / Spiral
+- [ ] キーフレーム補間
+
+### 25.8 Video Export
+- [ ] Sharp::VideoExporter クラス
+- [ ] H.265 / ProRes 出力
+- [ ] 進捗コールバック
+
+### 25.9 ofxSharp Wrapper
+- [ ] ofxSharp クラス実装
+- [ ] setup()
+- [ ] generateFromImage()
+- [ ] drawCloud()
+
+### 25.10 Examples
+- [ ] sharp_basic example
+- [ ] sharp_scene example
+- [ ] sharp_video_export example
+- [ ] sharp_realtime_camera example
+
+---
+
+## Phase 26: ofxNeuralEngine
+
+**Dependencies**: Core ML, Vision
+
+### 26.1 Image Classification
+- [ ] ImageClassifier クラス
+- [ ] load() / classify()
+- [ ] Top-K 結果
+
+### 26.2 Pose Estimation
+- [ ] PoseEstimator クラス
+- [ ] VNDetectHumanBodyPoseRequest 統合
+- [ ] スケルトン描画
+
+### 26.3 Depth Estimation
+- [ ] DepthEstimator クラス
+- [ ] estimate(ofPixels&)
+- [ ] GPU 直接処理
+
+### 26.4 Style Transfer
+- [ ] StyleTransfer クラス
+- [ ] load() / transfer()
+- [ ] GPU バージョン
+
+### 26.5 Person Segmentation
+- [ ] PersonSegmentation クラス
+- [ ] segment() - マスク生成
+
+### 26.6 Generic Model
+- [ ] GenericModel クラス
+- [ ] setInput() / predict() / getOutput()
+- [ ] 任意の Core ML モデル対応
+
+### 26.7 Examples
+- [ ] neural_classify example
+- [ ] neural_pose example
+- [ ] neural_depth example
+- [ ] neural_style example
+
+---
+
+## Phase 27: ofxMetalCompute
+
+**Dependencies**: Metal
+
+### 27.1 Core
+- [ ] ofxMetalCompute クラス
+- [ ] load() / loadFromSource()
+- [ ] dispatch() variants
+
+### 27.2 Buffer Management
+- [ ] setBuffer(index, ofBufferObject&)
+- [ ] setBuffer(index, vector<float>&)
+- [ ] readBuffer()
+
+### 27.3 Texture Support
+- [ ] setTexture(index, ofTexture&, write)
+- [ ] 読み書きテクスチャ
+
+### 27.4 Uniforms
+- [ ] setUniform(name, float)
+- [ ] setUniform(name, int)
+- [ ] setUniform(name, vec3/vec4)
+
+### 27.5 Synchronization
+- [ ] waitUntilCompleted()
+- [ ] 非同期実行
+
+### 27.6 Helpers
+- [ ] ofxComputeFilter クラス
+- [ ] blur / sobel / threshold
+
+### 27.7 Examples
+- [ ] compute_basic example
+- [ ] compute_particles example (100万パーティクル)
+- [ ] compute_image_filter example
+
+---
+
+## Phase 28: ofxMPS
+
+**Dependencies**: MetalPerformanceShaders.framework
+
+### 28.1 Image Filters
+- [ ] gaussianBlur()
+- [ ] boxBlur()
+- [ ] tentBlur()
+
+### 28.2 Edge Detection
+- [ ] sobel()
+- [ ] laplacian()
+- [ ] canny()
+
+### 28.3 Morphology
+- [ ] erode()
+- [ ] dilate()
+
+### 28.4 Color
+- [ ] colorConvert()
+- [ ] histogram()
+- [ ] histogramEqualization()
+
+### 28.5 Transform
+- [ ] scale()
+- [ ] lanczosScale()
+
+### 28.6 Compositing
+- [ ] add() / subtract() / multiply()
+
+### 28.7 Examples
+- [ ] mps_filters example
+- [ ] mps_histogram example
+
+---
+
+## Phase 29: ofxVideoToolbox
+
+**Dependencies**: VideoToolbox, AVFoundation
+
+### 29.1 Encoder
+- [ ] ofxVideoEncoder クラス
+- [ ] H.264 / H.265 対応
+- [ ] ProRes 422 / 4444 対応
+
+### 29.2 Settings
+- [ ] 解像度 (4K, 8K)
+- [ ] フレームレート
+- [ ] ビットレート
+- [ ] Hardware/Software 切り替え
+
+### 29.3 Input
+- [ ] addFrame(ofPixels&)
+- [ ] addFrame(ofTexture&) - Zero-copy
+
+### 29.4 Decoder
+- [ ] ofxVideoDecoder クラス
+- [ ] load() / seekTo()
+- [ ] getFrame()
+
+### 29.5 High-Res Player
+- [ ] ofxHighResVideoPlayer クラス
+- [ ] 4K/8K リアルタイム再生
+
+### 29.6 Examples
+- [ ] video_encode_h265 example
+- [ ] video_encode_prores example
+- [ ] video_decode example
+
+---
+
+## Phase 30: ofxSpatialAudio
+
+**Dependencies**: PHASE.framework
+
+### 30.1 Engine
+- [ ] ofxSpatialAudio クラス
+- [ ] setup() / update()
+
+### 30.2 Listener
+- [ ] setListenerPosition()
+- [ ] setListenerOrientation()
+
+### 30.3 Sources
+- [ ] Source クラス
+- [ ] load() / play() / stop()
+- [ ] setPosition() / setVelocity()
+- [ ] setDirectivity() / setRolloff()
+
+### 30.4 Environment
+- [ ] setReverb(preset)
+- [ ] setReverbFromMesh()
+
+### 30.5 Head Tracking
+- [ ] enableHeadTracking()
+- [ ] isHeadTrackingAvailable()
+- [ ] getHeadOrientation()
+
+### 30.6 Examples
+- [ ] spatial_audio_basic example
+- [ ] spatial_audio_3d example
+
+---
+
+## Phase 31: Additional Apple Native Addons
+
+### 31.1 ofxMetalFX
+- [ ] setup(inputW, inputH, outputW, outputH)
+- [ ] Spatial / Temporal モード
+- [ ] upscale()
+
+### 31.2 ofxUnifiedMemory
+- [ ] ofxUnifiedBuffer<T> テンプレート
+- [ ] allocate() / data()
+- [ ] getMetalBuffer()
+
+### 31.3 ofxLiveText
+- [ ] recognize(ofPixels&)
+- [ ] recognizeBarcodes()
+- [ ] setLanguages()
+
+### 31.4 ofxObjectCapture
+- [ ] processImages(folderPath)
+- [ ] getMesh() / getTexture()
+- [ ] exportUSDZ()
+
+---
+
+## Phase 32: Examples & Documentation
+
+### 32.1 Addon Examples
+- [ ] 全 addon の example 完成
+- [ ] README.md 各 addon
+
+### 32.2 Migration Guide
+- [ ] oF → oflike 移行ガイド
+- [ ] API 差分一覧
+
+### 32.3 API Documentation
+- [ ] Doxygen 設定
+- [ ] 全 public API ドキュメント
+
+---
+
 ## 進捗サマリー
 
-| Phase | 名称 | 状態 | 完了率 |
-|-------|------|------|--------|
-| 0 | プロジェクト基盤 | 完了 | 100% |
-| 1 | SwiftUI + Metal 基盤 | 完了 | 100% |
-| 2 | Core システム | 完了 | 100% |
-| 3 | 数学ライブラリ | 完了 | 100% |
-| 4 | レンダリング基盤 | 完了 | 100% |
-| 5 | 2D 描画 API | 完了 | 100% |
-| 6 | 色 | 完了 | 100% |
-| 7 | 画像・テクスチャ | 完了 | 100% |
-| 8 | 3D 描画 | 完了 | 100% |
-| 9 | カメラ | 完了 | 100% (24/24) |
-| 10 | ライティング | 完了 | 100% (23/23) |
-| 11 | FBO | 完了 | 100% (15/15) |
-| 12 | フォント | 完了 | 100% (10/10) |
-| 13 | イベントシステム | 完了 | 100% (17/17) |
-| 14 | ウィンドウ管理 | 完了 | 100% (9/9) |
-| 15 | ユーティリティ | 進行中 | 74% (17/23) |
-| 16 | デバッグ機能 | 完了 | 100% (12/12) |
-| 17 | サンプル・テスト | 進行中 | 20% (3/15) |
-| 18 | 最適化・仕上げ | 未着手 | 0% |
+### Core Framework (Phase 0-18)
+
+| Phase | 名称 | 完了率 |
+|-------|------|--------|
+| 0-16 | Core | 100% |
+| 17-18 | Samples & Polish | 27% |
+
+**Core 全体**: 94.2% 完了
+
+### Core Addons (Phase 19-24)
+
+| Phase | Addon | 完了率 |
+|-------|-------|--------|
+| 19 | ofxOsc | 0% |
+| 20 | ofxGui | 0% |
+| 21 | ofxXmlSettings | 0% |
+| 22 | ofxSvg | 0% |
+| 23 | ofxNetwork | 0% |
+| 24 | ofxOpenCv | 0% |
+
+**Core Addons 全体**: 0% 完了
+
+### Apple Native Addons (Phase 25-31)
+
+| Phase | Addon | Priority | 完了率 |
+|-------|-------|----------|--------|
+| 25 | **ofxSharp** | ⭐ HIGH | 0% |
+| 26 | ofxNeuralEngine | HIGH | 0% |
+| 27 | ofxMetalCompute | HIGH | 0% |
+| 28 | ofxMPS | MEDIUM | 0% |
+| 29 | ofxVideoToolbox | MEDIUM | 0% |
+| 30 | ofxSpatialAudio | MEDIUM | 0% |
+| 31 | Additional | LOW | 0% |
+
+**Apple Native Addons 全体**: 0% 完了
 
 ---
 
-**総タスク数**: 399 項目
-**完了**: 375 項目
-**全体進捗**: 94.0%
+## 優先順位
 
+### 最優先 (Phase 25)
+1. **ofxSharp** - Apple SHARP 3DGS統合
+
+### 高優先 (Phase 19, 26-27)
+2. **ofxOsc** - クリエイティブコーディング必須
+3. **ofxNeuralEngine** - ML推論
+4. **ofxMetalCompute** - GPU計算
+
+### 中優先 (Phase 20-24, 28-30)
+5. **ofxGui** - パラメータ調整
+6. **ofxMPS** - 画像処理
+7. **ofxVideoToolbox** - ビデオ出力
+8. その他
 ---
 
-次にどの Phase から着手しますか？Phase 0 → Phase 1 の順で進めることを推奨します。
