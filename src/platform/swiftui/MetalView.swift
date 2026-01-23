@@ -143,6 +143,25 @@ private class MouseTrackingMTKView: MTKView {
         let button = Int(event.buttonNumber)
         mouseEventReceiver?.mousePressed(x: Float(location.x), y: Float(location.y), button: button)
     }
+
+    override func mouseUp(with event: NSEvent) {
+        let location = convert(event.locationInWindow, from: nil)
+        // Left mouse button (0)
+        mouseEventReceiver?.mouseReleased(x: Float(location.x), y: Float(location.y), button: 0)
+    }
+
+    override func rightMouseUp(with event: NSEvent) {
+        let location = convert(event.locationInWindow, from: nil)
+        // Right mouse button (1)
+        mouseEventReceiver?.mouseReleased(x: Float(location.x), y: Float(location.y), button: 1)
+    }
+
+    override func otherMouseUp(with event: NSEvent) {
+        let location = convert(event.locationInWindow, from: nil)
+        // Middle or other button (2+)
+        let button = Int(event.buttonNumber)
+        mouseEventReceiver?.mouseReleased(x: Float(location.x), y: Float(location.y), button: button)
+    }
 }
 
 /// Protocol for receiving mouse events from MouseTrackingMTKView
@@ -150,6 +169,7 @@ protocol MouseEventReceiver: AnyObject {
     func mouseMoved(x: Float, y: Float)
     func mouseDragged(x: Float, y: Float, button: Int)
     func mousePressed(x: Float, y: Float, button: Int)
+    func mouseReleased(x: Float, y: Float, button: Int)
     func mouseEntered(x: Float, y: Float)
     func mouseExited(x: Float, y: Float)
 }
@@ -436,6 +456,11 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject, MouseEv
     func mousePressed(x: Float, y: Float, button: Int) {
         // Forward to C++ bridge
         bridge?.mousePressedX(x, y: y, button: Int32(button))
+    }
+
+    func mouseReleased(x: Float, y: Float, button: Int) {
+        // Forward to C++ bridge
+        bridge?.mouseReleasedX(x, y: y, button: Int32(button))
     }
 
     func mouseEntered(x: Float, y: Float) {

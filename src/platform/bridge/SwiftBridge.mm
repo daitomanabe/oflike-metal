@@ -174,9 +174,10 @@
             return;
         }
 
-        // TODO Phase 13: Forward to C++ event system
-        // engine_->mouseReleased((int)x, (int)y, button);
-        // app_->mouseReleased((int)x, (int)y, button);
+        // Phase 13.1: Forward to C++ app
+        if (testApp_) {
+            testApp_->mouseReleased((int)x, (int)y, button);
+        }
     }
 }
 
