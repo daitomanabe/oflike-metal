@@ -301,6 +301,41 @@ public:
         indices_.reserve(count);
     }
 
+    // ========================================================================
+    // Optimization (Phase 18.1)
+    // ========================================================================
+
+    /**
+     * Optimize the command list by batching consecutive similar commands.
+     * This reduces draw calls by merging commands with identical render state.
+     *
+     * Should be called before submitting to the renderer.
+     * Note: This modifies the command list in-place.
+     */
+    void optimize();
+
+    /**
+     * Sort commands to minimize state changes.
+     * Groups commands by texture, blend mode, and other state to reduce
+     * GPU pipeline stalls.
+     *
+     * Should be called before submitting to the renderer.
+     * Note: This may reorder commands (preserves relative order of state commands).
+     */
+    void sortCommands();
+
+    /**
+     * Get statistics about batching effectiveness.
+     * @return Number of commands that were batched together
+     */
+    size_t getBatchCount() const { return batchCount_; }
+
+    /**
+     * Get the number of commands before optimization.
+     * @return Original command count
+     */
+    size_t getOriginalCommandCount() const { return originalCommandCount_; }
+
 private:
     // Command buffer
     std::vector<DrawCommand> commands_;
@@ -311,6 +346,16 @@ private:
 
     // Index buffer (shared between 2D and 3D)
     std::vector<uint32_t> indices_;
+
+    // Optimization statistics
+    size_t batchCount_ = 0;
+    size_t originalCommandCount_ = 0;
+
+    // Helper methods for optimization
+    bool canBatch2D(const DrawCommand2D& a, const DrawCommand2D& b) const;
+    bool canBatch3D(const DrawCommand3D& a, const DrawCommand3D& b) const;
+    bool matricesEqual(const simd_float4x4& a, const simd_float4x4& b) const;
+    bool matricesEqual3x3(const simd_float3x3& a, const simd_float3x3& b) const;
 };
 
 } // namespace render

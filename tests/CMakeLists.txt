@@ -80,3 +80,25 @@ set_target_properties(performance_test PROPERTIES
 
 # Add performance test to CTest
 add_test(NAME PerformanceTests COMMAND performance_test)
+
+# Batching Tests (Phase 18.1)
+add_executable(batching_test
+    test_batching.cpp
+)
+
+target_include_directories(batching_test PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+)
+
+target_link_libraries(batching_test PRIVATE
+    oflike-metal
+)
+
+# Set C++ standard
+set_target_properties(batching_test PROPERTIES
+    CXX_STANDARD 20
+    CXX_STANDARD_REQUIRED YES
+)
+
+# Add batching test to CTest
+add_test(NAME BatchingTests COMMAND batching_test)
