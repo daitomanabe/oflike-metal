@@ -477,7 +477,7 @@
 - [x] drawString()
 - [x] drawStringAsShapes()
 - [x] getStringBoundingBox()
-- [ ] stringWidth() / stringHeight()
+- [x] stringWidth() / stringHeight()
 - [ ] getLineHeight() / setLineHeight()
 - [ ] getLetterSpacing() / setLetterSpacing()
 - [ ] getCharacterAsPoints()
@@ -657,7 +657,7 @@
 | 9 | カメラ | 完了 | 100% (24/24) |
 | 10 | ライティング | 完了 | 100% (23/23) |
 | 11 | FBO | 完了 | 100% (15/15) |
-| 12 | フォント | 進行中 | 50% (5/10) |
+| 12 | フォント | 進行中 | 60% (6/10) |
 | 13 | イベントシステム | 未着手 | 0% |
 | 14 | ウィンドウ管理 | 未着手 | 0% |
 | 15 | ユーティリティ | 未着手 | 0% |
@@ -668,8 +668,8 @@
 ---
 
 **総タスク数**: 399 項目
-**完了**: 305 項目
-**全体進捗**: 76.4%
+**完了**: 306 項目
+**全体進捗**: 76.7%
 
 ---
 
