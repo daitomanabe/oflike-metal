@@ -349,7 +349,7 @@
 - [x] addVertex() / addVertices()
 - [x] addNormal() / addNormals()
 - [x] addTexCoord() / addTexCoords()
-- [ ] addColor() / addColors()
+- [x] addColor() / addColors()
 - [ ] addIndex() / addIndices()
 - [ ] addTriangle()
 - [ ] setMode()
