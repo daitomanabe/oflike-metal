@@ -75,26 +75,26 @@
 - [x] メインループ管理
 
 ### 2.3 AppBase
-- [ ] ofBaseApp 互換クラス
-- [ ] setup() / update() / draw() / exit()
-- [ ] イベントコールバック（空実装）
+- [x] ofBaseApp 互換クラス
+- [x] setup() / update() / draw() / exit()
+- [x] イベントコールバック（空実装）
 
 ### 2.4 Time
-- [ ] ofGetElapsedTimef() 実装
-- [ ] ofGetElapsedTimeMillis() 実装
-- [ ] ofGetFrameNum() 実装
-- [ ] ofGetFrameRate() 実装
-- [ ] ofSetFrameRate() 実装
+- [x] ofGetElapsedTimef() 実装
+- [x] ofGetElapsedTimeMillis() 実装
+- [x] ofGetFrameNum() 実装
+- [x] ofGetFrameRate() 実装
+- [x] ofSetFrameRate() 実装
 
 ---
 
 ## Phase 3: 数学ライブラリ
 
 ### 3.1 基本型（simd ベース）
-- [ ] Types.h 作成（simd エイリアス）
-- [ ] float2 / float3 / float4
-- [ ] float2x2 / float3x3 / float4x4
-- [ ] quatf
+- [x] Types.h 作成（simd エイリアス）
+- [x] float2 / float3 / float4
+- [x] float2x2 / float3x3 / float4x4
+- [x] quatf
 
 ### 3.2 ofVec2f
 - [ ] コンストラクタ
@@ -647,8 +647,8 @@
 |-------|------|------|--------|
 | 0 | プロジェクト基盤 | 完了 | 100% |
 | 1 | SwiftUI + Metal 基盤 | 完了 | 100% |
-| 2 | Core システム | 進行中 | 50% |
-| 3 | 数学ライブラリ | 未着手 | 0% |
+| 2 | Core システム | 完了 | 100% |
+| 3 | 数学ライブラリ | 進行中 | 9% |
 | 4 | レンダリング基盤 | 未着手 | 0% |
 | 5 | 2D 描画 API | 未着手 | 0% |
 | 6 | 色 | 未着手 | 0% |
@@ -668,8 +668,8 @@
 ---
 
 **総タスク数**: 約 350 項目
-**完了**: 33 項目
-**全体進捗**: 9.4%
+**完了**: 37 項目
+**全体進捗**: 10.6%
 
 ---
 
