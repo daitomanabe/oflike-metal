@@ -83,6 +83,10 @@ struct MetalRenderer::Impl {
     bool createBuffers();
     bool createDepthStencilStates();
 
+    // Frame management
+    bool beginFrame();
+    bool endFrame();
+
     // Command execution
     bool executeCommand(const DrawCommand& cmd, const DrawList& drawList);
     bool executeDraw2D(const DrawCommand2D& cmd, const DrawList& drawList);
@@ -365,13 +369,13 @@ bool MetalRenderer::Impl::executeCommand(const DrawCommand& cmd, const DrawList&
             return executeDraw3D(cmd.draw3D, drawList);
 
         case CommandType::SetViewport:
-            return executeSetViewport(cmd.setViewport);
+            return executeSetViewport(cmd.viewport);
 
         case CommandType::SetScissor:
-            return executeSetScissor(cmd.setScissor);
+            return executeSetScissor(cmd.scissor);
 
         case CommandType::Clear:
-            return executeClear(cmd.setClear);
+            return executeClear(cmd.clear);
 
         case CommandType::SetRenderTarget:
             // TODO: Implement in Phase 11 (FBO)
@@ -446,21 +450,21 @@ bool MetalRenderer::Impl::executeClear(const SetClearCommand& cmd) {
         }
 
         // Configure clear operation
-        if (cmd.clear.clearColor) {
+        if (cmd.clearData.clearColor) {
             renderPass.colorAttachments[0].loadAction = MTLLoadActionClear;
             renderPass.colorAttachments[0].clearColor = MTLClearColorMake(
-                cmd.clear.color.x,
-                cmd.clear.color.y,
-                cmd.clear.color.z,
-                cmd.clear.color.w
+                cmd.clearData.color.x,
+                cmd.clearData.color.y,
+                cmd.clearData.color.z,
+                cmd.clearData.color.w
             );
         } else {
             renderPass.colorAttachments[0].loadAction = MTLLoadActionLoad;
         }
 
-        if (cmd.clear.clearDepth && renderPass.depthAttachment.texture) {
+        if (cmd.clearData.clearDepth && renderPass.depthAttachment.texture) {
             renderPass.depthAttachment.loadAction = MTLLoadActionClear;
-            renderPass.depthAttachment.clearDepth = cmd.clear.depth;
+            renderPass.depthAttachment.clearDepth = cmd.clearData.depth;
         }
 
         // Create new encoder with clear
@@ -619,10 +623,10 @@ void MetalRenderer::setScissorEnabled(bool enabled) {
 void MetalRenderer::clear(const simd_float4& color, bool clearColor,
                           bool clearDepth, float depth) {
     SetClearCommand cmd;
-    cmd.clear.color = color;
-    cmd.clear.clearColor = clearColor;
-    cmd.clear.clearDepth = clearDepth;
-    cmd.clear.depth = depth;
+    cmd.clearData.color = color;
+    cmd.clearData.clearColor = clearColor;
+    cmd.clearData.clearDepth = clearDepth;
+    cmd.clearData.depth = depth;
     impl_->executeClear(cmd);
 }
 

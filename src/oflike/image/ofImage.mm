@@ -6,7 +6,8 @@
 
 #include "ofImage.h"
 #include "../../core/Context.h"
-#include "../../utils/ofLog.h"
+#include "../../render/metal/MetalRenderer.h"
+#include "../utils/ofLog.h"
 #include <algorithm>
 
 namespace oflike {
@@ -91,30 +92,9 @@ bool ofImage::load(const std::string& fileName) {
         }
 
         // Strategy 1: Try MTKTextureLoader for direct GPU upload (fastest)
-        id<MTLDevice> device = (__bridge id<MTLDevice>)ctx().renderer().getDevice();
-        if (device && impl_->bUseTexture) {
-            MTKTextureLoader* loader = [[MTKTextureLoader alloc] initWithDevice:device];
-            NSDictionary* options = @{
-                MTKTextureLoaderOptionSRGB: @NO,
-                MTKTextureLoaderOptionGenerateMipmaps: @NO,
-                MTKTextureLoaderOptionOrigin: MTKTextureLoaderOriginTopLeft
-            };
-
-            NSError* error = nil;
-            id<MTLTexture> mtlTexture = [loader newTextureWithContentsOfURL:url
-                                                                    options:options
-                                                                      error:&error];
-
-            if (mtlTexture && !error) {
-                // Success! Now load pixels for CPU access
-                impl_->texture.clear();
-                // Set texture directly via native handle
-                // (We need to wrap the MTLTexture in our ofTexture)
-
-                // For now, fall through to ImageIO to get pixels
-                // In production, we'd optimize this path
-            }
-        }
+        // TODO: This requires accessing MetalRenderer's device directly
+        // For now, use ImageIO path below
+        // Future: Add MetalRenderer::getDevice() method or use renderer->loadTexture()
 
         // Strategy 2: Use ImageIO for CPU loading (always works)
         CGImageSourceRef imageSource = CGImageSourceCreateWithURL((__bridge CFURLRef)url, NULL);

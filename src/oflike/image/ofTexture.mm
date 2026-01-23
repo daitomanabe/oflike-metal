@@ -3,6 +3,7 @@
 #import "../../core/Context.h"
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
+#include <vector>
 
 namespace oflike {
 

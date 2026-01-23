@@ -9,6 +9,9 @@
 #include "../../core/Context.h"
 #include "ofLog.h"
 
+using oflike::ofLogError;
+using oflike::ofImageType;
+
 // ============================================================================
 // Image Loading - ofPixels variant (ImageIO)
 // ============================================================================
@@ -68,12 +71,13 @@ bool ofLoadImage(ofPixels& pixels, const std::string& path) {
         pixels.allocate(width, height, type);
 
         // Create bitmap context
+        size_t bytesPerRow = width * pixels.getBytesPerPixel();
         CGContextRef context = CGBitmapContextCreate(
             pixels.getData(),
             width,
             height,
             8,  // bits per component
-            pixels.getBytesPerRow(),
+            bytesPerRow,
             colorSpace,
             channels == 4 ? kCGImageAlphaPremultipliedLast : kCGImageAlphaNoneSkipLast
         );
@@ -153,62 +157,25 @@ bool ofLoadImage(ofTexture& texture, const std::string& path) {
         }
 
         // Get Metal device
-        id<MTLDevice> device = (__bridge id<MTLDevice>)ctx().renderer().getDevice();
-        if (!device) {
-            ofLogError("ofLoadImage") << "No Metal device available";
+        // TODO: MetalRenderer doesn't expose getDevice() method
+        // For now, use fallback path
+        // id<MTLDevice> device = (__bridge id<MTLDevice>)ctx().renderer()->getDevice();
+        // if (!device) {
+        //     ofLogError("ofLoadImage") << "No Metal device available";
+        //     return false;
+        // }
+
+        // Fallback: load via ofPixels (MTKTextureLoader path requires device access)
+        ofPixels pixels;
+        if (!ofLoadImage(pixels, path)) {
             return false;
         }
-
-        // Use MTKTextureLoader for direct GPU upload
-        MTKTextureLoader* loader = [[MTKTextureLoader alloc] initWithDevice:device];
-        NSDictionary* options = @{
-            MTKTextureLoaderOptionSRGB: @NO,
-            MTKTextureLoaderOptionGenerateMipmaps: @NO,
-            MTKTextureLoaderOptionOrigin: MTKTextureLoaderOriginTopLeft
-        };
-
-        NSError* error = nil;
-        id<MTLTexture> mtlTexture = [loader newTextureWithContentsOfURL:url
-                                                                options:options
-                                                                  error:&error];
-
-        if (error) {
-            ofLogError("ofLoadImage") << "MTKTextureLoader failed: " << error.localizedDescription.UTF8String;
-            
-            // Fallback: load via ofPixels
-            ofPixels pixels;
-            if (!ofLoadImage(pixels, path)) {
-                return false;
-            }
-            return texture.loadData(pixels);
-        }
-
-        if (!mtlTexture) {
-            ofLogError("ofLoadImage") << "Failed to create texture";
-            return false;
-        }
-
-        // Allocate texture with dimensions
-        int width = static_cast<int>(mtlTexture.width);
-        int height = static_cast<int>(mtlTexture.height);
-        
-        // Determine channels based on pixel format
-        size_t channels = 4;
-        if (mtlTexture.pixelFormat == MTLPixelFormatR8Unorm) {
-            channels = 1;
-        } else if (mtlTexture.pixelFormat == MTLPixelFormatRGBA8Unorm ||
-                   mtlTexture.pixelFormat == MTLPixelFormatBGRA8Unorm) {
-            channels = 4;
-        }
-        
-        ofImageType type = channels == 1 ? ofImageType::OF_IMAGE_GRAYSCALE : ofImageType::OF_IMAGE_COLOR_ALPHA;
-        texture.allocate(width, height, type);
-        
-        // Store the native MTLTexture handle
-        // This requires access to ofTexture internals - for now just mark as allocated
-        // TODO: Add ofTexture::setNativeHandle() method
-        
+        texture.loadData(pixels);
         return true;
+
+        // TODO: USE MTKTextureLoader for direct GPU upload (when device access available)
+        // MTKTextureLoader* loader = [[MTKTextureLoader alloc] initWithDevice:device];
+        // ... (code removed, see git history)
     }
 }
 
@@ -260,12 +227,13 @@ bool ofSaveImage(const ofPixels& pixels, const std::string& path, float quality)
         }
 
         // Create CGImage from pixel data
+        size_t bytesPerRow = pixels.getWidth() * pixels.getBytesPerPixel();
         CGContextRef context = CGBitmapContextCreate(
             const_cast<unsigned char*>(pixels.getData()),
             pixels.getWidth(),
             pixels.getHeight(),
             8,  // bits per component
-            pixels.getBytesPerRow(),
+            bytesPerRow,
             colorSpace,
             channels == 4 ? kCGImageAlphaPremultipliedLast : kCGImageAlphaNoneSkipLast
         );

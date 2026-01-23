@@ -38,9 +38,10 @@ void ofSetFrameRate(float targetRate);
 
 // Forward declarations
 namespace oflike {
-    class ofPixels;
-    class ofShortPixels;
-    class ofFloatPixels;
+    template<typename PixelType> class ofPixels_;
+    using ofPixels = ofPixels_<uint8_t>;
+    using ofShortPixels = ofPixels_<uint16_t>;
+    using ofFloatPixels = ofPixels_<float>;
     class ofTexture;
 }
 
