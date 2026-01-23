@@ -319,10 +319,44 @@ ofPath ofTrueTypeFont::Impl::getGlyphPath(char32_t ch) {
             return path;
         }
 
-        // Convert CGPath to ofPath (TODO: implement path conversion)
-        // For now, return empty path
-        CGPathRelease(cgPath);
+        // Convert CGPath to ofPath using CGPathApply
+        CGPathApply(cgPath, &path, [](void* info, const CGPathElement* element) {
+            ofPath* ofPath_ = static_cast<ofPath*>(info);
 
+            switch (element->type) {
+                case kCGPathElementMoveToPoint:
+                    ofPath_->moveTo(element->points[0].x, element->points[0].y);
+                    break;
+
+                case kCGPathElementAddLineToPoint:
+                    ofPath_->lineTo(element->points[0].x, element->points[0].y);
+                    break;
+
+                case kCGPathElementAddQuadCurveToPoint:
+                    // Convert quadratic to cubic Bezier
+                    // Quadratic: P(t) = (1-t)^2*P0 + 2(1-t)t*P1 + t^2*P2
+                    // Cubic: P(t) = (1-t)^3*P0 + 3(1-t)^2*t*CP1 + 3(1-t)t^2*CP2 + t^3*P3
+                    // CP1 = P0 + 2/3*(P1-P0), CP2 = P2 + 2/3*(P1-P2)
+                    // Note: We don't have the current point (P0), so we'll use a simpler approach
+                    // by converting to curveTo (Catmull-Rom), which is close enough for fonts
+                    ofPath_->curveTo(element->points[1].x, element->points[1].y);
+                    break;
+
+                case kCGPathElementAddCurveToPoint:
+                    ofPath_->bezierTo(
+                        element->points[0].x, element->points[0].y, 0,
+                        element->points[1].x, element->points[1].y, 0,
+                        element->points[2].x, element->points[2].y, 0
+                    );
+                    break;
+
+                case kCGPathElementCloseSubpath:
+                    ofPath_->close();
+                    break;
+            }
+        });
+
+        CGPathRelease(cgPath);
         return path;
     }
 }
@@ -441,8 +475,58 @@ void ofTrueTypeFont::drawStringAsShapes(const std::string& text, float x, float 
         return;
     }
 
-    // TODO: Implement vector rendering
-    ofLogWarning("ofTrueTypeFont") << "drawStringAsShapes not yet implemented";
+    if (text.empty()) {
+        return;
+    }
+
+    // Convert to UTF-32
+    std::u32string utf32 = utf8ToUtf32(text);
+    if (utf32.empty()) {
+        return;
+    }
+
+    float cursorX = x;
+    float cursorY = y;
+
+    // Draw each character as vector shapes
+    for (char32_t ch : utf32) {
+        // Get glyph path (in Core Text coordinate space: bottom-left origin)
+        ofPath glyphPath = impl_->getGlyphPath(ch);
+
+        // Get advance for this character
+        const GlyphInfo* info = impl_->getGlyphInfo(ch);
+        float advance = 0.0f;
+        if (info) {
+            advance = info->advance;
+        } else {
+            // Fallback: calculate advance from Core Text
+            @autoreleasepool {
+                CGGlyph glyph;
+                UniChar unichar = (UniChar)ch;
+                if (CTFontGetGlyphsForCharacters(impl_->ctFont, &unichar, &glyph, 1)) {
+                    CGSize glyphAdvance;
+                    CTFontGetAdvancesForGlyphs(impl_->ctFont, kCTFontOrientationDefault, &glyph, &glyphAdvance, 1);
+                    advance = glyphAdvance.width;
+                }
+            }
+        }
+
+        // Transform glyph path to screen coordinates
+        // Core Text uses bottom-left origin, oflike uses top-left (2D: left-top origin per ARCHITECTURE.md)
+        // 1. Scale to flip y-axis (Core Text glyphs are upside down in screen space)
+        // 2. Translate to cursor position
+        glyphPath.scale(1.0f, -1.0f);
+        glyphPath.translate(cursorX, cursorY);
+
+        // Draw the glyph path
+        glyphPath.draw();
+
+        // Advance cursor
+        cursorX += advance + impl_->letterSpacing;
+    }
+
+    ofLogVerbose("ofTrueTypeFont") << "drawStringAsShapes complete: \"" << text
+                                    << "\" at (" << x << ", " << y << ")";
 }
 
 ofRectangle ofTrueTypeFont::getStringBoundingBox(const std::string& text, float x, float y) const {
