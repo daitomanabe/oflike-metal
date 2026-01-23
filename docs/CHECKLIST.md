@@ -286,12 +286,12 @@
 ## Phase 7: 画像・テクスチャ
 
 ### 7.1 ofPixels
-- [ ] allocate()
-- [ ] setColor() / getColor()
-- [ ] getData()
-- [ ] getWidth() / getHeight()
-- [ ] getNumChannels() / getBytesPerPixel()
-- [ ] setFromPixels() / setFromExternalPixels()
+- [x] allocate()
+- [x] setColor() / getColor()
+- [x] getData()
+- [x] getWidth() / getHeight()
+- [x] getNumChannels() / getBytesPerPixel()
+- [x] setFromPixels() / setFromExternalPixels()
 
 ### 7.2 ofTexture
 - [ ] allocate()
@@ -652,7 +652,7 @@
 | 4 | レンダリング基盤 | 完了 | 100% |
 | 5 | 2D 描画 API | 完了 | 100% |
 | 6 | 色 | 完了 | 100% |
-| 7 | 画像・テクスチャ | 未着手 | 0% |
+| 7 | 画像・テクスチャ | 進行中 | 20% |
 | 8 | 3D 描画 | 未着手 | 0% |
 | 9 | カメラ | 未着手 | 0% |
 | 10 | ライティング | 未着手 | 0% |
@@ -668,8 +668,8 @@
 ---
 
 **総タスク数**: 約 350 項目
-**完了**: 159 項目
-**全体進捗**: 45.4%
+**完了**: 165 項目
+**全体進捗**: 47.1%
 
 ---
 
