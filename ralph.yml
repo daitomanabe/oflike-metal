@@ -1,17 +1,37 @@
 # oflike-metal Development Configuration
 #
-# openFrameworks API ported to macOS Metal
-# ドキュメント駆動開発: docs/ が設計の真実
+# SwiftUI + Metal で openFrameworks を再実装
+# チェックリスト駆動開発: CHECKLIST.md の [ ] を [x] に変えていく
+#
+# Flow:
+#   Builder → Confessor → Committer → Handler → (repeat)
+#   - Builder: タスク実装 + CHECKLIST更新
+#   - Confessor: ARCHITECTURE準拠チェック
+#   - Committer: git commit + push (GitHubで進捗確認可能)
+#   - Handler: 次のタスク選定
 #
 # Usage:
 #   cd /path/to/oflike_metal_skeleton
-#   ralph run -c ralph.yml -p "docs/INDEX.md"
+#   ralph run -c ralph.yml -p "docs/CHECKLIST.md"
+#
+# Examples:
+#   # Phase別に作業:
+#   ralph run -c ralph.yml -p "Phase 1: SwiftUI + Metal 基盤を実装"
+#
+#   # 特定タスクを実行:
+#   ralph run -c ralph.yml -p "ofDrawCircle() を実装"
+#
+#   # 次のタスクを自動選択:
+#   ralph run -c ralph.yml -p "docs/CHECKLIST.md の次のタスクを実装"
+#
+# GitHub Progress:
+#   各タスク完了後に自動でpushされるので、リモートで進捗確認可能
 
 event_loop:
-  prompt_file: "docs/INDEX.md"
+  prompt_file: "PROMPT.md"
   completion_promise: "LOOP_COMPLETE"
   max_iterations: 1000
-  max_runtime_seconds: 28800  # 8 hours
+  max_runtime_seconds: 14400  # 4 hours
   checkpoint_interval: 5
   starting_event: "build.task"
 
@@ -21,136 +41,105 @@ cli:
 core:
   specs_dir: "./docs/"
   guardrails:
-    # === ドキュメント駆動 ===
-    - "docs/INDEX.md を最初に読む - 全体構造を把握"
-    - "docs/ARCHITECTURE.md の禁止事項は絶対 - 例外なし"
-    - "docs/IMPLEMENTATION.md で進捗確認 - 次のPhaseを特定"
-    - "docs/api/*.md に設計がある - 実装前に必ず確認"
-    - "docs/metal/*.md でMetal詳細を確認"
-    # === 絶対禁止 (ARCHITECTURE.md より) ===
-    - "❌ FreeType禁止 → Core Text使用"
-    - "❌ stb_image禁止 → ImageIO/MTKTextureLoader使用"
-    - "❌ OpenGL禁止 → Metal使用"
-    - "❌ SDL/GLFW禁止 → Cocoa/AppKit使用"
-    - "❌ 外部SIMDライブラリ禁止 → Accelerate使用"
-    # === 必須フレームワーク ===
-    - "✅ Metal / MetalKit - GPU描画"
-    - "✅ Core Text - フォント"
-    - "✅ ImageIO / MTKTextureLoader - 画像読み込み"
-    - "✅ Core Graphics - パス、ビットマップ"
-    - "✅ Cocoa - ウィンドウ、イベント"
-    # === openFrameworks互換 ===
-    - "oF APIシグネチャを維持 - 内部はMetal最適化"
-    - "GL定数は内部でMetalに変換"
+    # === チェックリスト駆動 ===
+    - "docs/CHECKLIST.md の [ ] を見つけて実装 → [x] に更新"
+    - "Phase 0 → Phase 1 → ... の順に進める"
+    - "1タスク完了ごとに CHECKLIST.md を更新"
+    # === ARCHITECTURE.md 絶対ルール ===
+    - "❌ FreeType → Core Text"
+    - "❌ OpenGL → Metal"
+    - "❌ SDL/GLFW → SwiftUI + MTKView"
+    - "❌ stb_image → ImageIO / MTKTextureLoader"
+    - "❌ AppKit直接使用 → SwiftUI"
+    - "❌ GLM (新規コード) → simd"
+    # === 4つの柱 ===
+    - "✅ SwiftUI - ウィンドウ、イベント、UI"
+    - "✅ Metal - GPUレンダリング"
+    - "✅ C++記述 - ユーザーコードはC++"
+    - "✅ oF API互換 - openFrameworksと同じAPI"
+    # === 実装パターン ===
+    - "pImplパターン - パブリックヘッダーは純粋C++ (.h)"
+    - "Objective-C++ - 実装ファイルのみ (.mm)"
+    - "@autoreleasepool - ObjCオブジェクト生成時は必須"
+    # === Git ワークフロー ===
+    - "タスク完了ごとにコミット + GitHubにpush"
+    - "Conventional Commits形式: feat(phase-X): description"
+    - "CHECKLIST.md の更新も必ずコミットに含める"
 
 hats:
   builder:
     name: "🔨 Builder"
-    description: "oFソースを読み、ARCHITECTURE.mdに従ってMetal版を実装。"
+    description: "CHECKLIST.mdの次の[ ]タスクを実装し[x]に更新"
     triggers: ["build.task"]
     publishes: ["build.done", "build.blocked"]
     default_publishes: "build.done"
     instructions: |
       ## BUILDER PHASE
 
-      oFソースを読み → ARCHITECTURE.mdに従い → Metal版を実装
+      CHECKLIST.md のタスクを1つずつ実装する。
 
-      ### ⚠️ 移植ワークフロー (毎回必ず実行)
+      ### ⚠️ 毎回必ず実行するワークフロー
 
-      **Step 1: IMPLEMENTATION.md で次のタスクを確認**
+      **Step 1: CHECKLIST.md を読んで次の [ ] を見つける**
       ```bash
-      cat docs/IMPLEMENTATION.md | head -100
+      cat docs/CHECKLIST.md
       ```
-      → 次の ⬜ 未実装 を特定
+      → 最初に見つかった `- [ ]` がターゲット
+      → Phase順に進める (Phase 0 → 1 → 2 → ...)
 
-      **Step 2: oFオリジナルソースを読む (最重要)**
-      ```bash
-      # IMPLEMENTATION.md で特定した ⬜ ファイルのoFソースを読む
-      # パターン: references/of_v0.12.1_osx_release/libs/openFrameworks/<category>/<file>
-      #
-      # 例:
-      #   3d/of3dUtils.h → cat references/.../3d/of3dUtils.h
-      #   math/ofMath.h → cat references/.../math/ofMath.h
-      #   utils/ofUtils.h → cat references/.../utils/ofUtils.h
-      #   app/ofBaseApp.h → cat references/.../app/ofBaseApp.h
-      #
-      cat references/of_v0.12.1_osx_release/libs/openFrameworks/<category>/<file>.h
-      cat references/of_v0.12.1_osx_release/libs/openFrameworks/<category>/<file>.cpp
-      ```
-      → APIシグネチャ、実装ロジックを理解
-      → IMPLEMENTATION.md の「移植先」カラムを見て、どこに実装するか確認
-
-      **Step 3: ARCHITECTURE.md で禁止事項を確認**
+      **Step 2: ARCHITECTURE.md を読んで禁止事項を確認**
       ```bash
       cat docs/ARCHITECTURE.md
       ```
-      → oFソースで使われている禁止ライブラリを特定し、代替を決定:
-      | oFで使用 | Metal版で使用 |
-      |----------|---------------|
-      | OpenGL (gl*, GL_*) | Metal |
-      | FreeType | Core Text |
-      | stb_image | ImageIO / MTKTextureLoader |
-      | GLFW/SDL | Cocoa / AppKit |
+      確認ポイント:
+      - 禁止ライブラリ (FreeType, OpenGL, SDL, stb_image, AppKit)
+      - 4つの柱 (SwiftUI, Metal, C++, oF API互換)
+      - 実装パターン (pImpl, @autoreleasepool)
+      - 座標系 (2D: 左上原点, 3D: 右手系)
 
-      **Step 4: docs/api/*.md を確認/作成**
+      **Step 3: 実装**
+      ディレクトリ構造に従う:
+      ```
+      src/
+      ├── core/           # Engine, AppBase, Context
+      ├── math/           # Types.h (simd), ofVec*, ofMatrix*
+      ├── platform/
+      │   ├── swiftui/    # App.swift, MetalView.swift
+      │   └── bridge/     # SwiftBridge.h/.mm
+      ├── render/
+      │   ├── DrawList, DrawCommand, RenderTypes
+      │   └── metal/      # MetalRenderer, MetalTexture
+      └── oflike/
+          ├── app/        # ofBaseApp, ofAppRunner
+          ├── graphics/   # ofGraphics, ofPath, ofTrueTypeFont
+          ├── 3d/         # ofMesh, ofCamera, of3dPrimitive
+          ├── image/      # ofTexture, ofPixels, ofImage
+          ├── lighting/   # ofLight, ofMaterial
+          ├── types/      # ofColor, ofRectangle
+          └── utils/      # ofUtils, ofLog
+      ```
+
+      **Step 4: ビルド確認**
       ```bash
-      # IMPLEMENTATION.md の「API設計ドキュメント」セクションを確認
-      # 該当カテゴリの設計ドキュメントが ⬜ なら先に作成
-      #
-      # 例: math/ を移植する場合
-      #   → docs/api/MATH.md があるか確認
-      #   → なければ作成してから実装
-      #
-      # 既存: CORE.md, GRAPHICS_2D.md, GRAPHICS_3D.md, IMAGE.md,
-      #       LIGHTING.md, MESH.md, TYPOGRAPHY.md, COLOR.md, MATH.md
-      # 未作成: APP.md, EVENTS.md, UTILS.md, FBO.md, SOUND.md, VIDEO.md,
-      #         COMMUNICATION.md, TYPES.md
-      cat docs/api/<NAME>.md  # 既存なら読む
-      ```
-
-      **Step 5: 実装**
-      - oFのAPIシグネチャを維持
-      - 内部実装はMetal/macOSネイティブに置き換え
-      - パブリックヘッダーは純粋C++ (.h)
-      - Objective-C必要なら実装ファイルは .mm
-
-      **Step 6: IMPLEMENTATION.md を更新**
-      - ⬜ → ✅ に変更
-
-      ### oFソースディレクトリ構造
-      ```
-      references/of_v0.12.1_osx_release/libs/openFrameworks/
-      ├── 3d/           # ofNode, ofCamera, ofMesh, of3dPrimitives
-      ├── app/          # ofBaseApp, ofAppRunner
-      ├── communication/# ofSerial, ofArduino
-      ├── events/       # ofEvent, ofEvents
-      ├── gl/           # ofTexture, ofFbo, ofShader, ofLight
-      ├── graphics/     # ofGraphics, ofPath, ofTrueTypeFont, ofImage
-      ├── math/         # ofVec*, ofMatrix*, ofMath
-      ├── sound/        # ofSoundPlayer, ofSoundStream
-      ├── types/        # ofColor, ofRectangle, ofParameter
-      ├── utils/        # ofUtils, ofFileUtils, ofLog
-      └── video/        # ofVideoPlayer, ofVideoGrabber
-      ```
-
-      ### Before Starting
-      1. `ralph tools task list` で open tasks 確認
-      2. なければ IMPLEMENTATION.md を読んで最初の ⬜ を見つける
-      3. `ralph tools task add "Port: <category>/<file>.h" -p 1`
-         - category: 3d, app, math, utils, graphics, gl, events, etc.
-         - file: IMPLEMENTATION.md の「ファイル」カラムの値
-
-      ### Backpressure
-      ```bash
+      # Xcode プロジェクトの場合
+      xcodebuild -scheme oflike-metal build 2>&1 | head -50
+      # または CMake
       cd build && cmake .. && make -j8 2>&1 | head -100
       ```
 
+      **Step 5: CHECKLIST.md を更新**
+      完了したタスクを `- [ ]` → `- [x]` に変更
+
+      ### Before Starting
+      1. `ralph tools task list` で open tasks 確認
+      2. なければ CHECKLIST.md から次の [ ] を選択
+      3. `ralph tools task add "Phase X.Y: <タスク名>" -p 1`
+
       ### 完了時
-      1. docs/IMPLEMENTATION.md を更新:
-         - 該当ファイルのステータスを ⬜ → ✅
-         - API設計ドキュメントを作成した場合、そのチェックリストも ✅
-      2. `ralph tools task close <id>`
-      3. `ralph emit "build.done" "ported: <API名> from oF, updated: IMPLEMENTATION.md"`
+      1. docs/CHECKLIST.md の該当項目を `[x]` に更新
+      2. 進捗サマリーの完了率も更新
+      3. `ralph tools task close <id>`
+      4. `ralph emit "build.done" "completed: <タスク名>"`
 
       ### ブロック時
       ```bash
@@ -159,128 +148,227 @@ hats:
 
   confessor:
     name: "🔍 Confessor"
-    description: "oF互換性、ARCHITECTURE.md準拠、ドキュメント整合性を監査。"
+    description: "ARCHITECTURE.md準拠と実装品質を監査"
     triggers: ["build.done"]
     publishes: ["confession.clean", "confession.issues_found"]
+    default_publishes: "confession.clean"
     instructions: |
       ## CONFESSION PHASE
 
-      移植の品質を監査する。
+      実装がARCHITECTURE.mdに準拠しているか監査する。
 
-      ### ⚠️ チェックワークフロー (毎回実行)
+      ### ⚠️ 毎回必ず実行するチェック
 
-      **Step 1: oFオリジナルと比較**
-      ```bash
-      # 移植されたAPIのoFオリジナルを読む
-      cat references/of_v0.12.1_osx_release/libs/openFrameworks/<category>/<file>.h
-      ```
-      → APIシグネチャが一致しているか確認
-
-      **Step 2: ARCHITECTURE.md 違反チェック**
+      **Step 1: ARCHITECTURE.md を読む**
       ```bash
       cat docs/ARCHITECTURE.md
       ```
 
-      **禁止ライブラリが混入していないか grep:**
+      **Step 2: 禁止ライブラリ検出**
       ```bash
-      grep -r "FreeType\|freetype" src/
-      grep -r "stb_image\|STB_IMAGE" src/
-      grep -r "glBegin\|glEnd\|GL_\|glGen\|glBind" src/
-      grep -r "SDL_\|GLFW" src/
+      # FreeType
+      grep -r "FT_\|freetype\|FreeType" src/ --include="*.h" --include="*.cpp" --include="*.mm"
+      # OpenGL
+      grep -r "glBegin\|glEnd\|GL_\|glGen\|glBind\|#include.*gl\.h" src/
+      # SDL/GLFW
+      grep -r "SDL_\|GLFW\|glfwInit" src/
+      # stb_image
+      grep -r "stb_image\|STB_IMAGE\|stbi_" src/
+      # AppKit直接使用 (許可されるのはMTKViewのみ)
+      grep -r "NSWindow\|NSView\|NSEvent\|NSResponder" src/ --include="*.swift"
+      # GLM (新規コードでは非推奨)
+      grep -r "glm::" src/ --include="*.h" --include="*.cpp"
       ```
-      → ヒットしたら即 `confession.issues_found`
+      → ヒットしたら `confession.issues_found`
 
-      **Step 3: IMPLEMENTATION.md 更新確認**
+      **Step 3: 実装パターン確認**
+      - パブリックヘッダー (.h) に Objective-C 型がないか
+      - pImpl パターンが使われているか
+      - @autoreleasepool が適切に使われているか
+
+      **Step 4: oF API互換性確認**
+      - 関数シグネチャがoFと一致しているか
+      - 座標系が正しいか (2D: 左上原点, 3D: 右手系)
+
+      **Step 5: CHECKLIST.md 更新確認**
       ```bash
-      cat docs/IMPLEMENTATION.md
+      cat docs/CHECKLIST.md
       ```
-      → 移植したファイルが ⬜ → ✅ になっているか
-
-      ### oF互換性チェック
-      1. **APIシグネチャ一致?**
-         - 関数名、引数、戻り値がoFと同じか
-         - デフォルト引数も一致か
-      2. **振る舞い互換?**
-         - 座標系 (左上原点, +x右, +y下)
-         - 単位 (points vs pixels)
-      3. **パブリックヘッダー純粋C++?**
-         - .h にObjective-C型 (id, NS*, @) がないか
+      → 完了したタスクが [x] になっているか
 
       ### ConfessionReport
       ```bash
-      ralph tools memory add "confession: oF-compat=<API名>, match=Yes|No, diff=<詳細>" -t context --tags confession
-      ralph tools memory add "confession: arch-violation=None|<詳細>" -t context --tags confession
-      ralph tools memory add "confession: impl-md-updated=Yes|No" -t context --tags confession
+      ralph tools memory add "confession: arch-violation=<None|詳細>" -t context --tags confession
+      ralph tools memory add "confession: checklist-updated=<Yes|No>" -t context --tags confession
+      ralph tools memory add "confession: oF-compat=<Yes|No|差異詳細>" -t context --tags confession
       ```
 
       ### Publish
       - ARCHITECTURE違反 → 即 `confession.issues_found`
-      - oF API不一致 → `confession.issues_found`
-      - IMPLEMENTATION.md 未更新 → `confession.issues_found`
-      - 問題なし AND confidence >= 80 → `confession.clean`
+      - CHECKLIST.md未更新 → `confession.issues_found`
+      - 問題なし → `confession.clean`
+
+  committer:
+    name: "📦 Committer"
+    description: "変更をコミットしてGitHubにpush。開発進捗をリモートで確認可能に。"
+    triggers: ["confession.clean"]
+    publishes: ["commit.done", "commit.failed"]
+    default_publishes: "commit.done"
+    instructions: |
+      ## COMMITTER PHASE
+
+      実装が承認されたので、変更をコミットしてGitHubにpushする。
+
+      ### ⚠️ 毎回必ず実行するワークフロー
+
+      **Step 1: 変更内容を確認**
+      ```bash
+      git status
+      git diff --stat
+      ```
+
+      **Step 2: 変更をステージング**
+      ```bash
+      # 全ての変更をステージング
+      git add -A
+
+      # または特定のファイルのみ
+      git add src/ docs/CHECKLIST.md
+      ```
+
+      **Step 3: コミットメッセージ作成**
+      Conventional Commits 形式:
+      ```
+      <type>(<scope>): <description>
+
+      <body>
+
+      🤖 Auto-committed by ralph-orchestrator
+      ```
+
+      **Types:**
+      - `feat`: 新機能 (Phase X.Y の新規実装)
+      - `fix`: バグ修正
+      - `refactor`: リファクタリング
+      - `docs`: ドキュメント更新
+      - `chore`: その他
+
+      **Scope:** Phase番号 or コンポーネント名
+      - `phase-0`, `phase-1`, `swiftui`, `metal`, `oflike`, etc.
+
+      **例:**
+      ```bash
+      git commit -m "feat(phase-1): implement MTKView integration
+
+      - Add MetalView.swift with NSViewRepresentable
+      - Implement MTKViewDelegate for frame loop
+      - Update CHECKLIST.md progress
+
+      🤖 Auto-committed by ralph-orchestrator"
+      ```
+
+      **Step 4: GitHubにpush**
+      ```bash
+      git push origin main
+      ```
+      → push失敗時はエラー内容を確認
+
+      **Step 5: push成功を確認**
+      ```bash
+      git log --oneline -1
+      git remote -v
+      ```
+
+      ### コミットメッセージのガイドライン
+      - CHECKLIST.md のタスク名を含める
+      - 実装した内容を箇条書きで記載
+      - Phase番号を明記
+
+      ### 完了時
+      ```bash
+      ralph emit "commit.done" "pushed: <commit message summary>"
+      ```
+
+      ### 失敗時
+      ```bash
+      ralph emit "commit.failed" "error: <what went wrong>"
+      ```
+      → Handler が修正タスクを作成
 
   handler:
     name: "⚖️ Handler"
-    description: "次のPhase/タスクを決定。IMPLEMENTATION.mdを参照。"
-    triggers: ["confession.issues_found", "confession.clean"]
+    description: "次のタスクを決定。CHECKLIST.mdを参照。"
+    triggers: ["confession.issues_found", "commit.done", "commit.failed"]
     publishes: ["build.task", "escalate.human"]
+    default_publishes: "build.task"
     instructions: |
       ## HANDLER PHASE
 
-      ### ⚠️ 最初に必ず IMPLEMENTATION.md を読む (毎回実行)
+      ### ⚠️ 最初に CHECKLIST.md を読む
       ```bash
-      cat docs/IMPLEMENTATION.md
+      cat docs/CHECKLIST.md
       ```
-      → 現在のPhase完了状況と次の ⬜ を特定
 
       ### confession.issues_found の場合
       1. 問題を検証
       2. 問題が実在:
-         - 軽微: `ralph tools task add "Fix: <issue>" -p 1` → `build.task`
-         - 重大 (ARCHITECTURE違反): `escalate.human`
-      3. 誤検知: `escalate.human`
+         - ARCHITECTURE違反: 修正タスク作成
+         - CHECKLIST未更新: 更新タスク作成
+         ```bash
+         ralph tools task add "Fix: <issue>" -p 1
+         ralph emit "build.task" "fix needed: <summary>"
+         ```
+      3. 重大な設計違反: `escalate.human`
 
-      ### confession.clean の場合
+      ### commit.failed の場合
+      1. エラー内容を確認
+      2. 修正タスクを作成:
+         ```bash
+         ralph tools task add "Fix git: <issue>" -p 1
+         ralph emit "build.task" "git fix needed: <summary>"
+         ```
+      3. リモート設定問題など重大な場合: `escalate.human`
 
-      **IMPLEMENTATION.md の ⬜ を見て次のタスクを決定:**
+      ### commit.done の場合 (成功パス)
 
-      実装フェーズ (IMPLEMENTATION.mdより):
-      - Phase 1-5: ✅ 完了
-      - Phase 6: Math拡張 (ofMatrix, ofQuaternion, ofMath)
-      - Phase 7: ユーティリティ (ofUtils, ofFileUtils, ofLog)
-      - Phase 8: イベントシステム (ofEvent, ofEvents)
-      - Phase 9: アプリケーション基盤 (ofBaseApp, ofAppRunner)
-      - Phase 10: FBO・シェーダー (ofFbo, ofShader, ofVbo)
-      - Phase 11: 高度なグラフィックス (ofImage, ofTessellator)
-      - Phase 12: サウンド (ofSoundPlayer, ofSoundStream)
-      - Phase 13: ビデオ (ofVideoPlayer, ofVideoGrabber)
-      - Phase 14: 通信 (ofSerial, ofArduino)
-      - Phase 15: 拡張型 (ofParameter)
+      **CHECKLIST.md から次の [ ] を見つける:**
+
+      Phase順に進める:
+      - Phase 0: プロジェクト基盤
+      - Phase 1: SwiftUI + Metal 基盤
+      - Phase 2: Core システム
+      - Phase 3: 数学ライブラリ
+      - Phase 4: レンダリング基盤
+      - Phase 5: 2D 描画 API
+      - Phase 6: 色
+      - Phase 7: 画像・テクスチャ
+      - Phase 8: 3D 描画
+      - Phase 9: カメラ
+      - Phase 10: ライティング
+      - Phase 11: FBO
+      - Phase 12: フォント
+      - Phase 13: イベントシステム
+      - Phase 14: ウィンドウ管理
+      - Phase 15: ユーティリティ
+      - Phase 16: デバッグ機能
+      - Phase 17: サンプル・テスト
+      - Phase 18: 最適化・仕上げ
 
       ### 次のタスク作成
       ```bash
-      # IMPLEMENTATION.md を読んで、最初に見つかった ⬜ をタスクにする
-      # 例:
-      #   ⬜ math/ofMath.h → ralph tools task add "Port: math/ofMath.h" -p 1
-      #   ⬜ utils/ofUtils.h → ralph tools task add "Port: utils/ofUtils.h" -p 1
-      #   ⬜ app/ofBaseApp.h → ralph tools task add "Port: app/ofBaseApp.h" -p 1
-      #
-      # タスク名にoFソースパスを含める:
-      ralph tools task add "Port: <category>/<file>.h from references/of_v0.12.1_osx_release/libs/openFrameworks/" -p 1
-      ralph emit "build.task" "next: <file> from oF <category>/"
+      # CHECKLIST.md から最初の [ ] を見つけてタスク作成
+      ralph tools task add "Phase X.Y: <タスク名>" -p 1
+      ralph emit "build.task" "next: <タスク名>"
       ```
-
-      **重要:** IMPLEMENTATION.md の上から順に ⬜ を探し、最初に見つかったものを選ぶ。
-      特定のカテゴリに固執しない。
 
       ### 進捗記録
       ```bash
-      ralph tools memory add "ported: <API名>, next: <次のAPI>" -t pattern --tags progress
+      ralph tools memory add "completed: Phase X.Y, next: Phase X.Z" -t pattern --tags progress
       ```
 
       ### LOOP_COMPLETE 条件
-      - ユーザーが "stop" または "done" と言った場合
-      - 全Phase完了した場合 (IMPLEMENTATION.mdで ⬜ がなくなった場合)
+      - ユーザーが "stop" と言った場合
+      - 全Phaseが完了した場合 (CHECKLIST.mdに [ ] がない)
 
 # Task tracking
 tasks:

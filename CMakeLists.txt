@@ -1,88 +1,142 @@
-cmake_minimum_required(VERSION 3.24)
-project(oflike_metal_skeleton LANGUAGES CXX OBJCXX)
+cmake_minimum_required(VERSION 3.20)
+project(oflike-metal VERSION 0.1.0 LANGUAGES C CXX OBJCXX)
 
-set(CMAKE_CXX_STANDARD 20)
+# Project settings
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_OBJCXX_STANDARD 17)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Third-party libraries (GLM, tess2, utf8)
+# Swift support (requires Xcode generator)
+# Use: cmake -G Xcode .. to enable Swift
+if(CMAKE_Swift_COMPILER)
+    enable_language(Swift)
+    set(CMAKE_Swift_LANGUAGE_VERSION 5)
+endif()
+
+# macOS deployment target
+set(CMAKE_OSX_DEPLOYMENT_TARGET "13.0" CACHE STRING "Minimum macOS deployment version")
+
+# Compiler flags
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0 -DDEBUG")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -DNDEBUG")
+
+# Enable Objective-C ARC
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fobjc-arc")
+
+# Find required frameworks
+find_library(COCOA_LIBRARY Cocoa REQUIRED)
+find_library(METAL_LIBRARY Metal REQUIRED)
+find_library(METALKIT_LIBRARY MetalKit REQUIRED)
+find_library(QUARTZCORE_LIBRARY QuartzCore REQUIRED)
+find_library(CORETEXT_LIBRARY CoreText REQUIRED)
+find_library(COREGRAPHICS_LIBRARY CoreGraphics REQUIRED)
+find_library(IMAGEIO_LIBRARY ImageIO REQUIRED)
+find_library(ACCELERATE_LIBRARY Accelerate REQUIRED)
+
+# Third-party libraries
 add_subdirectory(third_party)
 
-# Core source files
-set(OFLIKE_CORE_SOURCES
-  src/render/DrawList.cpp
-  src/render/metal/MetalRenderer.mm
-  src/render/metal/MetalTexture.mm
-  src/render/metal/MetalImage.mm
-  src/oflike/graphics/ofTrueTypeFont.mm
-  src/oflike/3d/ofNode.cpp
-  src/oflike/3d/ofCamera.cpp
-  src/oflike/3d/ofEasyCam.cpp
-  src/oflike/3d/of3dPrimitive.cpp
-  src/oflike/3d/ofBoxPrimitive.cpp
-  src/oflike/3d/ofSpherePrimitive.cpp
-  src/oflike/3d/ofCylinderPrimitive.cpp
-  src/oflike/3d/ofConePrimitive.cpp
-  src/oflike/3d/ofPlanePrimitive.cpp
-  src/oflike/3d/ofIcoSpherePrimitive.cpp
-  src/oflike/lighting/ofLight.cpp
-  src/oflike/lighting/ofMaterial.cpp
+# Main library sources
+file(GLOB_RECURSE CORE_SOURCES
+    src/core/*.cpp
+    src/core/*.mm
 )
 
-# Platform source files
-set(OFLIKE_PLATFORM_SOURCES
-  platform/macos/main.mm
-  platform/macos/MacWindow.mm
+file(GLOB_RECURSE MATH_SOURCES
+    src/math/*.cpp
+    src/math/*.mm
 )
 
-# macOS Native Frameworks (Mac専用 - パフォーマンス最適化)
-# NOTE: This project is Mac-only. All APIs are optimized for macOS.
-# See ARCHITECTURE.md for the absolute policy on Mac-native APIs.
-find_library(COCOA_FRAMEWORK Cocoa REQUIRED)
-find_library(METAL_FRAMEWORK Metal REQUIRED)
-find_library(METALKIT_FRAMEWORK MetalKit REQUIRED)
-find_library(QUARTZCORE_FRAMEWORK QuartzCore REQUIRED)
-find_library(CORETEXT_FRAMEWORK CoreText REQUIRED)
-find_library(COREGRAPHICS_FRAMEWORK CoreGraphics REQUIRED)
-find_library(IMAGEIO_FRAMEWORK ImageIO REQUIRED)
-find_library(ACCELERATE_FRAMEWORK Accelerate REQUIRED)
-
-set(OFLIKE_FRAMEWORKS
-  ${COCOA_FRAMEWORK}
-  ${METAL_FRAMEWORK}
-  ${METALKIT_FRAMEWORK}
-  ${QUARTZCORE_FRAMEWORK}
-  ${CORETEXT_FRAMEWORK}
-  ${COREGRAPHICS_FRAMEWORK}
-  ${IMAGEIO_FRAMEWORK}
-  ${ACCELERATE_FRAMEWORK}
+file(GLOB_RECURSE PLATFORM_SOURCES
+    src/platform/*.cpp
+    src/platform/*.mm
+    src/platform/*.swift
 )
 
-# Macro to add an example
-macro(add_oflike_example name source)
-  add_executable(${name} MACOSX_BUNDLE
-    ${OFLIKE_CORE_SOURCES}
-    ${OFLIKE_PLATFORM_SOURCES}
-    ${source}
-  )
-  target_include_directories(${name} PRIVATE
+file(GLOB_RECURSE RENDER_SOURCES
+    src/render/*.cpp
+    src/render/*.mm
+)
+
+file(GLOB_RECURSE OFLIKE_SOURCES
+    src/oflike/*.cpp
+    src/oflike/*.mm
+)
+
+# Main oflike-metal library
+# Note: Create a dummy source file to allow library creation before implementation
+set(ALL_SOURCES
+    ${CORE_SOURCES}
+    ${MATH_SOURCES}
+    ${PLATFORM_SOURCES}
+    ${RENDER_SOURCES}
+    ${OFLIKE_SOURCES}
+)
+
+if(ALL_SOURCES)
+    add_library(oflike-metal STATIC ${ALL_SOURCES})
+else()
+    # Create empty library for now - will be populated as implementation progresses
+    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/dummy.cpp "// Placeholder\n")
+    add_library(oflike-metal STATIC ${CMAKE_CURRENT_BINARY_DIR}/dummy.cpp)
+    message(STATUS "Creating oflike-metal with placeholder (no source files yet)")
+endif()
+
+target_include_directories(oflike-metal PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src
-  )
-  target_link_libraries(${name} PRIVATE
-    ${OFLIKE_FRAMEWORKS}
-    third_party
-  )
-endmacro()
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/core
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/math
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/platform
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/render
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/oflike
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party
+)
 
-# Examples
-add_oflike_example(00_basic examples/00_basic/main.cpp)
-add_oflike_example(01_particles examples/01_particles/main.cpp)
-add_oflike_example(02_polylines examples/02_polylines/main.cpp)
-add_oflike_example(03_image examples/03_image/main.cpp)
-add_oflike_example(04_typography examples/04_typography/main.cpp)
-add_oflike_example(05_3d_primitives examples/05_3d_primitives/main.cpp)
-add_oflike_example(06_graphics examples/06_graphics/main.cpp)
-add_oflike_example(07_color examples/07_color/main.cpp)
-add_oflike_example(08_polygon examples/08_polygon/main.cpp)
-add_oflike_example(09_lines examples/09_lines/main.cpp)
-add_oflike_example(10_blending examples/10_blending/main.cpp)
+target_link_libraries(oflike-metal PUBLIC
+    ${COCOA_LIBRARY}
+    ${METAL_LIBRARY}
+    ${METALKIT_LIBRARY}
+    ${QUARTZCORE_LIBRARY}
+    ${CORETEXT_LIBRARY}
+    ${COREGRAPHICS_LIBRARY}
+    ${IMAGEIO_LIBRARY}
+    ${ACCELERATE_LIBRARY}
+    tess2
+    utf8
+)
+
+# Copy shaders to build directory
+file(GLOB SHADER_FILES ${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.metal)
+foreach(SHADER_FILE ${SHADER_FILES})
+    get_filename_component(SHADER_NAME ${SHADER_FILE} NAME)
+    configure_file(${SHADER_FILE} ${CMAKE_BINARY_DIR}/shaders/${SHADER_NAME} COPYONLY)
+endforeach()
+
+# Examples subdirectory
+add_subdirectory(examples)
+
+# Tests subdirectory (optional)
+option(BUILD_TESTS "Build tests" OFF)
+if(BUILD_TESTS)
+    add_subdirectory(tests)
+endif()
+
+# Installation
+install(TARGETS oflike-metal
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+)
+
+install(DIRECTORY src/oflike/
+    DESTINATION include/oflike
+    FILES_MATCHING PATTERN "*.h"
+)
+
+# Print configuration
+message(STATUS "oflike-metal configuration:")
+message(STATUS "  Version: ${PROJECT_VERSION}")
+message(STATUS "  C++ Standard: ${CMAKE_CXX_STANDARD}")
+message(STATUS "  Build Type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "  macOS Deployment Target: ${CMAKE_OSX_DEPLOYMENT_TARGET}")

@@ -1,55 +1,67 @@
-# oflike_metal_skeleton
+```markdown
+# oflike-metal
 
-macOS-only C++ creative-coding engine skeleton with an openFrameworks-like user API and Metal/MSL rendering.
+**macOS ネイティブ C++ クリエイティブコーディングフレームワーク**
 
-## Requirements
+SwiftUI + Metal ベースで、openFrameworks 互換 API を提供します。
 
-- macOS 13+
-- Xcode with Metal support
-- CMake 3.24+
+---
 
-## Build
+## 特徴
 
-```bash
-mkdir build && cd build
-cmake .. -G Xcode
-xcodebuild -project oflike_metal_skeleton.xcodeproj -scheme basic_app -configuration Debug build
+- openFrameworks と同じ API で書ける
+- Metal による高速レンダリング
+- macOS ネイティブ（SwiftUI 統合）
+- Apple Silicon 最適化
+
+```cpp
+class ofApp : public ofBaseApp {
+    void setup() override {
+        ofSetBackgroundColor(30);
+    }
+    
+    void draw() override {
+        ofSetColor(255, 100, 100);
+        ofDrawCircle(ofGetWidth()/2, ofGetHeight()/2, 100);
+    }
+};
 ```
 
-Or open the generated Xcode project:
+---
+
+## 要件
+
+- macOS 13.0+ (Ventura)
+- Xcode 15+
+
+---
+
+## ビルド
 
 ```bash
-open oflike_metal_skeleton.xcodeproj
+open oflike_metal.xcodeproj
+# Cmd + R で実行
 ```
 
-## Run
+---
 
-```bash
-open Debug/basic_app.app
+## 座標系
+
+- 2D: 左上原点、+X 右、+Y 下
+- 3D: 右手座標系
+
+---
+
+## ドキュメント
+
+- [ARCHITECTURE.md](docs/ARCHITECTURE.md) - 設計方針
+- [CHECKLIST.md](docs/CHECKLIST.md) - 開発進捗
+
+---
+
+## ライセンス
+
+MIT License
 ```
 
-Or run directly:
 
-```bash
-./Debug/basic_app.app/Contents/MacOS/basic_app
-```
-
-## User-app shape
-
-See `examples/basic_app.cpp` for a working example demonstrating:
-- Background clear with `ofBackground()`
-- Animated rectangle with `ofDrawRectangle()`
-- Mouse drag to move the rectangle
-
-## API
-
-- `ofBackground(r, g, b)` - Set background clear color
-- `ofSetColor(r, g, b, a)` - Set draw color
-- `ofDrawRectangle(x, y, w, h)` - Draw a rectangle
-
-Coordinate system: origin at top-left, +x right, +y down.
-
-## Notes
-
-- Public headers are pure C++. Objective-C++ should stay in `platform/macos` and renderer implementations.
-- MSL shaders are embedded in `Renderer2D.mm` for v0.1 simplicity.

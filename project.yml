@@ -1,0 +1,77 @@
+name: oflike-metal
+options:
+  bundleIdPrefix: com.oflike
+  deploymentTarget:
+    macOS: "13.0"
+  developmentLanguage: en
+
+settings:
+  MACOSX_DEPLOYMENT_TARGET: "13.0"
+  SWIFT_VERSION: "5.9"
+  CLANG_ENABLE_OBJC_ARC: YES
+  CLANG_CXX_LANGUAGE_STANDARD: "c++17"
+  CLANG_CXX_LIBRARY: "libc++"
+
+targets:
+  oflike-metal:
+    type: application
+    platform: macOS
+    sources:
+      - path: src
+        excludes:
+          - "**/.DS_Store"
+      - path: shaders
+        buildPhase: resources
+      - path: resources
+        buildPhase: resources
+    settings:
+      PRODUCT_NAME: oflike-metal
+      PRODUCT_BUNDLE_IDENTIFIER: com.oflike.oflike-metal
+      INFOPLIST_FILE: resources/Info.plist
+      DEVELOPMENT_TEAM: ""
+      CODE_SIGN_STYLE: Automatic
+      ENABLE_HARDENED_RUNTIME: YES
+      COMBINE_HIDPI_IMAGES: YES
+    dependencies:
+      - target: tess2
+      - target: utf8-cpp
+    scheme:
+      testTargets:
+        - oflike-metalTests
+      gatherCoverageData: true
+
+  tess2:
+    type: library.static
+    platform: macOS
+    sources:
+      - path: third_party/tess2
+        includes:
+          - "*.c"
+          - "*.h"
+    settings:
+      PRODUCT_NAME: tess2
+      HEADER_SEARCH_PATHS:
+        - $(SRCROOT)/third_party/tess2
+
+  utf8-cpp:
+    type: library.static
+    platform: macOS
+    sources:
+      - path: third_party/utf8
+        includes:
+          - "*.h"
+          - "utf8/*.h"
+    settings:
+      PRODUCT_NAME: utf8-cpp
+      HEADER_SEARCH_PATHS:
+        - $(SRCROOT)/third_party/utf8
+
+  oflike-metalTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - tests
+    dependencies:
+      - target: oflike-metal
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: com.oflike.oflike-metalTests
