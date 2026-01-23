@@ -114,13 +114,13 @@
 - [x] simd_float4 との相互変換
 
 ### 3.5 ofMatrix4x4
-- [ ] コンストラクタ
-- [ ] 単位行列 / ゼロ行列
-- [ ] 乗算
-- [ ] translate / rotate / scale
-- [ ] inverse / transpose
-- [ ] lookAt / perspective / ortho
-- [ ] simd_float4x4 との相互変換
+- [x] コンストラクタ
+- [x] 単位行列 / ゼロ行列
+- [x] 乗算
+- [x] translate / rotate / scale
+- [x] inverse / transpose
+- [x] lookAt / perspective / ortho
+- [x] simd_float4x4 との相互変換
 
 ### 3.6 ofQuaternion
 - [ ] コンストラクタ
@@ -648,7 +648,7 @@
 | 0 | プロジェクト基盤 | 完了 | 100% |
 | 1 | SwiftUI + Metal 基盤 | 完了 | 100% |
 | 2 | Core システム | 完了 | 100% |
-| 3 | 数学ライブラリ | 進行中 | 36% |
+| 3 | 数学ライブラリ | 進行中 | 50% |
 | 4 | レンダリング基盤 | 未着手 | 0% |
 | 5 | 2D 描画 API | 未着手 | 0% |
 | 6 | 色 | 未着手 | 0% |
@@ -668,8 +668,8 @@
 ---
 
 **総タスク数**: 約 350 項目
-**完了**: 48 項目
-**全体進捗**: 13.7%
+**完了**: 55 項目
+**全体進捗**: 15.7%
 
 ---
 
