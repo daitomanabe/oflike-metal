@@ -294,14 +294,14 @@
 - [x] setFromPixels() / setFromExternalPixels()
 
 ### 7.2 ofTexture
-- [ ] allocate()
-- [ ] loadData()
-- [ ] draw()
-- [ ] bind() / unbind()
-- [ ] getWidth() / getHeight()
-- [ ] setTextureWrap()
-- [ ] setTextureMinMagFilter()
-- [ ] getNativeHandle()
+- [x] allocate()
+- [x] loadData()
+- [x] draw()
+- [x] bind() / unbind()
+- [x] getWidth() / getHeight()
+- [x] setTextureWrap()
+- [x] setTextureMinMagFilter()
+- [x] getNativeHandle()
 
 ### 7.3 ofImage
 - [ ] load()（MTKTextureLoader / ImageIO）
@@ -652,7 +652,7 @@
 | 4 | レンダリング基盤 | 完了 | 100% |
 | 5 | 2D 描画 API | 完了 | 100% |
 | 6 | 色 | 完了 | 100% |
-| 7 | 画像・テクスチャ | 進行中 | 20% |
+| 7 | 画像・テクスチャ | 進行中 | 60% |
 | 8 | 3D 描画 | 未着手 | 0% |
 | 9 | カメラ | 未着手 | 0% |
 | 10 | ライティング | 未着手 | 0% |
@@ -668,8 +668,8 @@
 ---
 
 **総タスク数**: 約 350 項目
-**完了**: 165 項目
-**全体進捗**: 47.1%
+**完了**: 173 項目
+**全体進捗**: 49.4%
 
 ---
 
