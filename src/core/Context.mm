@@ -225,6 +225,18 @@ int Context::getScreenHeight() const {
     }
 }
 
+void Context::hideCursor() {
+    @autoreleasepool {
+        [NSCursor hide];
+    }
+}
+
+void Context::showCursor() {
+    @autoreleasepool {
+        [NSCursor unhide];
+    }
+}
+
 void Context::setWindowSize(int width, int height) {
     impl_->windowWidth = width;
     impl_->windowHeight = height;

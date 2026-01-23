@@ -130,6 +130,12 @@ public:
     /// @return Main screen height in pixels
     int getScreenHeight() const;
 
+    /// Hide the mouse cursor
+    void hideCursor();
+
+    /// Show the mouse cursor
+    void showCursor();
+
     // MARK: - Matrix Stack
 
     /// Get current transformation matrix

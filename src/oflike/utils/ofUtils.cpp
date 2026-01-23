@@ -98,3 +98,13 @@ int ofGetScreenWidth() {
 int ofGetScreenHeight() {
     return ctx().getScreenHeight();
 }
+
+// MARK: - Cursor Functions
+
+void ofHideCursor() {
+    ctx().hideCursor();
+}
+
+void ofShowCursor() {
+    ctx().showCursor();
+}

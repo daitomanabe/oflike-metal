@@ -538,7 +538,7 @@
 - [x] ofGetScreenWidth() / ofGetScreenHeight()
 
 ### 14.2 カーソル
-- [ ] ofHideCursor()
+- [x] ofHideCursor()
 - [ ] ofShowCursor()
 
 ---

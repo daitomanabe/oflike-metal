@@ -186,3 +186,13 @@ int ofGetScreenWidth();
 /// Returns the height of the main display screen (not the window)
 /// @return Main screen height in pixels
 int ofGetScreenHeight();
+
+// MARK: - Cursor Functions (Phase 14.2)
+
+/// Hide the mouse cursor
+/// The cursor will be hidden until ofShowCursor() is called
+void ofHideCursor();
+
+/// Show the mouse cursor
+/// Makes the cursor visible if it was previously hidden with ofHideCursor()
+void ofShowCursor();
