@@ -472,8 +472,8 @@
 ## Phase 12: フォント
 
 ### 12.1 ofTrueTypeFont
-- [ ] load()（Core Text）
-- [ ] isLoaded()
+- [x] load()（Core Text）
+- [x] isLoaded()
 - [ ] drawString()
 - [ ] drawStringAsShapes()
 - [ ] getStringBoundingBox()
@@ -668,8 +668,8 @@
 ---
 
 **総タスク数**: 399 項目
-**完了**: 300 項目
-**全体進捗**: 75.2%
+**完了**: 302 項目
+**全体進捗**: 75.7%
 
 ---
 
