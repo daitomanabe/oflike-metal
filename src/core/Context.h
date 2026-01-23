@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <simd/simd.h>
 
 // Forward declarations
 namespace render {
@@ -72,6 +73,18 @@ public:
 
     /// Set window size (called internally when window resizes)
     void setWindowSize(int width, int height);
+
+    /// Get window width (alias for getWindowWidth)
+    int getWidth() const { return getWindowWidth(); }
+
+    /// Get window height (alias for getWindowHeight)
+    int getHeight() const { return getWindowHeight(); }
+
+    // MARK: - Matrix Stack
+
+    /// Get current transformation matrix
+    /// @return Current matrix from the matrix stack
+    simd_float4x4 getCurrentMatrix() const;
 
 private:
     // Singleton: private constructor/destructor

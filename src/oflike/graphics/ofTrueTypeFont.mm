@@ -89,7 +89,7 @@ struct ofTrueTypeFont::Impl {
     ofPixels renderGlyphBitmap(char32_t ch, ofRectangle& bounds, float& advance);
 
     // Get glyph path (vector)
-    ofPath getGlyphPath(char32_t ch);
+    oflike::ofPath getGlyphPath(char32_t ch);
 };
 
 // ============================================================
@@ -171,7 +171,8 @@ ofPixels ofTrueTypeFont::Impl::renderGlyphBitmap(char32_t ch, ofRectangle& bound
         // Create bitmap context
         ofPixels pixels;
         pixels.allocate(width, height, 1);  // Grayscale
-        pixels.set(0);  // Clear to transparent
+        // Clear to transparent
+        std::memset(pixels.getData(), 0, width * height);
 
         CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceGray();
         CGContextRef context = CGBitmapContextCreate(
@@ -307,9 +308,9 @@ const GlyphInfo* ofTrueTypeFont::Impl::getGlyphInfo(char32_t ch) {
 // Get Glyph Path (Vector)
 // ============================================================
 
-ofPath ofTrueTypeFont::Impl::getGlyphPath(char32_t ch) {
+oflike::ofPath ofTrueTypeFont::Impl::getGlyphPath(char32_t ch) {
     @autoreleasepool {
-        ofPath path;
+        oflike::ofPath path;
 
         CGGlyph glyph;
         UniChar unichar = (UniChar)ch;
@@ -324,7 +325,7 @@ ofPath ofTrueTypeFont::Impl::getGlyphPath(char32_t ch) {
 
         // Convert CGPath to ofPath using CGPathApply
         CGPathApply(cgPath, &path, [](void* info, const CGPathElement* element) {
-            ofPath* ofPath_ = static_cast<ofPath*>(info);
+            oflike::ofPath* ofPath_ = static_cast<oflike::ofPath*>(info);
 
             switch (element->type) {
                 case kCGPathElementMoveToPoint:
@@ -542,7 +543,7 @@ void ofTrueTypeFont::drawStringAsShapes(const std::string& text, float x, float 
     // Draw each character as vector shapes
     for (char32_t ch : utf32) {
         // Get glyph path (in Core Text coordinate space: bottom-left origin)
-        ofPath glyphPath = impl_->getGlyphPath(ch);
+        oflike::ofPath glyphPath = impl_->getGlyphPath(ch);
 
         // Get advance for this character
         const GlyphInfo* info = impl_->getGlyphInfo(ch);
@@ -666,18 +667,18 @@ float ofTrueTypeFont::getFontSize() const {
     return impl_->fontSize;
 }
 
-std::vector<ofPath> ofTrueTypeFont::getCharacterAsPoints(char32_t character, bool vflip) const {
-    std::vector<ofPath> paths;
+std::vector<oflike::ofPath> ofTrueTypeFont::getCharacterAsPoints(char32_t character, bool vflip) const {
+    std::vector<oflike::ofPath> paths;
     if (!impl_->loaded) {
         return paths;
     }
 
-    ofPath path = impl_->getGlyphPath(character);
+    oflike::ofPath path = impl_->getGlyphPath(character);
     paths.push_back(std::move(path));
     return paths;
 }
 
-std::vector<ofPath> ofTrueTypeFont::getCharacterAsPoints(const std::string& character, bool vflip) const {
+std::vector<oflike::ofPath> ofTrueTypeFont::getCharacterAsPoints(const std::string& character, bool vflip) const {
     std::u32string utf32 = utf8ToUtf32(character);
     if (utf32.empty()) {
         return {};

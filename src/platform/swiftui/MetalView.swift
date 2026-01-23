@@ -35,7 +35,7 @@ private struct MetalViewRepresentable: NSViewRepresentable {
     @ObservedObject var coordinator: MetalViewCoordinator
 
     func makeNSView(context: Context) -> MTKView {
-        let mtkView = MTKView()
+        let mtkView = MouseTrackingMTKView()
 
         // Get Metal device
         guard let device = MTLCreateSystemDefaultDevice() else {
@@ -52,6 +52,9 @@ private struct MetalViewRepresentable: NSViewRepresentable {
         mtkView.isPaused = false
         mtkView.preferredFramesPerSecond = 60
 
+        // Set coordinator as mouse event receiver
+        mtkView.mouseEventReceiver = coordinator
+
         // Initialize coordinator with device
         coordinator.setup(device: device)
 
@@ -63,8 +66,76 @@ private struct MetalViewRepresentable: NSViewRepresentable {
     }
 }
 
-/// Coordinator that implements MTKViewDelegate
-class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject {
+/// Custom MTKView that tracks mouse events
+/// Phase 13.1: Mouse event tracking
+private class MouseTrackingMTKView: MTKView {
+    weak var mouseEventReceiver: MouseEventReceiver?
+
+    private var trackingArea: NSTrackingArea?
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+
+        // Remove old tracking area
+        if let existingArea = trackingArea {
+            removeTrackingArea(existingArea)
+        }
+
+        // Create new tracking area for the entire view bounds
+        let options: NSTrackingArea.Options = [
+            .mouseEnteredAndExited,
+            .mouseMoved,
+            .activeInKeyWindow,
+            .inVisibleRect
+        ]
+
+        trackingArea = NSTrackingArea(
+            rect: bounds,
+            options: options,
+            owner: self,
+            userInfo: nil
+        )
+
+        if let area = trackingArea {
+            addTrackingArea(area)
+        }
+    }
+
+    override func mouseMoved(with event: NSEvent) {
+        let location = convert(event.locationInWindow, from: nil)
+        mouseEventReceiver?.mouseMoved(x: Float(location.x), y: Float(location.y))
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        let location = convert(event.locationInWindow, from: nil)
+        mouseEventReceiver?.mouseEntered(x: Float(location.x), y: Float(location.y))
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        let location = convert(event.locationInWindow, from: nil)
+        mouseEventReceiver?.mouseExited(x: Float(location.x), y: Float(location.y))
+    }
+
+    override func mouseDragged(with event: NSEvent) {
+        let location = convert(event.locationInWindow, from: nil)
+        // Map NSEvent button number to openFrameworks convention
+        // NSEvent: 0=left, 1=right, 2=middle
+        // oF uses same convention: 0=left, 1=right, 2=middle
+        let button = Int(event.buttonNumber)
+        mouseEventReceiver?.mouseDragged(x: Float(location.x), y: Float(location.y), button: button)
+    }
+}
+
+/// Protocol for receiving mouse events from MouseTrackingMTKView
+protocol MouseEventReceiver: AnyObject {
+    func mouseMoved(x: Float, y: Float)
+    func mouseDragged(x: Float, y: Float, button: Int)
+    func mouseEntered(x: Float, y: Float)
+    func mouseExited(x: Float, y: Float)
+}
+
+/// Coordinator that implements MTKViewDelegate and MouseEventReceiver
+class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject, MouseEventReceiver {
     private var device: MTLDevice?
     private var commandQueue: MTLCommandQueue?
     private var library: MTLLibrary?
@@ -328,5 +399,29 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject {
 
     func getElapsedTime() -> CFTimeInterval {
         return CACurrentMediaTime() - startTime
+    }
+
+    // MARK: - MouseEventReceiver (Phase 13.1)
+
+    func mouseMoved(x: Float, y: Float) {
+        // Forward to C++ bridge
+        bridge?.mouseMovedX(x, y: y)
+    }
+
+    func mouseDragged(x: Float, y: Float, button: Int) {
+        // Forward to C++ bridge
+        bridge?.mouseDraggedX(x, y: y, button: Int32(button))
+    }
+
+    func mouseEntered(x: Float, y: Float) {
+        // Forward to C++ bridge
+        // TODO Phase 13.1: Implement mouseEntered in bridge
+        // bridge?.mouseEnteredX(x, y: y)
+    }
+
+    func mouseExited(x: Float, y: Float) {
+        // Forward to C++ bridge
+        // TODO Phase 13.1: Implement mouseExited in bridge
+        // bridge?.mouseExitedX(x, y: y)
     }
 }

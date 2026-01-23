@@ -3,8 +3,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-
-class ofPath;
+#include "ofPath.h"  // Required for std::vector<ofPath> return type
 
 // Simple rectangle structure (ofRectangle will be implemented in Phase 14)
 struct ofRectangle {
@@ -100,10 +99,10 @@ public:
     /// \param character UTF-8 character
     /// \param vflip Flip vertically (default: false)
     /// \return Vector of ofPath objects (may contain multiple contours)
-    std::vector<ofPath> getCharacterAsPoints(char32_t character, bool vflip = false) const;
+    std::vector<oflike::ofPath> getCharacterAsPoints(char32_t character, bool vflip = false) const;
 
     /// \brief Get character outline as single path
-    std::vector<ofPath> getCharacterAsPoints(const std::string& character, bool vflip = false) const;
+    std::vector<oflike::ofPath> getCharacterAsPoints(const std::string& character, bool vflip = false) const;
 
     /// \brief Set rendering mode
     void setRenderMode(RenderMode mode);

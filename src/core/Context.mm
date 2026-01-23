@@ -200,3 +200,11 @@ void Context::setWindowSize(int width, int height) {
     std::cout << "[Context] Window size set to " << width << "x" << height
               << std::endl;
 }
+
+// MARK: - Matrix Stack
+
+simd_float4x4 Context::getCurrentMatrix() const {
+    // TODO: Implement proper matrix stack
+    // For now, return identity matrix
+    return matrix_identity_float4x4;
+}

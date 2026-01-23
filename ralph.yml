@@ -66,6 +66,7 @@ core:
     - "タスク完了ごとにコミット + GitHubにpush"
     - "Conventional Commits形式: feat(phase-X): description"
     - "CHECKLIST.md の更新も必ずコミットに含める"
+    - "TODOは必ずTODOLIST.mdに追記していく"
 
 hats:
   builder:

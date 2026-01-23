@@ -24,3 +24,12 @@ endfunction()
 # add_oflike_example(01_particles)
 # add_oflike_example(02_polylines)
 # etc.
+
+# Standalone test programs (not full apps)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test_japanese_font.cpp)
+    add_executable(test_japanese_font
+        ${CMAKE_CURRENT_SOURCE_DIR}/test_japanese_font.cpp
+    )
+    target_link_libraries(test_japanese_font PRIVATE oflike-metal)
+    message(STATUS "Added test: test_japanese_font")
+endif()

@@ -135,9 +135,10 @@
             return;
         }
 
-        // TODO Phase 13: Forward to C++ event system
-        // engine_->mouseMoved((int)x, (int)y);
-        // app_->mouseMoved((int)x, (int)y);
+        // Phase 13.1: Forward to C++ app
+        if (testApp_) {
+            testApp_->mouseMoved((int)x, (int)y);
+        }
     }
 }
 
@@ -147,9 +148,10 @@
             return;
         }
 
-        // TODO Phase 13: Forward to C++ event system
-        // engine_->mouseDragged((int)x, (int)y, button);
-        // app_->mouseDragged((int)x, (int)y, button);
+        // Phase 13.1: Forward to C++ app
+        if (testApp_) {
+            testApp_->mouseDragged((int)x, (int)y, button);
+        }
     }
 }
 
