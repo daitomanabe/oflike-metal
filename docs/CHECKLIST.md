@@ -399,15 +399,15 @@
 - [x] screenToWorld()
 
 ### 9.2 ofEasyCam
-- [ ] コンストラクタ
-- [ ] setDistance() / getDistance()
-- [ ] setTarget() / getTarget()
-- [ ] enableMouseInput() / disableMouseInput()
-- [ ] enableInertia() / disableInertia()
-- [ ] setAutoDistance()
-- [ ] マウスドラッグ回転
-- [ ] マウスホイールズーム
-- [ ] 慣性実装
+- [x] コンストラクタ
+- [x] setDistance() / getDistance()
+- [x] setTarget() / getTarget()
+- [x] enableMouseInput() / disableMouseInput()
+- [x] enableInertia() / disableInertia()
+- [x] setAutoDistance()
+- [x] マウスドラッグ回転
+- [x] マウスホイールズーム
+- [x] 慣性実装
 
 ---
 
@@ -654,7 +654,7 @@
 | 6 | 色 | 完了 | 100% |
 | 7 | 画像・テクスチャ | 完了 | 100% |
 | 8 | 3D 描画 | 完了 | 100% |
-| 9 | カメラ | 進行中 | 54% (13/24) |
+| 9 | カメラ | ほぼ完了 | 92% (22/24) |
 | 10 | ライティング | 未着手 | 0% |
 | 11 | FBO | 未着手 | 0% |
 | 12 | フォント | 未着手 | 0% |
@@ -668,8 +668,8 @@
 ---
 
 **総タスク数**: 399 項目
-**完了**: 254 項目
-**全体進捗**: 63.7%
+**完了**: 263 項目
+**全体進捗**: 65.9%
 
 ---
 
