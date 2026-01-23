@@ -237,17 +237,17 @@
 - [x] getSmoothed()
 
 ### 5.6 ofPath
-- [ ] moveTo() / lineTo()
-- [ ] curveTo() / bezierTo()
-- [ ] arc() / arcNegative()
-- [ ] close()
-- [ ] setFilled() / setStrokeWidth()
-- [ ] setColor() / setFillColor() / setStrokeColor()
-- [ ] draw()
-- [ ] getOutline()
-- [ ] getTessellation()（tess2 使用）
-- [ ] simplify()
-- [ ] translate() / rotate() / scale()
+- [x] moveTo() / lineTo()
+- [x] curveTo() / bezierTo()
+- [x] arc() / arcNegative()
+- [x] close()
+- [x] setFilled() / setStrokeWidth()
+- [x] setColor() / setFillColor() / setStrokeColor()
+- [x] draw()
+- [x] getOutline()
+- [x] getTessellation()（tess2 使用）
+- [x] simplify()
+- [x] translate() / rotate() / scale()
 
 ### 5.7 Shape API
 - [ ] ofBeginShape() / ofEndShape()
@@ -650,7 +650,7 @@
 | 2 | Core システム | 完了 | 100% |
 | 3 | 数学ライブラリ | 完了 | 100% |
 | 4 | レンダリング基盤 | 完了 | 100% |
-| 5 | 2D 描画 API | 進行中 | 65% |
+| 5 | 2D 描画 API | 進行中 | 80% |
 | 6 | 色 | 未着手 | 0% |
 | 7 | 画像・テクスチャ | 未着手 | 0% |
 | 8 | 3D 描画 | 未着手 | 0% |
@@ -668,8 +668,8 @@
 ---
 
 **総タスク数**: 約 350 項目
-**完了**: 116 項目
-**全体進捗**: 33.1%
+**完了**: 127 項目
+**全体進捗**: 36.3%
 
 ---
 
