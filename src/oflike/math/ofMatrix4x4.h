@@ -1,4 +1,5 @@
 #pragma once
+#define OFLIKE_MATRIX4X4_H_INCLUDED
 
 // oflike-metal ofMatrix4x4 - openFrameworks API compatible 4x4 matrix
 // Uses Apple simd internally for performance
