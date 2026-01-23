@@ -25,6 +25,19 @@ This directory contains automated tests for the oflike-metal framework.
   - Matrix Stack API (push/pop, transforms)
   - Shape Building API (ofBeginShape/ofEndShape)
 
+### Performance Tests (`performance/`)
+- **File**: `performance_test.cpp`
+- **Purpose**: Benchmarks performance of various operations (Phase 17.2)
+- **Coverage**:
+  - Vector math operations (add, cross, dot, normalize)
+  - Color operations (construction, HSB conversion, lerp)
+  - Matrix stack operations (push/pop, transforms)
+  - Path construction (lines, curves, beziers, arcs)
+  - Polyline operations (vertices, queries, area, perimeter)
+  - Shape building (ofBeginShape/ofEndShape)
+  - 2D primitives rendering (circles, rectangles, ellipses, triangles)
+  - 3D primitives rendering (boxes, spheres, cones, cylinders)
+
 ## Running Tests
 
 ### Using CMake
@@ -37,10 +50,12 @@ cmake ..
 # Build tests
 make math_test
 make rendering_test
+make performance_test
 
 # Run tests
 ./tests/math_test
 ./tests/rendering_test
+./tests/performance_test
 
 # Or use CTest
 ctest

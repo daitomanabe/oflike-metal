@@ -51,3 +51,32 @@ set_target_properties(rendering_test PROPERTIES
 
 # Add rendering test to CTest
 add_test(NAME RenderingTests COMMAND rendering_test)
+
+# Performance Tests
+add_executable(performance_test
+    performance/performance_test.cpp
+)
+
+target_include_directories(performance_test PRIVATE
+    ${CMAKE_SOURCE_DIR}/src/oflike/app
+    ${CMAKE_SOURCE_DIR}/src/oflike/graphics
+    ${CMAKE_SOURCE_DIR}/src/oflike/image
+    ${CMAKE_SOURCE_DIR}/src/oflike/3d
+    ${CMAKE_SOURCE_DIR}/src/oflike/lighting
+    ${CMAKE_SOURCE_DIR}/src/oflike/types
+    ${CMAKE_SOURCE_DIR}/src/oflike/utils
+    ${CMAKE_SOURCE_DIR}/src/oflike/math
+)
+
+target_link_libraries(performance_test PRIVATE
+    oflike-metal
+)
+
+# Set C++ standard
+set_target_properties(performance_test PROPERTIES
+    CXX_STANDARD 20
+    CXX_STANDARD_REQUIRED YES
+)
+
+# Add performance test to CTest
+add_test(NAME PerformanceTests COMMAND performance_test)
