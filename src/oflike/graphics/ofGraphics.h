@@ -417,3 +417,68 @@ void ofDrawTriangle(float x1, float y1, float x2, float y2, float x3, float y3);
  * @param z3 Third vertex Z coordinate
  */
 void ofDrawTriangle(float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3);
+
+// ============================================================================
+// Curve Drawing
+// ============================================================================
+
+/**
+ * Draw a Catmull-Rom curve through four control points (2D).
+ * The curve passes through p1 and p2, with p0 and p3 affecting curvature.
+ * @param x0 First control point X
+ * @param y0 First control point Y
+ * @param x1 Second control point X (curve starts here)
+ * @param y1 Second control point Y
+ * @param x2 Third control point X (curve ends here)
+ * @param y2 Third control point Y
+ * @param x3 Fourth control point X
+ * @param y3 Fourth control point Y
+ */
+void ofDrawCurve(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3);
+
+/**
+ * Draw a Catmull-Rom curve through four control points (3D).
+ * @param x0 First control point X
+ * @param y0 First control point Y
+ * @param z0 First control point Z
+ * @param x1 Second control point X (curve starts here)
+ * @param y1 Second control point Y
+ * @param z1 Second control point Z
+ * @param x2 Third control point X (curve ends here)
+ * @param y2 Third control point Y
+ * @param z2 Third control point Z
+ * @param x3 Fourth control point X
+ * @param y3 Fourth control point Y
+ * @param z3 Fourth control point Z
+ */
+void ofDrawCurve(float x0, float y0, float z0, float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3);
+
+/**
+ * Draw a cubic Bezier curve (2D).
+ * @param x0 Start point X
+ * @param y0 Start point Y
+ * @param x1 First control point X
+ * @param y1 First control point Y
+ * @param x2 Second control point X
+ * @param y2 Second control point Y
+ * @param x3 End point X
+ * @param y3 End point Y
+ */
+void ofDrawBezier(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3);
+
+/**
+ * Draw a cubic Bezier curve (3D).
+ * @param x0 Start point X
+ * @param y0 Start point Y
+ * @param z0 Start point Z
+ * @param x1 First control point X
+ * @param y1 First control point Y
+ * @param z1 First control point Z
+ * @param x2 Second control point X
+ * @param y2 Second control point Y
+ * @param z2 Second control point Z
+ * @param x3 End point X
+ * @param y3 End point Y
+ * @param z3 End point Z
+ */
+void ofDrawBezier(float x0, float y0, float z0, float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3);

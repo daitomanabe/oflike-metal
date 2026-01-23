@@ -528,3 +528,96 @@ void ofDrawTriangle(float x1, float y1, float z1, float x2, float y2, float z2, 
         ofDrawLine(x3, y3, z3, x1, y1, z1);
     }
 }
+
+// ============================================================================
+// Curve Drawing
+// ============================================================================
+
+/**
+ * Evaluate Catmull-Rom spline at parameter t.
+ * Formula: P(t) = 0.5 * [2*P1 + (-P0 + P2)*t + (2*P0 - 5*P1 + 4*P2 - P3)*t^2 + (-P0 + 3*P1 - 3*P2 + P3)*t^3]
+ */
+namespace {
+    float catmullRomInterpolate(float p0, float p1, float p2, float p3, float t) {
+        float t2 = t * t;
+        float t3 = t2 * t;
+
+        return 0.5f * (
+            2.0f * p1 +
+            (-p0 + p2) * t +
+            (2.0f * p0 - 5.0f * p1 + 4.0f * p2 - p3) * t2 +
+            (-p0 + 3.0f * p1 - 3.0f * p2 + p3) * t3
+        );
+    }
+}
+
+void ofDrawCurve(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3) {
+    ofDrawCurve(x0, y0, 0.0f, x1, y1, 0.0f, x2, y2, 0.0f, x3, y3, 0.0f);
+}
+
+void ofDrawCurve(float x0, float y0, float z0, float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3) {
+    auto& state = getGraphicsState();
+    uint32_t resolution = state.curveResolution;
+
+    // Draw curve as a series of line segments
+    float prevX = x1, prevY = y1, prevZ = z1;
+
+    for (uint32_t i = 1; i <= resolution; i++) {
+        float t = static_cast<float>(i) / resolution;
+
+        float x = catmullRomInterpolate(x0, x1, x2, x3, t);
+        float y = catmullRomInterpolate(y0, y1, y2, y3, t);
+        float z = catmullRomInterpolate(z0, z1, z2, z3, t);
+
+        ofDrawLine(prevX, prevY, prevZ, x, y, z);
+
+        prevX = x;
+        prevY = y;
+        prevZ = z;
+    }
+}
+
+/**
+ * Evaluate cubic Bezier curve at parameter t.
+ * Formula: P(t) = (1-t)^3*P0 + 3*(1-t)^2*t*P1 + 3*(1-t)*t^2*P2 + t^3*P3
+ */
+namespace {
+    float bezierInterpolate(float p0, float p1, float p2, float p3, float t) {
+        float oneMinusT = 1.0f - t;
+        float oneMinusT2 = oneMinusT * oneMinusT;
+        float oneMinusT3 = oneMinusT2 * oneMinusT;
+        float t2 = t * t;
+        float t3 = t2 * t;
+
+        return oneMinusT3 * p0 +
+               3.0f * oneMinusT2 * t * p1 +
+               3.0f * oneMinusT * t2 * p2 +
+               t3 * p3;
+    }
+}
+
+void ofDrawBezier(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3) {
+    ofDrawBezier(x0, y0, 0.0f, x1, y1, 0.0f, x2, y2, 0.0f, x3, y3, 0.0f);
+}
+
+void ofDrawBezier(float x0, float y0, float z0, float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3) {
+    auto& state = getGraphicsState();
+    uint32_t resolution = state.curveResolution;
+
+    // Draw Bezier curve as a series of line segments
+    float prevX = x0, prevY = y0, prevZ = z0;
+
+    for (uint32_t i = 1; i <= resolution; i++) {
+        float t = static_cast<float>(i) / resolution;
+
+        float x = bezierInterpolate(x0, x1, x2, x3, t);
+        float y = bezierInterpolate(y0, y1, y2, y3, t);
+        float z = bezierInterpolate(z0, z1, z2, z3, t);
+
+        ofDrawLine(prevX, prevY, prevZ, x, y, z);
+
+        prevX = x;
+        prevY = y;
+        prevZ = z;
+    }
+}
