@@ -285,4 +285,11 @@
     }
 }
 
+- (void)setFullscreenState:(bool)fullscreen {
+    @autoreleasepool {
+        // Phase 14.1: Update fullscreen state in Context
+        Context::instance().setFullscreenState(fullscreen);
+    }
+}
+
 @end

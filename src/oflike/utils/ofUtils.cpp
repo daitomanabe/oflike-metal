@@ -85,3 +85,8 @@ void ofSetWindowTitle(const std::string& title) {
 void ofSetFullscreen(bool fullscreen) {
     ctx().requestFullscreen(fullscreen);
 }
+
+void ofToggleFullscreen() {
+    bool currentFullscreen = ctx().isFullscreen();
+    ctx().requestFullscreen(!currentFullscreen);
+}

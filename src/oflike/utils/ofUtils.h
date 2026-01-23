@@ -171,3 +171,8 @@ void ofSetWindowTitle(const std::string& title);
 /// Set fullscreen mode
 /// @param fullscreen true to enter fullscreen, false to exit fullscreen
 void ofSetFullscreen(bool fullscreen);
+
+/// Toggle fullscreen mode (on/off)
+/// If currently in fullscreen, exits fullscreen
+/// If currently in windowed mode, enters fullscreen
+void ofToggleFullscreen();

@@ -64,4 +64,8 @@
 /// @param callback C function pointer for fullscreen change requests
 - (void)setFullscreenCallback:(void (*)(bool fullscreen))callback;
 
+/// Update fullscreen state (called when fullscreen mode changes)
+/// @param fullscreen true if fullscreen mode is active, false otherwise
+- (void)setFullscreenState:(bool)fullscreen;
+
 @end

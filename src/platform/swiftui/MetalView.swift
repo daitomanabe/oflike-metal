@@ -235,6 +235,9 @@ protocol MouseEventReceiver: AnyObject {
 
 /// Coordinator that implements MTKViewDelegate and MouseEventReceiver
 class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject, MouseEventReceiver {
+    // Static weak reference for accessing coordinator from C callbacks
+    private static weak var sharedCoordinator: MetalViewCoordinator?
+
     private var device: MTLDevice?
     private var commandQueue: MTLCommandQueue?
     private var library: MTLLibrary?
@@ -259,6 +262,8 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject, MouseEv
         startTime = CACurrentMediaTime()
         lastFPSUpdate = startTime
         bridge = OFLBridge()
+        // Set static reference to this coordinator
+        MetalViewCoordinator.sharedCoordinator = self
     }
 
     func setup(device: MTLDevice) {
@@ -598,6 +603,10 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject, MouseEv
                     } else if !fullscreen && window.styleMask.contains(.fullScreen) {
                         window.toggleFullScreen(nil)
                     }
+                    // Update C++ state to reflect actual fullscreen state
+                    // Note: The actual state change happens asynchronously, so we update
+                    // based on what we requested
+                    MetalViewCoordinator.sharedCoordinator?.bridge?.setFullscreenState(fullscreen)
                 }
             }
         }

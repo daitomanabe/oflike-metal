@@ -108,6 +108,14 @@ public:
     /// @param callback Function pointer to call when fullscreen change is requested
     void setFullscreenCallback(void (*callback)(bool fullscreen));
 
+    /// Set fullscreen state (called internally when fullscreen mode changes)
+    /// @param fullscreen true if fullscreen mode is active, false otherwise
+    void setFullscreenState(bool fullscreen);
+
+    /// Get fullscreen state
+    /// @return true if fullscreen mode is active, false otherwise
+    bool isFullscreen() const;
+
     /// Get window width (alias for getWindowWidth)
     int getWidth() const { return getWindowWidth(); }
 

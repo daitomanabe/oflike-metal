@@ -534,7 +534,7 @@
 - [x] ofSetWindowPosition()
 - [x] ofSetWindowTitle()
 - [x] ofSetFullscreen()
-- [ ] ofToggleFullscreen()
+- [x] ofToggleFullscreen()
 - [ ] ofGetScreenWidth() / ofGetScreenHeight()
 
 ### 14.2 カーソル

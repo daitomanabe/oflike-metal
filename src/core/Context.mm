@@ -38,6 +38,7 @@ struct Context::Impl {
     void (*windowPositionCallback)(int x, int y) = nullptr;
     void (*windowTitleCallback)(const char* title) = nullptr;
     void (*fullscreenCallback)(bool fullscreen) = nullptr;
+    bool isFullscreen = false;
 
     // Keyboard state (Phase 13.2)
     std::unordered_map<int, bool> keyStates;
@@ -276,6 +277,14 @@ void Context::requestFullscreen(bool fullscreen) {
 void Context::setFullscreenCallback(void (*callback)(bool fullscreen)) {
     impl_->fullscreenCallback = callback;
     std::cout << "[Context] Fullscreen callback registered" << std::endl;
+}
+
+void Context::setFullscreenState(bool fullscreen) {
+    impl_->isFullscreen = fullscreen;
+}
+
+bool Context::isFullscreen() const {
+    return impl_->isFullscreen;
 }
 
 // MARK: - Matrix Stack
