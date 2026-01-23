@@ -182,6 +182,16 @@ public:
      */
     size_t getPoolSize() const;
 
+    /**
+     * Get number of buffers currently acquired.
+     */
+    size_t getAcquiredCount() const;
+
+    /**
+     * Get number of buffers currently available.
+     */
+    size_t getAvailableCount() const;
+
 private:
     struct Impl;
     std::unique_ptr<Impl> impl_;

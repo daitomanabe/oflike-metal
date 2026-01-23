@@ -135,8 +135,11 @@ struct MetalBufferPool::Impl {
     id<MTLDevice> device = nil;
     uint32_t maxFramesInFlight = 3;
 
-    // Pool of available buffers
-    std::vector<std::unique_ptr<MetalBuffer>> availableBuffers;
+    // Pool of all buffers (owns them)
+    std::vector<std::unique_ptr<MetalBuffer>> allBuffers;
+
+    // Tracking acquired/available state (does not own)
+    std::vector<MetalBuffer*> availableBuffers;
     std::vector<MetalBuffer*> acquiredBuffers;
 
     Impl(id<MTLDevice> dev, uint32_t maxFrames)
@@ -145,6 +148,7 @@ struct MetalBufferPool::Impl {
 
     ~Impl() {
         @autoreleasepool {
+            allBuffers.clear();
             availableBuffers.clear();
             acquiredBuffers.clear();
         }
@@ -163,13 +167,13 @@ MetalBuffer* MetalBufferPool::acquire(size_t size, uint32_t frameIndex) {
     }
 
     @autoreleasepool {
-        // Try to find a suitable buffer in the pool
+        // Try to find a suitable buffer in the available pool
         for (auto it = impl_->availableBuffers.begin(); it != impl_->availableBuffers.end(); ++it) {
-            if ((*it)->getSize(frameIndex) >= size) {
-                // Found a suitable buffer
-                MetalBuffer* buffer = it->get();
-                impl_->acquiredBuffers.push_back(buffer);
+            MetalBuffer* buffer = *it;
+            if (buffer->getSize(frameIndex) >= size) {
+                // Found a suitable buffer - move to acquired
                 impl_->availableBuffers.erase(it);
+                impl_->acquiredBuffers.push_back(buffer);
                 return buffer;
             }
         }
@@ -179,11 +183,8 @@ MetalBuffer* MetalBufferPool::acquire(size_t size, uint32_t frameIndex) {
             (__bridge void*)impl_->device, size, impl_->maxFramesInFlight);
 
         MetalBuffer* bufferPtr = newBuffer.get();
+        impl_->allBuffers.push_back(std::move(newBuffer));
         impl_->acquiredBuffers.push_back(bufferPtr);
-        impl_->availableBuffers.push_back(std::move(newBuffer));
-
-        // Move from available to acquired
-        impl_->availableBuffers.pop_back();
 
         return bufferPtr;
     }
@@ -201,10 +202,9 @@ void MetalBufferPool::release(MetalBuffer* buffer) {
                            buffer);
 
         if (it != impl_->acquiredBuffers.end()) {
+            // Move from acquired to available
             impl_->acquiredBuffers.erase(it);
-
-            // Buffer ownership is in availableBuffers, just update tracking
-            // (Buffer is already in the pool, we just move it back to available)
+            impl_->availableBuffers.push_back(buffer);
         }
     }
 }
@@ -216,10 +216,7 @@ void MetalBufferPool::resetFrame(uint32_t frameIndex) {
 
     @autoreleasepool {
         // Reset all buffers in the pool
-        for (auto& buffer : impl_->availableBuffers) {
-            buffer->reset(frameIndex);
-        }
-        for (auto* buffer : impl_->acquiredBuffers) {
+        for (auto& buffer : impl_->allBuffers) {
             buffer->reset(frameIndex);
         }
     }
@@ -231,6 +228,7 @@ void MetalBufferPool::clear() {
     }
 
     @autoreleasepool {
+        impl_->allBuffers.clear();
         impl_->availableBuffers.clear();
         impl_->acquiredBuffers.clear();
     }
@@ -240,7 +238,21 @@ size_t MetalBufferPool::getPoolSize() const {
     if (!impl_) {
         return 0;
     }
-    return impl_->availableBuffers.size() + impl_->acquiredBuffers.size();
+    return impl_->allBuffers.size();
+}
+
+size_t MetalBufferPool::getAcquiredCount() const {
+    if (!impl_) {
+        return 0;
+    }
+    return impl_->acquiredBuffers.size();
+}
+
+size_t MetalBufferPool::getAvailableCount() const {
+    if (!impl_) {
+        return 0;
+    }
+    return impl_->availableBuffers.size();
 }
 
 } // namespace metal
