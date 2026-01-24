@@ -198,17 +198,21 @@ bool ofxTcpServer::setup(const std::string& address, uint16_t port) {
                 client->remotePort = clientPort;
             }
 
+            // Get raw pointer for block capture (lifetime managed by pImpl->clients)
+            ClientConnection* clientPtr = client.get();
+            Impl* implPtr = pImpl.get();
+
             // Set up state handler for client
             nw_connection_set_state_changed_handler(connection, ^(nw_connection_state_t state, nw_error_t error) {
                 switch (state) {
                     case nw_connection_state_ready:
-                        client->connected = true;
+                        clientPtr->connected = true;
                         // Start receiving data
-                        pImpl->setupClientReceive(client.get());
+                        implPtr->setupClientReceive(clientPtr);
                         break;
                     case nw_connection_state_failed:
                     case nw_connection_state_cancelled:
-                        client->connected = false;
+                        clientPtr->connected = false;
                         break;
                     default:
                         break;

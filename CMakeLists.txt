@@ -22,8 +22,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0 -DDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -DNDEBUG")
 
-# Enable Objective-C ARC
+# Enable Objective-C ARC for both C++ and Objective-C++
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fobjc-arc")
+set(CMAKE_OBJCXX_FLAGS "${CMAKE_OBJCXX_FLAGS} -fobjc-arc")
 
 # Find required frameworks
 find_library(COCOA_LIBRARY Cocoa REQUIRED)
@@ -65,10 +66,12 @@ file(GLOB_RECURSE OFLIKE_SOURCES
     src/oflike/*.mm
 )
 
-file(GLOB_RECURSE ADDON_SOURCES
-    src/addons/**/*.cpp
-    src/addons/**/*.mm
+# Core addons only (excluding apple_native/ofxSharp which has incomplete implementation)
+file(GLOB_RECURSE ADDON_CORE_SOURCES
+    src/addons/core/**/*.cpp
+    src/addons/core/**/*.mm
 )
+set(ADDON_SOURCES ${ADDON_CORE_SOURCES})
 
 # Main oflike-metal library
 # Note: Create a dummy source file to allow library creation before implementation
@@ -115,6 +118,16 @@ target_link_libraries(oflike-metal PUBLIC
     utf8
 )
 
+# Link nanosvg if available
+if(TARGET nanosvg)
+    target_link_libraries(oflike-metal PUBLIC nanosvg)
+endif()
+
+# Link pugixml if available
+if(TARGET pugixml)
+    target_link_libraries(oflike-metal PUBLIC pugixml)
+endif()
+
 # Link oscpack if available
 if(TARGET oscpack)
     target_link_libraries(oflike-metal PUBLIC oscpack)
@@ -129,6 +142,17 @@ endforeach()
 
 # Examples subdirectory
 add_subdirectory(examples)
+
+# Example Launcher (Swift GUI tool)
+add_custom_target(launcher
+    COMMAND swiftc -o ${CMAKE_BINARY_DIR}/tools/ExampleLauncher/ExampleLauncher
+            -framework AppKit
+            ${CMAKE_SOURCE_DIR}/tools/ExampleLauncher/ExampleLauncher.swift
+    COMMAND ${CMAKE_BINARY_DIR}/tools/ExampleLauncher/ExampleLauncher
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    COMMENT "Building and launching Example Launcher"
+)
+file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/tools/ExampleLauncher)
 
 # Tests
 option(BUILD_TESTS "Build tests" ON)

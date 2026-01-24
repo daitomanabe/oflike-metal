@@ -872,10 +872,10 @@
 - [x] 進捗コールバック
 
 ### 25.9 ofxSharp Wrapper
-- [ ] ofxSharp クラス実装
-- [ ] setup()
-- [ ] generateFromImage()
-- [ ] drawCloud()
+- [x] ofxSharp クラス実装
+- [x] setup()
+- [x] generateFromImage()
+- [x] drawCloud()
 
 ### 25.10 Examples
 - [ ] sharp_basic example
@@ -1136,7 +1136,7 @@
 
 | Phase | Addon | Priority | 完了率 |
 |-------|-------|----------|--------|
-| 25 | **ofxSharp** | ⭐ HIGH | 0% |
+| 25 | **ofxSharp** | ⭐ HIGH | 90% |
 | 26 | ofxNeuralEngine | HIGH | 0% |
 | 27 | ofxMetalCompute | HIGH | 0% |
 | 28 | ofxMPS | MEDIUM | 0% |

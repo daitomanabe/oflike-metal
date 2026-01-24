@@ -190,18 +190,190 @@ bool MetalRenderer::Impl::createPipelines() {
     @autoreleasepool {
         NSError* error = nil;
 
-        // Load default shader library
+        // Try to load default shader library first
         id<MTLLibrary> library = [device newDefaultLibrary];
+
+        // If default library not found, compile shaders from source
         if (!library) {
-            NSLog(@"MetalRenderer: Failed to load shader library");
-            return false;
+            NSLog(@"MetalRenderer: Default library not found, compiling shaders from source...");
+
+            // Embedded shader source (Common.h + Basic2D.metal combined)
+            NSString* shaderSource = @R"(
+#include <metal_stdlib>
+using namespace metal;
+
+// Vertex Definitions
+struct Vertex2D {
+    float2 position [[attribute(0)]];
+    float2 texCoord [[attribute(1)]];
+    float4 color    [[attribute(2)]];
+};
+
+struct Vertex3D {
+    float3 position [[attribute(0)]];
+    float3 normal   [[attribute(1)]];
+    float2 texCoord [[attribute(2)]];
+    float4 color    [[attribute(3)]];
+};
+
+// Uniform Buffers
+struct Uniforms2D {
+    float4x4 projectionMatrix;
+    float4x4 modelViewMatrix;
+};
+
+struct Uniforms3D {
+    float4x4 projectionMatrix;
+    float4x4 modelViewMatrix;
+    float4x4 normalMatrix;
+};
+
+// Rasterizer Data
+struct RasterizerData2D {
+    float4 position [[position]];
+    float2 texCoord;
+    float4 color;
+};
+
+struct RasterizerData3D {
+    float4 position [[position]];
+    float3 normal;
+    float2 texCoord;
+    float4 color;
+    float3 worldPosition;
+};
+
+// 2D Vertex Shader
+vertex RasterizerData2D vertex2D(
+    uint vertexID [[vertex_id]],
+    constant Vertex2D* vertices [[buffer(0)]],
+    constant Uniforms2D& uniforms [[buffer(1)]]
+) {
+    RasterizerData2D out;
+    Vertex2D in = vertices[vertexID];
+    float4 position = float4(in.position, 0.0, 1.0);
+    out.position = uniforms.projectionMatrix * uniforms.modelViewMatrix * position;
+    out.texCoord = in.texCoord;
+    out.color = in.color;
+    return out;
+}
+
+// 2D Fragment Shader (solid color)
+fragment float4 fragment2D(RasterizerData2D in [[stage_in]]) {
+    return in.color;
+}
+
+// 2D Fragment Shader (textured)
+fragment float4 fragment2DTextured(
+    RasterizerData2D in [[stage_in]],
+    texture2d<float> colorTexture [[texture(0)]],
+    sampler textureSampler [[sampler(0)]]
+) {
+    float4 texColor = colorTexture.sample(textureSampler, in.texCoord);
+    return texColor * in.color;
+}
+
+// 3D Vertex Shader
+vertex RasterizerData3D vertex3D(
+    uint vertexID [[vertex_id]],
+    constant Vertex3D* vertices [[buffer(0)]],
+    constant Uniforms3D& uniforms [[buffer(1)]]
+) {
+    RasterizerData3D out;
+    Vertex3D in = vertices[vertexID];
+    float4 position = float4(in.position, 1.0);
+    out.position = uniforms.projectionMatrix * uniforms.modelViewMatrix * position;
+    out.worldPosition = in.position;
+    out.normal = (uniforms.normalMatrix * float4(in.normal, 0.0)).xyz;
+    out.texCoord = in.texCoord;
+    out.color = in.color;
+    return out;
+}
+
+// 3D Fragment Shader (solid color)
+fragment float4 fragment3D(RasterizerData3D in [[stage_in]]) {
+    return in.color;
+}
+)";
+
+            MTLCompileOptions* options = [[MTLCompileOptions alloc] init];
+            options.languageVersion = MTLLanguageVersion2_4;
+
+            library = [device newLibraryWithSource:shaderSource options:options error:&error];
+            if (!library) {
+                NSLog(@"MetalRenderer: Failed to compile shaders: %@", error.localizedDescription);
+                return false;
+            }
+            NSLog(@"MetalRenderer: Shaders compiled successfully from source");
         }
 
-        // TODO: For now, create placeholder pipeline
-        // In Phase 4.7, we'll add actual shaders
-        // For now, we'll just mark the renderer as ready
+        // Create 2D pipeline
+        {
+            id<MTLFunction> vertexFunc = [library newFunctionWithName:@"vertex2D"];
+            id<MTLFunction> fragmentFunc = [library newFunctionWithName:@"fragment2D"];
 
-        NSLog(@"MetalRenderer: Pipelines created (placeholder)");
+            if (!vertexFunc || !fragmentFunc) {
+                NSLog(@"MetalRenderer: Failed to find 2D shader functions");
+                return false;
+            }
+
+            MTLRenderPipelineDescriptor* pipelineDesc = [[MTLRenderPipelineDescriptor alloc] init];
+            pipelineDesc.label = @"Pipeline2D";
+            pipelineDesc.vertexFunction = vertexFunc;
+            pipelineDesc.fragmentFunction = fragmentFunc;
+            pipelineDesc.colorAttachments[0].pixelFormat = MTLPixelFormatBGRA8Unorm;
+            pipelineDesc.depthAttachmentPixelFormat = MTLPixelFormatDepth32Float;
+
+            // Enable alpha blending
+            pipelineDesc.colorAttachments[0].blendingEnabled = YES;
+            pipelineDesc.colorAttachments[0].rgbBlendOperation = MTLBlendOperationAdd;
+            pipelineDesc.colorAttachments[0].alphaBlendOperation = MTLBlendOperationAdd;
+            pipelineDesc.colorAttachments[0].sourceRGBBlendFactor = MTLBlendFactorSourceAlpha;
+            pipelineDesc.colorAttachments[0].destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+            pipelineDesc.colorAttachments[0].sourceAlphaBlendFactor = MTLBlendFactorOne;
+            pipelineDesc.colorAttachments[0].destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+
+            pipeline2D = [device newRenderPipelineStateWithDescriptor:pipelineDesc error:&error];
+            if (!pipeline2D) {
+                NSLog(@"MetalRenderer: Failed to create 2D pipeline: %@", error.localizedDescription);
+                return false;
+            }
+        }
+
+        // Create 3D pipeline
+        {
+            id<MTLFunction> vertexFunc = [library newFunctionWithName:@"vertex3D"];
+            id<MTLFunction> fragmentFunc = [library newFunctionWithName:@"fragment3D"];
+
+            if (!vertexFunc || !fragmentFunc) {
+                NSLog(@"MetalRenderer: Failed to find 3D shader functions");
+                return false;
+            }
+
+            MTLRenderPipelineDescriptor* pipelineDesc = [[MTLRenderPipelineDescriptor alloc] init];
+            pipelineDesc.label = @"Pipeline3D";
+            pipelineDesc.vertexFunction = vertexFunc;
+            pipelineDesc.fragmentFunction = fragmentFunc;
+            pipelineDesc.colorAttachments[0].pixelFormat = MTLPixelFormatBGRA8Unorm;
+            pipelineDesc.depthAttachmentPixelFormat = MTLPixelFormatDepth32Float;
+
+            // Enable alpha blending
+            pipelineDesc.colorAttachments[0].blendingEnabled = YES;
+            pipelineDesc.colorAttachments[0].rgbBlendOperation = MTLBlendOperationAdd;
+            pipelineDesc.colorAttachments[0].alphaBlendOperation = MTLBlendOperationAdd;
+            pipelineDesc.colorAttachments[0].sourceRGBBlendFactor = MTLBlendFactorSourceAlpha;
+            pipelineDesc.colorAttachments[0].destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+            pipelineDesc.colorAttachments[0].sourceAlphaBlendFactor = MTLBlendFactorOne;
+            pipelineDesc.colorAttachments[0].destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+
+            pipeline3D = [device newRenderPipelineStateWithDescriptor:pipelineDesc error:&error];
+            if (!pipeline3D) {
+                NSLog(@"MetalRenderer: Failed to create 3D pipeline: %@", error.localizedDescription);
+                return false;
+            }
+        }
+
+        NSLog(@"MetalRenderer: Pipelines created successfully");
         return true;
     }
 }
@@ -320,7 +492,7 @@ bool MetalRenderer::Impl::beginFrame() {
 }
 
 bool MetalRenderer::Impl::endFrame() {
-    if (!initialized || !currentCommandBuffer) {
+    if (!initialized || !currentCommandBuffer || !view) {
         return false;
     }
 
@@ -330,12 +502,14 @@ bool MetalRenderer::Impl::endFrame() {
 
         // Present drawable
         id<CAMetalDrawable> drawable = view.currentDrawable;
-        if (drawable) {
+        if (drawable && currentCommandBuffer) {
             [currentCommandBuffer presentDrawable:drawable];
         }
 
         // Commit command buffer
-        [currentCommandBuffer commit];
+        if (currentCommandBuffer) {
+            [currentCommandBuffer commit];
+        }
 
         // Advance frame index
         currentFrameIndex = (currentFrameIndex + 1) % kMaxFramesInFlight;
@@ -543,10 +717,12 @@ bool MetalRenderer::isInitialized() const {
 }
 
 bool MetalRenderer::beginFrame() {
+    if (!impl_) return false;
     return impl_->beginFrame();
 }
 
 bool MetalRenderer::endFrame() {
+    if (!impl_) return false;
     return impl_->endFrame();
 }
 

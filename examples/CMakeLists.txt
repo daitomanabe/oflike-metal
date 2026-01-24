@@ -2,10 +2,16 @@
 
 # Function to create an example app
 function(add_oflike_example EXAMPLE_NAME)
-    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${EXAMPLE_NAME}/main.cpp)
-        add_executable(${EXAMPLE_NAME}
-            ${CMAKE_CURRENT_SOURCE_DIR}/${EXAMPLE_NAME}/main.cpp
-        )
+    # Check for .mm (Objective-C++) or .cpp file
+    set(EXAMPLE_SOURCE "")
+    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${EXAMPLE_NAME}/main.mm)
+        set(EXAMPLE_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/${EXAMPLE_NAME}/main.mm)
+    elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${EXAMPLE_NAME}/main.cpp)
+        set(EXAMPLE_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/${EXAMPLE_NAME}/main.cpp)
+    endif()
+
+    if(EXAMPLE_SOURCE)
+        add_executable(${EXAMPLE_NAME} ${EXAMPLE_SOURCE})
 
         target_link_libraries(${EXAMPLE_NAME} PRIVATE oflike-metal)
 
