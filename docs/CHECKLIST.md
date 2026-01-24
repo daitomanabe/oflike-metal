@@ -813,8 +813,8 @@
 - [ ] Background Subtraction
 
 ### 24.4 Wrapper Classes
-- [ ] ofxCv namespace
-- [ ] toCv() / toOf() 変換関数
+- [x] ofxCv namespace
+- [x] toCv() / toOf() 変換関数
 
 ### 24.5 Examples
 - [ ] face_detection example
