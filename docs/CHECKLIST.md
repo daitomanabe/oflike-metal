@@ -735,7 +735,7 @@
 - [x] getCurrentTag()
 
 ### 21.4 Examples
-- [ ] xml_settings example
+- [x] xml_settings example
 
 ---
 
