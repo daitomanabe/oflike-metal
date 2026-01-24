@@ -880,7 +880,7 @@
 ### 25.10 Examples
 - [x] sharp_basic example
 - [x] sharp_scene example
-- [ ] sharp_video_export example
+- [x] sharp_video_export example
 - [ ] sharp_realtime_camera example
 
 ---
