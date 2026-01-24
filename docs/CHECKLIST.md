@@ -845,10 +845,10 @@
 - [x] バッチ推論
 
 ### 25.4 Gaussian Cloud
-- [ ] PLY 読み込み / 書き出し
-- [ ] Metal Buffer 生成
-- [ ] 変換 (translate, rotate, scale)
-- [ ] フィルタリング
+- [x] PLY 読み込み / 書き出し
+- [x] Metal Buffer 生成
+- [x] 変換 (translate, rotate, scale)
+- [x] フィルタリング
 
 ### 25.5 Renderer
 - [ ] 深度ソート (GPU)
