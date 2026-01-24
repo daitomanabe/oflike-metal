@@ -914,9 +914,9 @@
 - [x] segment() - マスク生成
 
 ### 26.6 Generic Model
-- [ ] GenericModel クラス
-- [ ] setInput() / predict() / getOutput()
-- [ ] 任意の Core ML モデル対応
+- [x] GenericModel クラス
+- [x] setInput() / predict() / getOutput()
+- [x] 任意の Core ML モデル対応
 
 ### 26.7 Examples
 - [ ] neural_classify example
@@ -1137,7 +1137,7 @@
 | Phase | Addon | Priority | 完了率 |
 |-------|-------|----------|--------|
 | 25 | **ofxSharp** | ⭐ HIGH | 100% |
-| 26 | ofxNeuralEngine | HIGH | 58% |
+| 26 | ofxNeuralEngine | HIGH | 89% |
 | 27 | ofxMetalCompute | HIGH | 0% |
 | 28 | ofxMPS | MEDIUM | 0% |
 | 29 | ofxVideoToolbox | MEDIUM | 0% |
