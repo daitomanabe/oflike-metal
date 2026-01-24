@@ -6,7 +6,7 @@
 // - Image Classification (Phase 26.1) ✅
 // - Pose Estimation (Phase 26.2) ✅
 // - Depth Estimation (Phase 26.3) ✅
-// - Style Transfer (Phase 26.4)
+// - Style Transfer (Phase 26.4) ✅
 // - Person Segmentation (Phase 26.5)
 // - Generic Core ML Models (Phase 26.6)
 //
@@ -30,6 +30,11 @@
 //   ofxNeuralEngine::DepthEstimator depthEstimator;
 //   depthEstimator.load("DepthAnything.mlmodelc");
 //   ofPixels depthMap = depthEstimator.estimate(myImage);
+//
+//   // Style transfer
+//   ofxNeuralEngine::StyleTransfer styleTransfer;
+//   styleTransfer.load("CandyStyle.mlmodelc");
+//   ofPixels stylized = styleTransfer.transfer(myImage);
 
 // Core ML Image Classification
 #include "ImageClassifier.h"
@@ -39,6 +44,9 @@
 
 // Core ML Depth Estimation
 #include "DepthEstimator.h"
+
+// Core ML Style Transfer
+#include "StyleTransfer.h"
 
 // Convenience namespace alias
 namespace ofxNeuralEngine = NeuralEngine;

@@ -905,9 +905,9 @@
 - [x] GPU 直接処理
 
 ### 26.4 Style Transfer
-- [ ] StyleTransfer クラス
-- [ ] load() / transfer()
-- [ ] GPU バージョン
+- [x] StyleTransfer クラス
+- [x] load() / transfer()
+- [x] GPU バージョン
 
 ### 26.5 Person Segmentation
 - [ ] PersonSegmentation クラス
@@ -1137,7 +1137,7 @@
 | Phase | Addon | Priority | 完了率 |
 |-------|-------|----------|--------|
 | 25 | **ofxSharp** | ⭐ HIGH | 100% |
-| 26 | ofxNeuralEngine | HIGH | 43% |
+| 26 | ofxNeuralEngine | HIGH | 57% |
 | 27 | ofxMetalCompute | HIGH | 0% |
 | 28 | ofxMPS | MEDIUM | 0% |
 | 29 | ofxVideoToolbox | MEDIUM | 0% |
