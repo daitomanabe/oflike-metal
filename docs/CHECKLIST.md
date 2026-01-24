@@ -647,7 +647,7 @@
 
 ### 19.1 Core Classes
 - [x] ofxOscMessage 実装
-- [ ] ofxOscBundle 実装
+- [x] ofxOscBundle 実装
 - [ ] ofxOscSender 実装
 - [ ] ofxOscReceiver 実装
 
