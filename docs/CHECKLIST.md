@@ -867,9 +867,9 @@
 - [x] キーフレーム補間
 
 ### 25.8 Video Export
-- [ ] Sharp::VideoExporter クラス
-- [ ] H.265 / ProRes 出力
-- [ ] 進捗コールバック
+- [x] Sharp::VideoExporter クラス
+- [x] H.265 / ProRes 出力
+- [x] 進捗コールバック
 
 ### 25.9 ofxSharp Wrapper
 - [ ] ofxSharp クラス実装
