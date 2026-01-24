@@ -680,18 +680,18 @@
 **Dependencies**: SwiftUI (primary), Dear ImGui (optional)
 
 ### 20.1 SwiftUI Implementation
-- [ ] OFLGuiPanel.swift 作成
-- [ ] C++ → Swift ブリッジ
-- [ ] パラメータバインディング
+- [x] OFLGuiPanel.swift 作成
+- [x] C++ → Swift ブリッジ
+- [x] パラメータバインディング
 
 ### 20.2 Widgets
-- [ ] Slider (float, int)
-- [ ] Toggle (bool)
-- [ ] Button
-- [ ] Label
-- [ ] TextField
-- [ ] ColorPicker
-- [ ] Dropdown / Picker
+- [x] Slider (float, int)
+- [x] Toggle (bool)
+- [x] Button
+- [x] Label
+- [x] TextField
+- [x] ColorPicker
+- [x] Dropdown / Picker
 
 ### 20.3 Layout
 - [ ] ofxGuiGroup 実装
