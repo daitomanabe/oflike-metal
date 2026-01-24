@@ -719,9 +719,9 @@
 **Dependencies**: pugixml (MIT)
 
 ### 21.1 Core
-- [ ] ofxXmlSettings クラス実装
-- [ ] load() / save()
-- [ ] pushTag() / popTag()
+- [x] ofxXmlSettings クラス実装
+- [x] load() / save()
+- [x] pushTag() / popTag()
 
 ### 21.2 Value Types
 - [ ] getValue() - int, float, string
