@@ -890,9 +890,9 @@
 **Dependencies**: Core ML, Vision
 
 ### 26.1 Image Classification
-- [ ] ImageClassifier クラス
-- [ ] load() / classify()
-- [ ] Top-K 結果
+- [x] ImageClassifier クラス
+- [x] load() / classify()
+- [x] Top-K 結果
 
 ### 26.2 Pose Estimation
 - [ ] PoseEstimator クラス
@@ -1137,7 +1137,7 @@
 | Phase | Addon | Priority | 完了率 |
 |-------|-------|----------|--------|
 | 25 | **ofxSharp** | ⭐ HIGH | 100% |
-| 26 | ofxNeuralEngine | HIGH | 0% |
+| 26 | ofxNeuralEngine | HIGH | 14% |
 | 27 | ofxMetalCompute | HIGH | 0% |
 | 28 | ofxMPS | MEDIUM | 0% |
 | 29 | ofxVideoToolbox | MEDIUM | 0% |
