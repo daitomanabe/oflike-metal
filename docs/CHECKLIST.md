@@ -744,10 +744,10 @@
 **Dependencies**: nanosvg (Zlib), Core Graphics
 
 ### 22.1 Core
-- [ ] ofxSvg クラス実装
-- [ ] load() - nanosvg パース
-- [ ] getNumPaths()
-- [ ] getPathAt()
+- [x] ofxSvg クラス実装
+- [x] load() - nanosvg パース
+- [x] getNumPaths()
+- [x] getPathAt()
 
 ### 22.2 Path Conversion
 - [ ] NSVGpath → ofPath 変換

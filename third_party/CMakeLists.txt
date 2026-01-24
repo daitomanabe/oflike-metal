@@ -38,6 +38,34 @@ else()
     message(WARNING "oscpack not found - ofxOsc addon will not be available")
 endif()
 
+# pugixml - XML parsing library for ofxXmlSettings
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/pugixml/src/pugixml.hpp)
+    add_library(pugixml STATIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/pugixml/src/pugixml.cpp
+    )
+    target_include_directories(pugixml PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/pugixml/src
+    )
+    set_target_properties(pugixml PROPERTIES
+        CXX_STANDARD 11
+        CXX_STANDARD_REQUIRED YES
+    )
+    message(STATUS "pugixml found (XML parsing support)")
+else()
+    message(WARNING "pugixml not found - ofxXmlSettings addon will not be available")
+endif()
+
+# nanosvg - SVG parsing library for ofxSvg
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/nanosvg/src/nanosvg.h)
+    add_library(nanosvg INTERFACE)
+    target_include_directories(nanosvg INTERFACE
+        ${CMAKE_CURRENT_SOURCE_DIR}/nanosvg/src
+    )
+    message(STATUS "nanosvg found (SVG parsing support)")
+else()
+    message(WARNING "nanosvg not found - ofxSvg addon will not be available")
+endif()
+
 # GLM - OpenGL Mathematics (temporary, will be replaced by simd)
 # Note: This is for compatibility during v0.1-v0.5
 # Will be fully replaced by simd in v0.5.0+
