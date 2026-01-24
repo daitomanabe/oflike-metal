@@ -54,6 +54,7 @@ add_oflike_example(22_sharp_basic)
 add_oflike_example(23_sharp_scene)
 add_oflike_example(24_sharp_video_export)
 add_oflike_example(25_sharp_realtime_camera)
+add_oflike_example(26_neural_classify)
 # etc.
 
 # Standalone test programs (not full apps)

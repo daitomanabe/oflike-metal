@@ -919,7 +919,7 @@
 - [x] 任意の Core ML モデル対応
 
 ### 26.7 Examples
-- [ ] neural_classify example
+- [x] neural_classify example
 - [ ] neural_pose example
 - [ ] neural_depth example
 - [ ] neural_style example
