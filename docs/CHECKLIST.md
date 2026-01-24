@@ -831,7 +831,7 @@
 - [x] Sharp::Gaussian 構造体
 - [x] Sharp::GaussianCloud クラス
 - [x] Sharp::SharpModel クラス
-- [ ] Sharp::GaussianRenderer クラス
+- [x] Sharp::GaussianRenderer クラス
 
 ### 25.2 Model Integration
 - [ ] PyTorch → Core ML 変換スクリプト
