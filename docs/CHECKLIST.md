@@ -730,9 +730,9 @@
 - [x] addTag() / removeTag()
 
 ### 21.3 Navigation
-- [ ] getNumTags()
-- [ ] tagExists()
-- [ ] getCurrentTag()
+- [x] getNumTags()
+- [x] tagExists()
+- [x] getCurrentTag()
 
 ### 21.4 Examples
 - [ ] xml_settings example
