@@ -669,8 +669,8 @@
 - [ ] 双方向同期
 
 ### 19.5 Examples
-- [ ] osc_sender example
-- [ ] osc_receiver example
+- [x] osc_sender example
+- [x] osc_receiver example
 - [ ] osc_parameter_sync example
 
 ---
