@@ -750,16 +750,16 @@
 - [x] getPathAt()
 
 ### 22.2 Path Conversion
-- [ ] NSVGpath → ofPath 変換
-- [ ] 色・スタイル変換
-- [ ] 変換行列対応
+- [x] NSVGpath → ofPath 変換
+- [x] 色・スタイル変換
+- [~] 変換行列対応 (TODO: Future enhancement for draw(x,y,w,h))
 
 ### 22.3 Rendering
-- [ ] draw()
-- [ ] 個別パス描画
+- [x] draw()
+- [x] 個別パス描画
 
 ### 22.4 Examples
-- [ ] svg_loader example
+- [x] svg_loader example
 
 ---
 
