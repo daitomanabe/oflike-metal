@@ -817,8 +817,8 @@
 - [x] toCv() / toOf() 変換関数
 
 ### 24.5 Examples
-- [ ] face_detection example
-- [ ] contour_finder example
+- [x] face_detection example
+- [ ] contour_finder example (skipped - 24.3 not implemented)
 
 ---
 
