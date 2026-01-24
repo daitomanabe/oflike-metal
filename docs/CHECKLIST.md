@@ -803,9 +803,9 @@
 - [x] バーコード検出
 
 ### 24.2 Image Conversion
-- [ ] ofPixels → CVPixelBuffer
-- [ ] CVPixelBuffer → ofPixels
-- [ ] ofPixels → cv::Mat (optional)
+- [x] ofPixels → CVPixelBuffer
+- [x] CVPixelBuffer → ofPixels
+- [x] ofPixels → cv::Mat (optional)
 
 ### 24.3 OpenCV Features (Optional)
 - [ ] ContourFinder

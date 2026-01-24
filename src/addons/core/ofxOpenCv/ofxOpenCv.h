@@ -13,14 +13,16 @@
 // - Human detection (VNDetectHumanRectanglesRequest)
 // - Text recognition (VNRecognizeTextRequest)
 // - Barcode detection (VNDetectBarcodesRequest)
+// - Image format conversion (ofPixels ↔ CVPixelBuffer ↔ cv::Mat)
 //
 // All bounding boxes are returned in normalized coordinates [0,1]
 // with origin at top-left (oflike coordinate system)
 
 #include "ofxCvVisionDetector.h"
+#include "ofxCvImageConversion.h"
 
 namespace ofxCv {
-    // Re-export main types
+    // Re-export main types for detection
     using VisionDetector = VisionDetector;
     using FaceDetection = FaceDetection;
     using HumanDetection = HumanDetection;
@@ -28,4 +30,8 @@ namespace ofxCv {
     using BarcodeDetection = BarcodeDetection;
     using DetectionType = DetectionType;
     using TextRecognitionLevel = TextRecognitionLevel;
+
+    // Re-export image conversion utilities
+    using ImageConverter = ImageConverter;
+    // Convenience functions: toCv() and toOf() are available in namespace
 }
