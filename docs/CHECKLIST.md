@@ -881,7 +881,7 @@
 - [x] sharp_basic example
 - [x] sharp_scene example
 - [x] sharp_video_export example
-- [ ] sharp_realtime_camera example
+- [x] sharp_realtime_camera example
 
 ---
 
@@ -1136,7 +1136,7 @@
 
 | Phase | Addon | Priority | 完了率 |
 |-------|-------|----------|--------|
-| 25 | **ofxSharp** | ⭐ HIGH | 90% |
+| 25 | **ofxSharp** | ⭐ HIGH | 100% |
 | 26 | ofxNeuralEngine | HIGH | 0% |
 | 27 | ofxMetalCompute | HIGH | 0% |
 | 28 | ofxMPS | MEDIUM | 0% |
