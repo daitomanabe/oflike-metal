@@ -648,7 +648,7 @@
 ### 19.1 Core Classes
 - [x] ofxOscMessage 実装
 - [x] ofxOscBundle 実装
-- [ ] ofxOscSender 実装
+- [x] ofxOscSender 実装
 - [ ] ofxOscReceiver 実装
 
 ### 19.2 Message Types
