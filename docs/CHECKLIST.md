@@ -709,8 +709,8 @@
 - [ ] DEBUG ビルドのみ有効化
 
 ### 20.6 Examples
-- [ ] gui_basic example
-- [ ] gui_groups example
+- [x] gui_basic example
+- [x] gui_groups example
 
 ---
 
