@@ -724,10 +724,10 @@
 - [x] pushTag() / popTag()
 
 ### 21.2 Value Types
-- [ ] getValue() - int, float, string
-- [ ] setValue() - int, float, string
-- [ ] getAttribute()
-- [ ] addTag() / removeTag()
+- [x] getValue() - int, float, string
+- [x] setValue() - int, float, string
+- [x] getAttribute()
+- [x] addTag() / removeTag()
 
 ### 21.3 Navigation
 - [ ] getNumTags()
