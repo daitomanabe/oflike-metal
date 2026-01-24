@@ -797,10 +797,10 @@
 **Dependencies**: Vision.framework (primary), OpenCV (optional)
 
 ### 24.1 Vision.framework Implementation
-- [ ] 顔検出 (VNDetectFaceRectanglesRequest)
-- [ ] 人体検出 (VNDetectHumanRectanglesRequest)
-- [ ] テキスト検出 (VNRecognizeTextRequest)
-- [ ] バーコード検出
+- [x] 顔検出 (VNDetectFaceRectanglesRequest)
+- [x] 人体検出 (VNDetectHumanRectanglesRequest)
+- [x] テキスト検出 (VNRecognizeTextRequest)
+- [x] バーコード検出
 
 ### 24.2 Image Conversion
 - [ ] ofPixels → CVPixelBuffer
