@@ -768,10 +768,10 @@
 **Dependencies**: Network.framework (Apple)
 
 ### 23.1 TCP
-- [ ] ofxTcpClient 実装
-- [ ] ofxTcpServer 実装
-- [ ] 非同期接続
-- [ ] 送受信
+- [x] ofxTcpClient 実装
+- [x] ofxTcpServer 実装
+- [x] 非同期接続
+- [x] 送受信
 
 ### 23.2 UDP
 - [ ] ofxUdpManager 実装
