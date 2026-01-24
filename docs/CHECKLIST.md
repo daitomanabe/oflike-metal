@@ -900,9 +900,9 @@
 - [x] スケルトン描画
 
 ### 26.3 Depth Estimation
-- [ ] DepthEstimator クラス
-- [ ] estimate(ofPixels&)
-- [ ] GPU 直接処理
+- [x] DepthEstimator クラス
+- [x] estimate(ofPixels&)
+- [x] GPU 直接処理
 
 ### 26.4 Style Transfer
 - [ ] StyleTransfer クラス
@@ -1137,7 +1137,7 @@
 | Phase | Addon | Priority | 完了率 |
 |-------|-------|----------|--------|
 | 25 | **ofxSharp** | ⭐ HIGH | 100% |
-| 26 | ofxNeuralEngine | HIGH | 29% |
+| 26 | ofxNeuralEngine | HIGH | 43% |
 | 27 | ofxMetalCompute | HIGH | 0% |
 | 28 | ofxMPS | MEDIUM | 0% |
 | 29 | ofxVideoToolbox | MEDIUM | 0% |
