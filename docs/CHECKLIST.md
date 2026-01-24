@@ -646,7 +646,7 @@
 **Dependencies**: oscpack (MIT)
 
 ### 19.1 Core Classes
-- [ ] ofxOscMessage 実装
+- [x] ofxOscMessage 実装
 - [ ] ofxOscBundle 実装
 - [ ] ofxOscSender 実装
 - [ ] ofxOscReceiver 実装

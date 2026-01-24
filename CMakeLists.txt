@@ -65,6 +65,11 @@ file(GLOB_RECURSE OFLIKE_SOURCES
     src/oflike/*.mm
 )
 
+file(GLOB_RECURSE ADDON_SOURCES
+    src/addons/**/*.cpp
+    src/addons/**/*.mm
+)
+
 # Main oflike-metal library
 # Note: Create a dummy source file to allow library creation before implementation
 set(ALL_SOURCES
@@ -73,6 +78,7 @@ set(ALL_SOURCES
     ${PLATFORM_SOURCES}
     ${RENDER_SOURCES}
     ${OFLIKE_SOURCES}
+    ${ADDON_SOURCES}
 )
 
 if(ALL_SOURCES)
@@ -91,6 +97,7 @@ target_include_directories(oflike-metal PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/platform
     ${CMAKE_CURRENT_SOURCE_DIR}/src/render
     ${CMAKE_CURRENT_SOURCE_DIR}/src/oflike
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/addons/core
     ${CMAKE_CURRENT_SOURCE_DIR}/third_party
 )
 
@@ -106,6 +113,11 @@ target_link_libraries(oflike-metal PUBLIC
     tess2
     utf8
 )
+
+# Link oscpack if available
+if(TARGET oscpack)
+    target_link_libraries(oflike-metal PUBLIC oscpack)
+endif()
 
 # Copy shaders to build directory
 file(GLOB SHADER_FILES ${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.metal)

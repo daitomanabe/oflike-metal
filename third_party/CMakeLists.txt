@@ -18,6 +18,26 @@ add_library(utf8 INTERFACE)
 target_include_directories(utf8 INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/utf8)
 # Note: Header-only library
 
+# oscpack - OSC (Open Sound Control) library
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/oscpack/osc/OscTypes.h)
+    file(GLOB OSCPACK_SOURCES
+        ${CMAKE_CURRENT_SOURCE_DIR}/oscpack/osc/*.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/oscpack/ip/*.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/oscpack/ip/posix/*.cpp
+    )
+    add_library(oscpack STATIC ${OSCPACK_SOURCES})
+    target_include_directories(oscpack PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/oscpack
+    )
+    set_target_properties(oscpack PROPERTIES
+        CXX_STANDARD 11
+        CXX_STANDARD_REQUIRED YES
+    )
+    message(STATUS "oscpack found (OSC protocol support)")
+else()
+    message(WARNING "oscpack not found - ofxOsc addon will not be available")
+endif()
+
 # GLM - OpenGL Mathematics (temporary, will be replaced by simd)
 # Note: This is for compatibility during v0.1-v0.5
 # Will be fully replaced by simd in v0.5.0+
