@@ -649,7 +649,7 @@
 - [x] ofxOscMessage 実装
 - [x] ofxOscBundle 実装
 - [x] ofxOscSender 実装
-- [ ] ofxOscReceiver 実装
+- [x] ofxOscReceiver 実装
 
 ### 19.2 Message Types
 - [ ] Int32 引数

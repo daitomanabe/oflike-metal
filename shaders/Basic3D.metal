@@ -61,14 +61,14 @@ fragment float4 fragment3DLit(
     RasterizerData3D in [[stage_in]]
 ) {
     // Simple directional light from above (pre-normalized constant)
-    constant float3 lightDir = fast::normalize(float3(0.0, 1.0, 0.5));
+    const float3 lightDir = fast::normalize(float3(0.0, 1.0, 0.5));
     float3 normal = fast::normalize(in.normal);
 
     // Diffuse lighting
     float diffuse = max(dot(normal, lightDir), 0.0);
 
     // Ambient + diffuse (optimized: single mad operation)
-    constant float ambient = 0.3;
+    const float ambient = 0.3;
     float lighting = fma((1.0 - ambient), diffuse, ambient);
 
     return float4(in.color.rgb * lighting, in.color.a);
@@ -82,14 +82,14 @@ fragment float4 fragment3DTexturedLit(
     sampler textureSampler [[sampler(0)]]
 ) {
     // Simple directional light from above (pre-normalized constant)
-    constant float3 lightDir = fast::normalize(float3(0.0, 1.0, 0.5));
+    const float3 lightDir = fast::normalize(float3(0.0, 1.0, 0.5));
     float3 normal = fast::normalize(in.normal);
 
     // Diffuse lighting
     float diffuse = max(dot(normal, lightDir), 0.0);
 
     // Ambient + diffuse (optimized: single mad operation)
-    constant float ambient = 0.3;
+    const float ambient = 0.3;
     float lighting = fma((1.0 - ambient), diffuse, ambient);
 
     // Sample texture and apply lighting
