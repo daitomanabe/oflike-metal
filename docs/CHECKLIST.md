@@ -830,7 +830,7 @@
 ### 25.1 Core Classes
 - [x] Sharp::Gaussian 構造体
 - [x] Sharp::GaussianCloud クラス
-- [ ] Sharp::SharpModel クラス
+- [x] Sharp::SharpModel クラス
 - [ ] Sharp::GaussianRenderer クラス
 
 ### 25.2 Model Integration
