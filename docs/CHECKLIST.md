@@ -910,8 +910,8 @@
 - [x] GPU バージョン
 
 ### 26.5 Person Segmentation
-- [ ] PersonSegmentation クラス
-- [ ] segment() - マスク生成
+- [x] PersonSegmentation クラス
+- [x] segment() - マスク生成
 
 ### 26.6 Generic Model
 - [ ] GenericModel クラス
@@ -1137,7 +1137,7 @@
 | Phase | Addon | Priority | 完了率 |
 |-------|-------|----------|--------|
 | 25 | **ofxSharp** | ⭐ HIGH | 100% |
-| 26 | ofxNeuralEngine | HIGH | 57% |
+| 26 | ofxNeuralEngine | HIGH | 58% |
 | 27 | ofxMetalCompute | HIGH | 0% |
 | 28 | ofxMPS | MEDIUM | 0% |
 | 29 | ofxVideoToolbox | MEDIUM | 0% |
