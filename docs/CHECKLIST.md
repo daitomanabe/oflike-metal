@@ -862,9 +862,9 @@
 - [x] シーン保存 / 読み込み
 
 ### 25.7 Camera Path
-- [ ] Sharp::CameraPath クラス
-- [ ] Orbit / Dolly / Spiral
-- [ ] キーフレーム補間
+- [x] Sharp::CameraPath クラス
+- [x] Orbit / Dolly / Spiral
+- [x] キーフレーム補間
 
 ### 25.8 Video Export
 - [ ] Sharp::VideoExporter クラス
