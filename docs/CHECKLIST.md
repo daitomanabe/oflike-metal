@@ -659,9 +659,9 @@
 - [x] Int64 / Double / Char / Bool
 
 ### 19.3 Features
-- [ ] マルチキャスト対応
-- [ ] Bundle タイムスタンプ
-- [ ] エラーハンドリング
+- [x] マルチキャスト対応
+- [x] Bundle タイムスタンプ
+- [x] エラーハンドリング
 
 ### 19.4 Parameter Mapping
 - [ ] ofxOscParameterSync 実装

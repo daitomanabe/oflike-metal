@@ -49,6 +49,12 @@ public:
     /// \return true on success, false on failure
     bool setup(int port);
 
+    /// \brief Set up the receiver to listen on a multicast group
+    /// \param multicastGroup Multicast group address (e.g., "224.0.0.1")
+    /// \param port Port number to listen on (1-65535)
+    /// \return true on success, false on failure
+    bool setupMulticast(const std::string& multicastGroup, int port);
+
     /// \brief Check if the receiver is set up and ready
     bool isSetup() const;
 
