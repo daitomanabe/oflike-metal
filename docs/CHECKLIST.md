@@ -895,9 +895,9 @@
 - [x] Top-K 結果
 
 ### 26.2 Pose Estimation
-- [ ] PoseEstimator クラス
-- [ ] VNDetectHumanBodyPoseRequest 統合
-- [ ] スケルトン描画
+- [x] PoseEstimator クラス
+- [x] VNDetectHumanBodyPoseRequest 統合
+- [x] スケルトン描画
 
 ### 26.3 Depth Estimation
 - [ ] DepthEstimator クラス
@@ -1137,7 +1137,7 @@
 | Phase | Addon | Priority | 完了率 |
 |-------|-------|----------|--------|
 | 25 | **ofxSharp** | ⭐ HIGH | 100% |
-| 26 | ofxNeuralEngine | HIGH | 14% |
+| 26 | ofxNeuralEngine | HIGH | 29% |
 | 27 | ofxMetalCompute | HIGH | 0% |
 | 28 | ofxMPS | MEDIUM | 0% |
 | 29 | ofxVideoToolbox | MEDIUM | 0% |

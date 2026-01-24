@@ -4,7 +4,7 @@
 //
 // This addon provides easy-to-use interfaces for:
 // - Image Classification (Phase 26.1) ✅
-// - Pose Estimation (Phase 26.2)
+// - Pose Estimation (Phase 26.2) ✅
 // - Depth Estimation (Phase 26.3)
 // - Style Transfer (Phase 26.4)
 // - Person Segmentation (Phase 26.5)
@@ -15,12 +15,22 @@
 // Example usage:
 //   #include "ofxNeuralEngine.h"
 //
+//   // Image classification
 //   ofxNeuralEngine::ImageClassifier classifier;
 //   classifier.load("MobileNetV3.mlmodelc");
 //   auto results = classifier.classify(myImage);
+//
+//   // Pose estimation
+//   ofxNeuralEngine::PoseEstimator poseEstimator;
+//   poseEstimator.setup();
+//   auto poses = poseEstimator.estimate(myImage);
+//   poseEstimator.drawSkeletons(poses, width, height);
 
 // Core ML Image Classification
 #include "ImageClassifier.h"
+
+// Vision Pose Estimation
+#include "PoseEstimator.h"
 
 // Convenience namespace alias
 namespace ofxNeuralEngine = NeuralEngine;
