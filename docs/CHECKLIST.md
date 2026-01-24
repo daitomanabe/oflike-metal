@@ -652,11 +652,11 @@
 - [x] ofxOscReceiver 実装
 
 ### 19.2 Message Types
-- [ ] Int32 引数
-- [ ] Float 引数
-- [ ] String 引数
-- [ ] Blob 引数
-- [ ] Int64 / Double / Char / Bool
+- [x] Int32 引数
+- [x] Float 引数
+- [x] String 引数
+- [x] Blob 引数
+- [x] Int64 / Double / Char / Bool
 
 ### 19.3 Features
 - [ ] マルチキャスト対応
