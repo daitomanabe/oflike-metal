@@ -857,9 +857,9 @@
 - [x] Anti-aliasing
 
 ### 25.6 Scene Management
-- [ ] Sharp::SharpScene クラス
-- [ ] 複数オブジェクト管理
-- [ ] シーン保存 / 読み込み
+- [x] Sharp::SharpScene クラス
+- [x] 複数オブジェクト管理
+- [x] シーン保存 / 読み込み
 
 ### 25.7 Camera Path
 - [ ] Sharp::CameraPath クラス
