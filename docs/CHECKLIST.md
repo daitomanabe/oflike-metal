@@ -774,10 +774,10 @@
 - [x] 送受信
 
 ### 23.2 UDP
-- [ ] ofxUdpManager 実装
-- [ ] bind() / connect()
-- [ ] send() / receive()
-- [ ] マルチキャスト
+- [x] ofxUdpManager 実装
+- [x] bind() / connect()
+- [x] send() / receive()
+- [x] マルチキャスト
 
 ### 23.3 Features
 - [ ] 非ブロッキングモード
