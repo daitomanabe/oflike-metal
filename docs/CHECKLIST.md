@@ -664,14 +664,14 @@
 - [x] エラーハンドリング
 
 ### 19.4 Parameter Mapping
-- [ ] ofxOscParameterSync 実装
-- [ ] ofParameter との連携
-- [ ] 双方向同期
+- [x] ofxOscParameterSync 実装
+- [x] ofParameter との連携
+- [x] 双方向同期
 
 ### 19.5 Examples
 - [x] osc_sender example
 - [x] osc_receiver example
-- [ ] osc_parameter_sync example
+- [x] osc_parameter_sync example
 
 ---
 
