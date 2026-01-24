@@ -785,10 +785,10 @@
 - [x] エラーハンドリング
 
 ### 23.4 Examples
-- [ ] tcp_client example
-- [ ] tcp_server example
-- [ ] udp_sender example
-- [ ] udp_receiver example
+- [x] tcp_client example
+- [x] tcp_server example
+- [x] udp_sender example
+- [x] udp_receiver example
 
 ---
 
