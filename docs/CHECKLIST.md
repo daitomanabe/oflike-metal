@@ -878,7 +878,7 @@
 - [x] drawCloud()
 
 ### 25.10 Examples
-- [ ] sharp_basic example
+- [x] sharp_basic example
 - [ ] sharp_scene example
 - [ ] sharp_video_export example
 - [ ] sharp_realtime_camera example
