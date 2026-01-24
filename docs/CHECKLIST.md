@@ -829,7 +829,7 @@
 
 ### 25.1 Core Classes
 - [x] Sharp::Gaussian 構造体
-- [ ] Sharp::GaussianCloud クラス
+- [x] Sharp::GaussianCloud クラス
 - [ ] Sharp::SharpModel クラス
 - [ ] Sharp::GaussianRenderer クラス
 
