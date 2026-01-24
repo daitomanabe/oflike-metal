@@ -98,6 +98,7 @@ target_include_directories(oflike-metal PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/render
     ${CMAKE_CURRENT_SOURCE_DIR}/src/oflike
     ${CMAKE_CURRENT_SOURCE_DIR}/src/addons/core
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/addons/apple_native
     ${CMAKE_CURRENT_SOURCE_DIR}/third_party
 )
 

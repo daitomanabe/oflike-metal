@@ -828,7 +828,7 @@
 **Reference**: https://github.com/apple/ml-sharp
 
 ### 25.1 Core Classes
-- [ ] Sharp::Gaussian 構造体
+- [x] Sharp::Gaussian 構造体
 - [ ] Sharp::GaussianCloud クラス
 - [ ] Sharp::SharpModel クラス
 - [ ] Sharp::GaussianRenderer クラス

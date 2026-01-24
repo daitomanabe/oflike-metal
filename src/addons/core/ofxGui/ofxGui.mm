@@ -5,12 +5,6 @@
 // Forward declaration of Swift class
 // OFLGuiPanel.swift exports GuiParameterStore to Objective-C
 @class GuiParameterStore;
-@class GuiFloatParameter;
-@class GuiIntParameter;
-@class GuiBoolParameter;
-@class GuiColorParameter;
-@class GuiButtonParameter;
-@class GuiStringParameter;
 
 // Access Swift's GuiParameterStore singleton
 extern "C" {
