@@ -834,9 +834,9 @@
 - [x] Sharp::GaussianRenderer クラス
 
 ### 25.2 Model Integration
-- [ ] PyTorch → Core ML 変換スクリプト
-- [ ] .mlmodelc バンドル
-- [ ] Neural Engine 最適化
+- [x] PyTorch → Core ML 変換スクリプト
+- [x] .mlmodelc バンドル
+- [x] Neural Engine 最適化
 
 ### 25.3 Inference
 - [ ] predict(ofPixels&)
