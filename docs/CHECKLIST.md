@@ -839,10 +839,10 @@
 - [x] Neural Engine 最適化
 
 ### 25.3 Inference
-- [ ] predict(ofPixels&)
-- [ ] predict(ofTexture&)
-- [ ] predictAsync()
-- [ ] バッチ推論
+- [x] predict(ofPixels&)
+- [x] predict(ofTexture&)
+- [x] predictAsync()
+- [x] バッチ推論
 
 ### 25.4 Gaussian Cloud
 - [ ] PLY 読み込み / 書き出し

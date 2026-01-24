@@ -17,6 +17,7 @@
 #include <string>
 #include <memory>
 #include <functional>
+#include <vector>
 
 // Forward declarations
 namespace oflike {
@@ -139,6 +140,36 @@ public:
 
     // Cancel ongoing async inference
     void cancelInference();
+
+    // ============================================================================
+    // Batch Inference
+    // ============================================================================
+
+    // Generate Gaussian clouds from multiple images (batch processing)
+    // Returns vector of clouds (empty cloud on error for that item)
+    std::vector<GaussianCloud> predictBatch(const std::vector<oflike::ofPixels>& images);
+
+    // Generate Gaussian clouds from multiple textures (batch processing)
+    // Returns vector of clouds (empty cloud on error for that item)
+    std::vector<GaussianCloud> predictBatch(const std::vector<oflike::ofTexture>& textures);
+
+    // Callback type for batch async inference
+    // Parameters: vector of GaussianCloud results, vector of ModelStatus for each
+    using PredictBatchCallback = std::function<void(std::vector<GaussianCloud>&& clouds, std::vector<ModelStatus> statuses)>;
+
+    // Generate Gaussian clouds asynchronously from multiple images (batch)
+    // Callback is called on background thread when all inferences complete
+    void predictBatchAsync(const std::vector<oflike::ofPixels>& images, PredictBatchCallback callback);
+
+    // Generate Gaussian clouds asynchronously from multiple textures (batch)
+    // Callback is called on background thread when all inferences complete
+    void predictBatchAsync(const std::vector<oflike::ofTexture>& textures, PredictBatchCallback callback);
+
+    // Set whether to parallelize batch inference (default: true on multi-core)
+    void setBatchParallelProcessing(bool enabled);
+
+    // Get number of parallel inference threads used for batch processing
+    size_t getBatchParallelThreads() const;
 
     // ============================================================================
     // Error Handling

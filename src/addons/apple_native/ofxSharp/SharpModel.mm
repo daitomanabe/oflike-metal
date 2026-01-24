@@ -34,7 +34,9 @@ public:
         , inferenceInProgress_(false)
         , minOpacity_(0.01f)
         , maxGaussians_(0)
-        , postProcessingEnabled_(true) {
+        , postProcessingEnabled_(true)
+        , batchParallelProcessing_(true)
+        , batchParallelThreads_(0) {
         @autoreleasepool {
             device_ = MTLCreateSystemDefaultDevice();
         }
@@ -297,6 +299,129 @@ public:
         // Core ML doesn't support cancellation mid-inference
         // This would require additional threading infrastructure
         inferenceInProgress_ = false;
+    }
+
+    // ========================================================================
+    // Batch Inference
+    // ========================================================================
+
+    std::vector<GaussianCloud> predictBatch(const std::vector<oflike::ofPixels>& images) {
+        std::vector<GaussianCloud> results;
+        results.reserve(images.size());
+
+        if (!isLoaded()) {
+            lastStatus_ = ModelStatus::ErrorModelNotLoaded;
+            lastError_ = "Model not loaded";
+            // Return empty clouds for all images
+            for (size_t i = 0; i < images.size(); i++) {
+                results.push_back(GaussianCloud());
+            }
+            return results;
+        }
+
+        if (batchParallelProcessing_ && images.size() > 1) {
+            // Parallel processing using GCD
+            results.resize(images.size());
+            dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0);
+            dispatch_group_t group = dispatch_group_create();
+
+            for (size_t i = 0; i < images.size(); i++) {
+                dispatch_group_async(group, queue, ^{
+                    results[i] = predict(images[i]);
+                });
+            }
+
+            dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+        } else {
+            // Sequential processing
+            for (const auto& image : images) {
+                results.push_back(predict(image));
+            }
+        }
+
+        return results;
+    }
+
+    std::vector<GaussianCloud> predictBatch(const std::vector<oflike::ofTexture>& textures) {
+        std::vector<GaussianCloud> results;
+        results.reserve(textures.size());
+
+        if (!isLoaded()) {
+            lastStatus_ = ModelStatus::ErrorModelNotLoaded;
+            lastError_ = "Model not loaded";
+            // Return empty clouds for all textures
+            for (size_t i = 0; i < textures.size(); i++) {
+                results.push_back(GaussianCloud());
+            }
+            return results;
+        }
+
+        if (batchParallelProcessing_ && textures.size() > 1) {
+            // Parallel processing using GCD
+            results.resize(textures.size());
+            dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0);
+            dispatch_group_t group = dispatch_group_create();
+
+            for (size_t i = 0; i < textures.size(); i++) {
+                dispatch_group_async(group, queue, ^{
+                    results[i] = predict(textures[i]);
+                });
+            }
+
+            dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+        } else {
+            // Sequential processing
+            for (const auto& texture : textures) {
+                results.push_back(predict(texture));
+            }
+        }
+
+        return results;
+    }
+
+    void predictBatchAsync(const std::vector<oflike::ofPixels>& images, PredictBatchCallback callback) {
+        if (!isLoaded()) {
+            std::vector<GaussianCloud> emptyClouds(images.size());
+            std::vector<ModelStatus> statuses(images.size(), ModelStatus::ErrorModelNotLoaded);
+            callback(std::move(emptyClouds), statuses);
+            return;
+        }
+
+        // Create copies for async operation
+        auto imagesCopy = std::make_shared<std::vector<oflike::ofPixels>>(images);
+
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+            std::vector<GaussianCloud> clouds = predictBatch(*imagesCopy);
+            std::vector<ModelStatus> statuses(clouds.size(), lastStatus_);
+            callback(std::move(clouds), statuses);
+        });
+    }
+
+    void predictBatchAsync(const std::vector<oflike::ofTexture>& textures, PredictBatchCallback callback) {
+        if (!isLoaded()) {
+            std::vector<GaussianCloud> emptyClouds(textures.size());
+            std::vector<ModelStatus> statuses(textures.size(), ModelStatus::ErrorModelNotLoaded);
+            callback(std::move(emptyClouds), statuses);
+            return;
+        }
+
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+            std::vector<GaussianCloud> clouds = predictBatch(textures);
+            std::vector<ModelStatus> statuses(clouds.size(), lastStatus_);
+            callback(std::move(clouds), statuses);
+        });
+    }
+
+    void setBatchParallelProcessing(bool enabled) {
+        batchParallelProcessing_ = enabled;
+    }
+
+    size_t getBatchParallelThreads() const {
+        if (!batchParallelProcessing_) return 1;
+        if (batchParallelThreads_ > 0) return batchParallelThreads_;
+
+        // Default: number of CPU cores
+        return [[NSProcessInfo processInfo] processorCount];
     }
 
     // ========================================================================
@@ -620,6 +745,8 @@ private:
     float minOpacity_;
     size_t maxGaussians_;
     bool postProcessingEnabled_;
+    bool batchParallelProcessing_;
+    size_t batchParallelThreads_;
 };
 
 // ============================================================================
@@ -681,6 +808,31 @@ bool SharpModel::isInferenceInProgress() const {
 
 void SharpModel::cancelInference() {
     impl_->cancelInference();
+}
+
+// Batch Inference
+std::vector<GaussianCloud> SharpModel::predictBatch(const std::vector<oflike::ofPixels>& images) {
+    return impl_->predictBatch(images);
+}
+
+std::vector<GaussianCloud> SharpModel::predictBatch(const std::vector<oflike::ofTexture>& textures) {
+    return impl_->predictBatch(textures);
+}
+
+void SharpModel::predictBatchAsync(const std::vector<oflike::ofPixels>& images, PredictBatchCallback callback) {
+    impl_->predictBatchAsync(images, callback);
+}
+
+void SharpModel::predictBatchAsync(const std::vector<oflike::ofTexture>& textures, PredictBatchCallback callback) {
+    impl_->predictBatchAsync(textures, callback);
+}
+
+void SharpModel::setBatchParallelProcessing(bool enabled) {
+    impl_->setBatchParallelProcessing(enabled);
+}
+
+size_t SharpModel::getBatchParallelThreads() const {
+    return impl_->getBatchParallelThreads();
 }
 
 // Error Handling
