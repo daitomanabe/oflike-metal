@@ -694,15 +694,15 @@
 - [x] Dropdown / Picker
 
 ### 20.3 Layout
-- [ ] ofxGuiGroup 実装
-- [ ] ofxPanel 実装
-- [ ] ネスト対応
-- [ ] 折りたたみ
+- [x] ofxGuiGroup 実装
+- [x] ofxPanel 実装
+- [x] ネスト対応
+- [x] 折りたたみ
 
 ### 20.4 Styling
-- [ ] .ultraThinMaterial 背景
-- [ ] ダークモード対応
-- [ ] カスタムカラー
+- [x] .ultraThinMaterial 背景
+- [x] ダークモード対応
+- [x] カスタムカラー
 
 ### 20.5 ImGui Backend (Optional)
 - [ ] Metal バックエンド統合
