@@ -851,10 +851,10 @@
 - [x] フィルタリング
 
 ### 25.5 Renderer
-- [ ] 深度ソート (GPU)
-- [ ] Alpha blending
-- [ ] Covariance → 2D projection
-- [ ] Anti-aliasing
+- [x] 深度ソート (GPU)
+- [x] Alpha blending
+- [x] Covariance → 2D projection
+- [x] Anti-aliasing
 
 ### 25.6 Scene Management
 - [ ] Sharp::SharpScene クラス

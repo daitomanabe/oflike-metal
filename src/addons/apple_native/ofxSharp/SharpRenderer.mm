@@ -242,16 +242,14 @@ private:
                 return false;
             }
 
-            // NOTE: This is a placeholder. The actual shader implementation would be:
-            // - shaders/GaussianSplatting.metal with vertex/fragment functions
-            // For now, we use basic 3D shaders as a template
-            id<MTLFunction> vertexFunction = [library newFunctionWithName:@"vertex3D"];
-            id<MTLFunction> fragmentFunction = [library newFunctionWithName:@"fragment3D"];
+            // Load Gaussian Splatting shaders (Phase 25.5)
+            id<MTLFunction> vertexFunction = [library newFunctionWithName:@"gaussianSplattingVertex"];
+            id<MTLFunction> fragmentFunction = [library newFunctionWithName:@"gaussianSplattingFragment"];
 
             if (!vertexFunction || !fragmentFunction) {
-                // Shaders not yet implemented - this is expected for Phase 25.1
-                // The actual shader implementation would be in Phase 25.5
-                return true; // Return true to allow class to be instantiated
+                NSLog(@"[SharpRenderer] Error: Failed to load Gaussian Splatting shaders");
+                NSLog(@"[SharpRenderer] Ensure GaussianSplatting.metal is compiled into default.metallib");
+                return false;
             }
 
             // Create render pipeline descriptor
@@ -294,13 +292,12 @@ private:
                 return false;
             }
 
-            // NOTE: This is a placeholder. The actual compute shader would be:
-            // - shaders/GaussianSort.metal with depth sort kernel
-            // For now, we'll use CPU-based sorting as fallback
-            id<MTLFunction> sortFunction = [library newFunctionWithName:@"gaussianDepthSort"];
+            // Load GPU depth sort shader (Phase 25.5)
+            id<MTLFunction> sortFunction = [library newFunctionWithName:@"bitonicSort"];
 
             if (!sortFunction) {
-                // Compute shader not yet implemented - use CPU sorting as fallback
+                NSLog(@"[SharpRenderer] Warning: GPU sort shader not found, using CPU fallback");
+                // CPU sorting fallback is still available
                 return true;
             }
 
@@ -389,9 +386,105 @@ private:
                 return true;
             }
 
-            // For now, use CPU-based sorting
-            // TODO: Implement GPU-based radix sort in Phase 25.5
+            // Use CPU-based sorting as fallback
+            // GPU sorting available if compute shader loaded (Phase 25.5)
+            if (sortComputePipelineState_) {
+                return depthSortGPU(cloud, viewMatrix);
+            }
             return depthSortCPU(cloud, viewMatrix);
+        }
+    }
+
+    // GPU-based bitonic sort for depth ordering
+    bool depthSortGPU(const GaussianCloud& cloud, const oflike::ofMatrix4x4& viewMatrix) {
+        @autoreleasepool {
+            if (!sortComputePipelineState_) {
+                return false;
+            }
+
+            size_t count = cloud.size();
+            if (count == 0) {
+                return true;
+            }
+
+            // Create sort data with depths
+            SortData* sortData = new SortData[count];
+            const auto& gaussians = cloud.getGaussians();
+            simd_float4x4 view = toSimdMatrix(viewMatrix);
+
+            for (size_t i = 0; i < count; ++i) {
+                const Gaussian& g = gaussians[i];
+                simd_float4 pos = simd_make_float4(g.position.x, g.position.y, g.position.z, 1.0f);
+                simd_float4 viewPos = simd_mul(view, pos);
+
+                sortData[i].index = static_cast<uint32_t>(i);
+                sortData[i].depth = viewPos.z;
+            }
+
+            // Upload to GPU
+            size_t sortBufferSize = count * sizeof(SortData);
+            if (!sortDataBuffer_ || sortDataBuffer_.length < sortBufferSize) {
+                sortDataBuffer_ = [device_ newBufferWithLength:sortBufferSize
+                                                       options:MTLResourceStorageModeShared];
+                if (!sortDataBuffer_) {
+                    delete[] sortData;
+                    return false;
+                }
+            }
+            memcpy(sortDataBuffer_.contents, sortData, sortBufferSize);
+            delete[] sortData;
+
+            // Bitonic sort requires power-of-2 size, pad if needed
+            uint32_t paddedCount = 1;
+            while (paddedCount < count) {
+                paddedCount <<= 1;
+            }
+
+            // Create command buffer for sorting
+            id<MTLCommandBuffer> commandBuffer = [commandQueue_ commandBuffer];
+            id<MTLComputeCommandEncoder> computeEncoder = [commandBuffer computeCommandEncoder];
+            [computeEncoder setComputePipelineState:sortComputePipelineState_];
+            [computeEncoder setBuffer:sortDataBuffer_ offset:0 atIndex:0];
+
+            // Bitonic sort: log2(N) stages
+            for (uint32_t stage = 2; stage <= paddedCount; stage <<= 1) {
+                for (uint32_t step = stage >> 1; step > 0; step >>= 1) {
+                    [computeEncoder setBytes:&paddedCount length:sizeof(uint32_t) atIndex:1];
+                    [computeEncoder setBytes:&stage length:sizeof(uint32_t) atIndex:2];
+                    [computeEncoder setBytes:&step length:sizeof(uint32_t) atIndex:3];
+
+                    // Dispatch threads
+                    NSUInteger threadsPerGroup = 256;
+                    NSUInteger numThreadgroups = (paddedCount / 2 + threadsPerGroup - 1) / threadsPerGroup;
+                    [computeEncoder dispatchThreadgroups:MTLSizeMake(numThreadgroups, 1, 1)
+                                   threadsPerThreadgroup:MTLSizeMake(threadsPerGroup, 1, 1)];
+
+                    // Memory barrier between passes
+                    [computeEncoder memoryBarrierWithScope:MTLBarrierScopeBuffers];
+                }
+            }
+
+            [computeEncoder endEncoding];
+            [commandBuffer commit];
+            [commandBuffer waitUntilCompleted];
+
+            // Copy sorted indices
+            SortData* sortedData = (SortData*)sortDataBuffer_.contents;
+            size_t indexBufferSize = count * sizeof(uint32_t);
+            if (!indexBuffer_ || indexBuffer_.length < indexBufferSize) {
+                indexBuffer_ = [device_ newBufferWithLength:indexBufferSize
+                                                    options:MTLResourceStorageModeShared];
+                if (!indexBuffer_) {
+                    return false;
+                }
+            }
+
+            uint32_t* indices = (uint32_t*)indexBuffer_.contents;
+            for (size_t i = 0; i < count; ++i) {
+                indices[i] = sortedData[i].index;
+            }
+
+            return true;
         }
     }
 
