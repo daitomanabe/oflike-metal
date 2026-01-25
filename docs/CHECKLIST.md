@@ -216,8 +216,8 @@ Addons are explicitly last.
   Files: `tools/project_generator/`
   DoD: `oflike-gen --help` works; generates project skeleton.
 
-- [ ] **Add templates for generated projects.**  
-  Files: `tools/project_generator/templates/`  
+- [x] **Add templates for generated projects.**
+  Files: `tools/project_generator/templates/`
   DoD: includes `ofApp.*`, `main.mm`, `project.yml`, `Info.plist`.
 
 - [ ] **Add addons selection + link/copy logic.**  

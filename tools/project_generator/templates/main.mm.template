@@ -1,0 +1,7 @@
+#include <oflike/ofMain.h>
+#include "{{CLASS_NAME}}.h"
+
+int main() {
+    ofRunApp<{{CLASS_NAME}}>(1024, 768, "{{PROJECT_NAME}}");
+    return 0;
+}

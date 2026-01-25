@@ -1,0 +1,45 @@
+name: {{PROJECT_NAME}}
+options:
+  bundleIdPrefix: {{BUNDLE_ID_PREFIX}}
+  deploymentTarget:
+    macOS: "13.0"
+  xcodeVersion: "15.0"
+
+settings:
+  base:
+    PRODUCT_NAME: {{PROJECT_NAME}}
+    PRODUCT_BUNDLE_IDENTIFIER: {{BUNDLE_ID}}
+    MACOSX_DEPLOYMENT_TARGET: "13.0"
+    SWIFT_VERSION: "5.9"
+    CLANG_CXX_LANGUAGE_STANDARD: "c++20"
+    CLANG_CXX_LIBRARY: "libc++"
+    INFOPLIST_FILE: resources/Info.plist
+    CODE_SIGN_ENTITLEMENTS: resources/Entitlements.plist
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: ""
+
+targets:
+  {{PROJECT_NAME}}:
+    type: application
+    platform: macOS
+    sources:
+      - src
+      - path: data
+        type: folder
+        buildPhase: resources
+    {{#if_swiftui}}
+      - path: resources
+        type: folder
+        buildPhase: resources
+    {{/if_swiftui}}
+    dependencies:
+      - framework: Metal.framework
+      - framework: MetalKit.framework
+      - framework: CoreGraphics.framework
+      - framework: Foundation.framework
+      - framework: QuartzCore.framework
+      {{#if_swiftui}}
+      - framework: SwiftUI.framework
+      {{/if_swiftui}}
+      # oflike-metal framework (adjust path as needed)
+      # - framework: path/to/oflike-metal.framework

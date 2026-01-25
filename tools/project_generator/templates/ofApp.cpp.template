@@ -1,0 +1,46 @@
+#include "{{CLASS_NAME}}.h"
+
+void {{CLASS_NAME}}::setup() {
+    // Initialization
+    ofSetWindowTitle("{{PROJECT_NAME}}");
+}
+
+void {{CLASS_NAME}}::update() {
+    // Update logic
+}
+
+void {{CLASS_NAME}}::draw() {
+    ofClear(50);
+
+    // Draw example
+    ofSetColor(255);
+    ofDrawCircle(ofGetWidth() / 2, ofGetHeight() / 2, 100);
+}
+
+void {{CLASS_NAME}}::keyPressed(int key) {
+    // Handle key press
+}
+
+void {{CLASS_NAME}}::keyReleased(int key) {
+    // Handle key release
+}
+
+void {{CLASS_NAME}}::mouseMoved(int x, int y) {
+    // Handle mouse move
+}
+
+void {{CLASS_NAME}}::mouseDragged(int x, int y, int button) {
+    // Handle mouse drag
+}
+
+void {{CLASS_NAME}}::mousePressed(int x, int y, int button) {
+    // Handle mouse press
+}
+
+void {{CLASS_NAME}}::mouseReleased(int x, int y, int button) {
+    // Handle mouse release
+}
+
+void {{CLASS_NAME}}::windowResized(int w, int h) {
+    // Handle window resize
+}
