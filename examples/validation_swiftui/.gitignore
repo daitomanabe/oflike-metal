@@ -1,0 +1,9 @@
+# Xcode
+*.xcodeproj
+.DS_Store
+build/
+DerivedData/
+
+# Test data (optional)
+data/test.jpg
+data/*.ttf

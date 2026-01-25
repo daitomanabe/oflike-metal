@@ -1,0 +1,21 @@
+name: validation_swiftui
+options:
+  bundleIdPrefix: com.oflike
+  deploymentTarget:
+    macOS: "13.0"
+
+targets:
+  validation_swiftui:
+    type: application
+    platform: macOS
+    sources:
+      - src
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: com.oflike.validation_swiftui
+      SWIFT_VERSION: "5.9"
+      ENABLE_HARDENED_RUNTIME: YES
+      FRAMEWORK_SEARCH_PATHS: $(SRCROOT)/../../build/Release
+      HEADER_SEARCH_PATHS: $(SRCROOT)/../../src
+    dependencies:
+      - framework: oflike-metal.framework
+        embed: true

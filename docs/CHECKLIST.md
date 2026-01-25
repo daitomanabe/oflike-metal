@@ -234,8 +234,8 @@ Addons are explicitly last.
 
 > **Note**: Validation tests require human visual confirmation. See `docs/VALIDATION_TESTS.md` for detailed test procedures.
 
-- [ ] **SwiftUI path renders ofDrawCircle/ofImage/ofTrueTypeFont.**
-  Files: `examples/` (or new SwiftUI example), `docs/VALIDATION_TESTS.md` (Test 11.1)
+- [x] **SwiftUI path renders ofDrawCircle/ofImage/ofTrueTypeFont.**
+  Files: `examples/validation_swiftui/`, `docs/VALIDATION_TESTS.md` (Test 11.1)
   DoD: visual confirmation + no runtime errors. Follow validation test procedure and document results.
 
 - [ ] **PerformanceStats returns non-zero values.**
