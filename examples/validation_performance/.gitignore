@@ -1,0 +1,7 @@
+# Xcode
+*.xcodeproj
+build/
+DerivedData/
+
+# Test data
+data/

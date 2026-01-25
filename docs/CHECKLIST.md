@@ -238,8 +238,8 @@ Addons are explicitly last.
   Files: `examples/validation_swiftui/`, `docs/VALIDATION_TESTS.md` (Test 11.1)
   DoD: visual confirmation + no runtime errors. Follow validation test procedure and document results.
 
-- [ ] **PerformanceStats returns non-zero values.**
-  Files: `src/platform/swiftui/MetalView.swift`, `docs/VALIDATION_TESTS.md` (Test 11.2)
+- [x] **PerformanceStats returns non-zero values.**
+  Files: `src/platform/swiftui/MetalView.swift`, `examples/validation_performance/`, `docs/VALIDATION_TESTS.md` (Test 11.2)
   DoD: drawCalls/vertices/gpuTime update during render. Verify with performance overlay.
 
 ---
