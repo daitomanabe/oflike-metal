@@ -1,6 +1,6 @@
 # oflike-metal Architecture - Absolute Policies
 
-**Version**: 3.2.0
+**Version**: 3.3.0
 **Last Updated**: 2026-01-25
 **Status**: Active
 
@@ -167,11 +167,196 @@ int main() {
 - **Neural Engine活用** (Apple Silicon のみ)
 - **macOS 14 依存機能はオプション化** (VisionKit などは機能有効時のみ)
 
-### 1.6 座標系
+### 1.6 座標系とレイヤー責任
 
-- **2D**: oflike API は左上原点 (+X 右, +Y 下) を維持
-- **3D**: oF 互換の右手座標系を維持
-- **Renderer**: Metal の NDC (Z: 0..1) への変換や Y 軸反転は描画層で吸収
+oflike-metal は openFrameworks 互換の座標系を維持しながら、Metal への変換は renderer 層で処理します。
+
+#### 1.6.1 座標系定義
+
+**2D 座標系** (oflike API):
+- **原点**: 左上 (0, 0)
+- **X軸**: 右方向が正 (+X)
+- **Y軸**: 下方向が正 (+Y)
+- **範囲**: (0, 0) から (width, height)
+
+```cpp
+// oflike API - 左上原点
+ofDrawCircle(100, 100, 50);  // 左上から (100, 100) の位置
+```
+
+**3D 座標系** (oflike API):
+- **座標系**: 右手座標系 (openFrameworks 互換)
+- **X軸**: 右方向が正
+- **Y軸**: 上方向が正
+- **Z軸**: 手前方向が正 (右手系)
+
+```cpp
+// oflike API - 右手座標系
+ofVec3f pos(1, 1, 1);  // X右, Y上, Z手前
+camera.setPosition(0, 0, 10);  // カメラは Z+ 方向
+camera.lookAt(ofVec3f(0, 0, 0));  // 原点を見る
+```
+
+**Metal NDC** (Metal 内部):
+- **X軸**: -1 (左) ～ +1 (右)
+- **Y軸**: -1 (下) ～ +1 (上) ※OpenGL と逆
+- **Z軸**: 0 (near) ～ 1 (far) ※OpenGL は -1～+1
+
+#### 1.6.2 レイヤー責任の分離
+
+座標変換の責任は明確に分離されています:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  oflike Layer (User Code)                                            │
+│  ─────────────────────────                                           │
+│  • 2D: 左上原点 (0,0)～(width,height)                                 │
+│  • 3D: 右手座標系                                                     │
+│  • Metal の座標系を意識しない                                         │
+│  • openFrameworks と同じコード                                        │
+│                                                                      │
+│  例:                                                                  │
+│    ofDrawCircle(100, 100, 50);  // 左上から (100,100)                │
+│    camera.setPosition(0, 0, 10);  // 右手系                          │
+│                                                                      │
+└───────────────────────────────┬──────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│  Render Abstraction Layer                                            │
+│  ─────────────────────────────                                       │
+│  • DrawCommand にユーザー座標系のまま格納                              │
+│  • 座標変換は実装しない                                               │
+│  • API非依存の中間表現                                                │
+│                                                                      │
+└───────────────────────────────┬──────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│  Metal Renderer Layer (Implementation)                               │
+│  ──────────────────────────────────────                              │
+│  ✅ ここで座標変換を実行 (全ての変換責任がここにある)                   │
+│                                                                      │
+│  【2D 変換】                                                          │
+│  1. 左上原点 (0, height) → Metal NDC (-1, +1)                        │
+│  2. Y軸反転: oF の Y↓ → Metal の Y↑                                  │
+│                                                                      │
+│     Projection Matrix (2D):                                          │
+│     [  2/w    0      0   -1 ]                                        │
+│     [   0   -2/h    0    1 ]  ← Y を反転して左上原点に               │
+│     [   0     0     1    0 ]                                         │
+│     [   0     0     0    1 ]                                         │
+│                                                                      │
+│  【3D 変換】                                                          │
+│  1. 右手座標系 → Metal NDC                                            │
+│  2. Y軸方向: oF (Y↑) → Metal (Y↑) ※3Dは同じ                         │
+│  3. Z範囲変換: oF/OpenGL (-1～+1) → Metal (0～1)                     │
+│                                                                      │
+│     Projection Matrix (3D):                                          │
+│     Metal の perspective projection を使用                            │
+│     Z範囲を 0～1 に調整                                               │
+│                                                                      │
+│  【実装箇所】                                                          │
+│  • MetalRenderer::setup2DProjection()                                │
+│  • MetalRenderer::setup3DProjection(camera)                          │
+│  • Vertex Shader で最終変換                                           │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+#### 1.6.3 実装パターン
+
+**2D 座標変換 (MetalRenderer 実装)**:
+```cpp
+// src/render/metal/MetalRenderer.mm
+void MetalRenderer::setup2DProjection(int width, int height) {
+    // 左上原点 (0,0) を Metal NDC (-1, +1) に変換
+    // Y軸を反転して左上原点にする
+    float ortho[16] = {
+        2.0f / width,  0.0f,           0.0f, -1.0f,
+        0.0f,         -2.0f / height,  0.0f,  1.0f,  // Y反転
+        0.0f,          0.0f,           1.0f,  0.0f,
+        0.0f,          0.0f,           0.0f,  1.0f
+    };
+    // Uniform バッファに設定
+}
+```
+
+**3D 座標変換 (MetalRenderer 実装)**:
+```cpp
+// src/render/metal/MetalRenderer.mm
+void MetalRenderer::setup3DProjection(const ofCamera& camera) {
+    // ofCamera の view/projection 行列を取得 (右手座標系)
+    simd_float4x4 view = camera.getViewMatrix().toSimd();
+    simd_float4x4 proj = camera.getProjectionMatrix().toSimd();
+
+    // Metal 用に Z 範囲を 0～1 に調整
+    simd_float4x4 metalProj = adjustZRangeForMetal(proj);
+
+    // Uniform バッファに設定
+}
+```
+
+**Vertex Shader (Metal 実装)**:
+```metal
+// src/render/metal/Shaders.metal
+vertex VertexOut vertex2D(
+    VertexIn in [[stage_in]],
+    constant Uniforms& uniforms [[buffer(1)]]
+) {
+    VertexOut out;
+    // oflike の左上原点座標をそのまま受け取る
+    // Projection Matrix で Metal NDC に変換
+    out.position = uniforms.projectionMatrix * float4(in.position, 1.0);
+    return out;
+}
+```
+
+#### 1.6.4 ユーザーコードへの影響
+
+**ユーザーは座標変換を意識しない**:
+```cpp
+// ofApp.cpp - ユーザーコード
+void ofApp::draw() {
+    // 2D: 左上原点で描画 (openFrameworks と同じ)
+    ofDrawCircle(100, 100, 50);
+
+    // 3D: 右手座標系で描画 (openFrameworks と同じ)
+    camera.setPosition(0, 0, 10);
+    camera.begin();
+    ofDrawBox(0, 0, 0, 2, 2, 2);
+    camera.end();
+
+    // Metal NDC/Y軸反転は renderer が自動処理
+}
+```
+
+#### 1.6.5 テスト検証
+
+座標系の正確性を検証するためのテスト:
+
+```cpp
+// 左上が (0,0) であることを確認
+ofSetColor(255, 0, 0);
+ofDrawCircle(0, 0, 10);  // 左上隅に赤い円
+
+// 右下が (width, height) であることを確認
+ofSetColor(0, 0, 255);
+ofDrawCircle(ofGetWidth(), ofGetHeight(), 10);  // 右下隅に青い円
+
+// 3D 右手座標系を確認
+ofDrawAxis(100);  // X赤(右), Y緑(上), Z青(手前)
+```
+
+#### 1.6.6 まとめ
+
+| 項目 | oflike Layer | Renderer Layer |
+|------|-------------|----------------|
+| **2D 座標系** | 左上原点 (0, 0) ～ (width, height) | Metal NDC + Y反転処理 |
+| **3D 座標系** | 右手座標系 (Y↑, Z手前) | Metal NDC + Z範囲調整 |
+| **責任** | oF互換APIを提供 | Metal変換を実装 |
+| **ユーザーコード** | openFrameworks と同じ | 変換を意識しない |
+| **変換処理** | なし | Projection Matrix + Shader |
 
 ---
 
@@ -793,6 +978,7 @@ os_log_error(OS_LOG_DEFAULT, "ofxSharp: Failed to load model");
 | 2026-01-23 | 3.0.0 | Apple Native Addons追加、ofxSharp設計 |
 | 2026-01-25 | 3.1.0 | レイヤー境界の明確化 (Phase 0.1) |
 | 2026-01-25 | 3.2.0 | SwiftUIデフォルト、ofMainレガシー明記 (Phase 0.2) |
+| 2026-01-25 | 3.3.0 | 座標系責任の明確化、Metal変換はrenderer層 (Phase 0.3) |
 
 ---
 

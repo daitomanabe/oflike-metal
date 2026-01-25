@@ -16,8 +16,8 @@ Addons are explicitly last.
   Files: `docs/ARCHITECTURE.md`, `docs/MIGRATION.md`
   DoD: docs explicitly state SwiftUI is the default entry; ofMain is legacy.
 
-- [ ] **Clarify coordinate responsibilities (2D top-left; renderer handles NDC/Y).**  
-  Files: `docs/ARCHITECTURE.md`  
+- [x] **Clarify coordinate responsibilities (2D top-left; renderer handles NDC/Y).**
+  Files: `docs/ARCHITECTURE.md`
   DoD: renderer responsible for Metal NDC/Y conversion; oflike API remains oF-compatible.
 
 - [ ] **Finalize generator-friendly folder layout.**  
