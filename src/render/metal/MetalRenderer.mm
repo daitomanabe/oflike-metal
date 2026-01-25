@@ -579,10 +579,160 @@ bool MetalRenderer::Impl::executeCommand(const DrawCommand& cmd, const DrawList&
 
 bool MetalRenderer::Impl::executeDraw2D(const DrawCommand2D& cmd, const DrawList& drawList) {
     @autoreleasepool {
-        // TODO: Phase 4.7 - Implement with actual shaders
-        // For now, just track statistics
+        // Ensure we have an encoder
+        if (!currentEncoder) {
+            MTLRenderPassDescriptor* renderPass = getCurrentRenderPassDescriptor();
+            if (!renderPass) {
+                NSLog(@"MetalRenderer: Failed to get render pass for draw2D");
+                return false;
+            }
+
+            currentEncoder = [currentCommandBuffer renderCommandEncoderWithDescriptor:renderPass];
+            if (!currentEncoder) {
+                NSLog(@"MetalRenderer: Failed to create render encoder for draw2D");
+                return false;
+            }
+
+            // Apply current viewport and scissor state
+            [currentEncoder setViewport:currentViewport];
+            if (scissorEnabled) {
+                [currentEncoder setScissorRect:currentScissor];
+            }
+            applyDepthState(depthTestEnabled);
+        }
+
+        // Upload vertex data to buffer
+        const Vertex2D* vertices = drawList.getVertex2DData();
+        if (!vertices || cmd.vertexCount == 0) {
+            NSLog(@"MetalRenderer: No vertices to draw in draw2D");
+            return false;
+        }
+
+        const size_t vertexDataSize = cmd.vertexCount * sizeof(Vertex2D);
+        const size_t bufferOffset = cmd.vertexOffset * sizeof(Vertex2D);
+
+        // Check buffer bounds
+        if (bufferOffset + vertexDataSize > kMaxVertices2D * sizeof(Vertex2D)) {
+            NSLog(@"MetalRenderer: Vertex data exceeds buffer size in draw2D");
+            return false;
+        }
+
+        // Copy vertex data into current frame's buffer
+        id<MTLBuffer> currentBuffer = vertexBuffer2D[currentFrameIndex];
+        uint8_t* bufferPtr = (uint8_t*)[currentBuffer contents];
+        memcpy(bufferPtr + bufferOffset, vertices + cmd.vertexOffset, vertexDataSize);
+
+        // Set pipeline
+        [currentEncoder setRenderPipelineState:pipeline2D];
+
+        // Set vertex buffer
+        [currentEncoder setVertexBuffer:currentBuffer offset:bufferOffset atIndex:0];
+
+        // Set uniforms (projection + modelView matrices)
+        struct Uniforms2D {
+            simd_float4x4 projectionMatrix;
+            simd_float4x4 modelViewMatrix;
+        };
+
+        // Get viewport dimensions for projection matrix
+        float width = currentViewport.width;
+        float height = currentViewport.height;
+
+        // Create orthographic projection matrix: left-top origin (0,0) to (width, height)
+        // Maps to Metal NDC: (-1, -1) to (+1, +1)
+        // Y-axis flipped: oF Y↓ to Metal Y↑
+        simd_float4x4 projection = {
+            simd_make_float4(2.0f / width,  0.0f,            0.0f, 0.0f),
+            simd_make_float4(0.0f,         -2.0f / height,   0.0f, 0.0f),
+            simd_make_float4(0.0f,          0.0f,            1.0f, 0.0f),
+            simd_make_float4(-1.0f,         1.0f,            0.0f, 1.0f)
+        };
+
+        Uniforms2D uniforms;
+        uniforms.projectionMatrix = projection;
+        uniforms.modelViewMatrix = cmd.transform;
+
+        [currentEncoder setVertexBytes:&uniforms length:sizeof(Uniforms2D) atIndex:1];
+
+        // Set texture if present
+        if (cmd.texture) {
+            id<MTLTexture> texture = (__bridge id<MTLTexture>)cmd.texture;
+            [currentEncoder setFragmentTexture:texture atIndex:0];
+
+            // Create sampler state (linear filtering, clamp to edge)
+            MTLSamplerDescriptor* samplerDesc = [[MTLSamplerDescriptor alloc] init];
+            samplerDesc.minFilter = MTLSamplerMinMagFilterLinear;
+            samplerDesc.magFilter = MTLSamplerMinMagFilterLinear;
+            samplerDesc.sAddressMode = MTLSamplerAddressModeClampToEdge;
+            samplerDesc.tAddressMode = MTLSamplerAddressModeClampToEdge;
+            samplerDesc.mipFilter = MTLSamplerMipFilterNotMipmapped;
+
+            id<MTLSamplerState> sampler = [device newSamplerStateWithDescriptor:samplerDesc];
+            [currentEncoder setFragmentSamplerState:sampler atIndex:0];
+        }
+
+        // Convert PrimitiveType to MTLPrimitiveType
+        MTLPrimitiveType mtlPrimitive;
+        switch (cmd.primitiveType) {
+            case PrimitiveType::Point:
+                mtlPrimitive = MTLPrimitiveTypePoint;
+                break;
+            case PrimitiveType::Line:
+                mtlPrimitive = MTLPrimitiveTypeLine;
+                break;
+            case PrimitiveType::LineStrip:
+                mtlPrimitive = MTLPrimitiveTypeLineStrip;
+                break;
+            case PrimitiveType::Triangle:
+                mtlPrimitive = MTLPrimitiveTypeTriangle;
+                break;
+            case PrimitiveType::TriangleStrip:
+                mtlPrimitive = MTLPrimitiveTypeTriangleStrip;
+                break;
+            default:
+                mtlPrimitive = MTLPrimitiveTypeTriangle;
+                break;
+        }
+
+        // Execute draw call
+        if (cmd.indexCount > 0) {
+            // Indexed draw
+            const uint32_t* indices = drawList.getIndexData();
+            if (!indices) {
+                NSLog(@"MetalRenderer: No indices for indexed draw2D");
+                return false;
+            }
+
+            const size_t indexDataSize = cmd.indexCount * sizeof(uint32_t);
+            const size_t indexBufferOffset = cmd.indexOffset * sizeof(uint32_t);
+
+            // Check buffer bounds
+            if (indexBufferOffset + indexDataSize > kMaxIndices * sizeof(uint32_t)) {
+                NSLog(@"MetalRenderer: Index data exceeds buffer size in draw2D");
+                return false;
+            }
+
+            // Copy index data into current frame's buffer
+            id<MTLBuffer> currentIndexBuffer = indexBuffer[currentFrameIndex];
+            uint8_t* indexBufferPtr = (uint8_t*)[currentIndexBuffer contents];
+            memcpy(indexBufferPtr + indexBufferOffset, indices + cmd.indexOffset, indexDataSize);
+
+            [currentEncoder drawIndexedPrimitives:mtlPrimitive
+                                       indexCount:cmd.indexCount
+                                        indexType:MTLIndexTypeUInt32
+                                      indexBuffer:currentIndexBuffer
+                                indexBufferOffset:indexBufferOffset];
+        } else {
+            // Non-indexed draw
+            [currentEncoder drawPrimitives:mtlPrimitive
+                               vertexStart:0
+                               vertexCount:cmd.vertexCount];
+        }
+
+        // Update statistics
         frameDrawCalls++;
         frameVertices += cmd.vertexCount;
+
         return true;
     }
 }

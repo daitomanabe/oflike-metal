@@ -88,8 +88,8 @@ Addons are explicitly last.
 
 ## Phase 4: MetalRenderer Execution (Drawing Must Work)
 
-- [ ] **Implement `executeDraw2D` (vertex upload, pipeline bind, draw).**  
-  Files: `src/render/metal/MetalRenderer.mm`  
+- [x] **Implement `executeDraw2D` (vertex upload, pipeline bind, draw).**
+  Files: `src/render/metal/MetalRenderer.mm`
   DoD: DrawList 2D draws produce visible output.
 
 - [ ] **Implement `executeDraw3D` (vertex/index buffers, depth state).**  
