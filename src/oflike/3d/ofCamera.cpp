@@ -1,4 +1,5 @@
 #include "ofCamera.h"
+#include "../../core/Context.h"
 #include <cmath>
 
 namespace oflike {
@@ -33,16 +34,17 @@ void ofCamera::begin() {
         return;
     }
 
-    // TODO: Push current view and projection matrices to render context
-    // TODO: Apply this camera's matrices
-
-    isActive_ = true;
+    // Push current view and projection matrices to render context (Phase 8.1)
+    Context::instance().pushView();
 
     // Update projection matrix if needed
     updateProjectionMatrix();
 
-    // TODO: Set view matrix via Context::get()->setViewMatrix(calculateViewMatrix())
-    // TODO: Set projection matrix via Context::get()->setProjectionMatrix(projectionMatrix_)
+    // Apply this camera's matrices
+    Context::instance().setViewMatrix(calculateViewMatrix().toSimd());
+    Context::instance().setProjectionMatrix(projectionMatrix_.toSimd());
+
+    isActive_ = true;
 }
 
 void ofCamera::end() {
@@ -51,7 +53,8 @@ void ofCamera::end() {
         return;
     }
 
-    // TODO: Restore previous view and projection matrices
+    // Restore previous view and projection matrices (Phase 8.1)
+    Context::instance().popView();
 
     isActive_ = false;
 }
@@ -177,33 +180,65 @@ ofMatrix4x4 ofCamera::getModelViewProjectionMatrix() const {
 // ========================================================================
 
 ofVec3f ofCamera::worldToScreen(const ofVec3f& world) const {
-    // TODO: Get viewport dimensions from Context
-    // For now, return placeholder
+    // Get viewport dimensions from Context (Phase 8.1)
+    simd_float4 viewport = Context::instance().getViewport();
+    float viewportX = viewport.x;
+    float viewportY = viewport.y;
+    float viewportWidth = viewport.z;
+    float viewportHeight = viewport.w;
 
     // Transform world -> clip space
     ofMatrix4x4 mvp = getModelViewProjectionMatrix();
     ofVec4f clipPos = mvp * ofVec4f(world.x, world.y, world.z, 1.0f);
 
-    // Perspective divide
+    // Perspective divide to get NDC (-1 to +1)
     if (clipPos.w != 0.0f) {
         clipPos.x /= clipPos.w;
         clipPos.y /= clipPos.w;
         clipPos.z /= clipPos.w;
     }
 
-    // TODO: Convert NDC to screen coordinates using actual viewport
-    // For now, return NDC coordinates
-    return ofVec3f(clipPos.x, clipPos.y, clipPos.z);
+    // Convert NDC to screen coordinates
+    // NDC: (-1, -1) at bottom-left, (+1, +1) at top-right
+    // Screen: (0, 0) at top-left, (width, height) at bottom-right
+    float screenX = viewportX + (clipPos.x + 1.0f) * 0.5f * viewportWidth;
+    float screenY = viewportY + (1.0f - clipPos.y) * 0.5f * viewportHeight;  // Flip Y
+    float screenZ = clipPos.z;  // Keep Z in NDC range for depth testing
+
+    return ofVec3f(screenX, screenY, screenZ);
 }
 
 ofVec3f ofCamera::screenToWorld(const ofVec3f& screen) const {
-    // TODO: Get viewport dimensions from Context
-    // For now, return placeholder
+    // Get viewport dimensions from Context (Phase 8.1)
+    simd_float4 viewport = Context::instance().getViewport();
+    float viewportX = viewport.x;
+    float viewportY = viewport.y;
+    float viewportWidth = viewport.z;
+    float viewportHeight = viewport.w;
 
-    // TODO: Convert screen coordinates to NDC
-    // TODO: Apply inverse MVP transform
+    // Convert screen coordinates to NDC (-1 to +1)
+    // Screen: (0, 0) at top-left, (width, height) at bottom-right
+    // NDC: (-1, -1) at bottom-left, (+1, +1) at top-right
+    float ndcX = ((screen.x - viewportX) / viewportWidth) * 2.0f - 1.0f;
+    float ndcY = 1.0f - ((screen.y - viewportY) / viewportHeight) * 2.0f;  // Flip Y
+    float ndcZ = screen.z;  // Z is already in NDC range
 
-    return ofVec3f(0, 0, 0);  // Placeholder
+    // Create clip space position (with w = 1 for inverse transform)
+    ofVec4f clipPos(ndcX, ndcY, ndcZ, 1.0f);
+
+    // Apply inverse MVP transform
+    ofMatrix4x4 mvp = getModelViewProjectionMatrix();
+    ofMatrix4x4 invMVP = mvp.getInverse();
+    ofVec4f worldPos = invMVP * clipPos;
+
+    // Perspective divide (if w != 1)
+    if (worldPos.w != 0.0f && worldPos.w != 1.0f) {
+        worldPos.x /= worldPos.w;
+        worldPos.y /= worldPos.w;
+        worldPos.z /= worldPos.w;
+    }
+
+    return ofVec3f(worldPos.x, worldPos.y, worldPos.z);
 }
 
 // ========================================================================

@@ -9,6 +9,7 @@
 #include <iostream>
 #include <mutex>
 #include <unordered_map>
+#include <vector>
 
 // MARK: - Context Implementation
 
@@ -44,6 +45,15 @@ struct Context::Impl {
 
     // Keyboard state (Phase 13.2)
     std::unordered_map<int, bool> keyStates;
+
+    // Camera matrix stack (Phase 8.1)
+    struct ViewProjectionState {
+        simd_float4x4 viewMatrix;
+        simd_float4x4 projectionMatrix;
+    };
+    std::vector<ViewProjectionState> viewStack;
+    simd_float4x4 currentViewMatrix = matrix_identity_float4x4;
+    simd_float4x4 currentProjectionMatrix = matrix_identity_float4x4;
 
     // State
     bool initialized = false;
@@ -373,6 +383,50 @@ simd_float4x4 Context::getCurrentMatrix() const {
     // TODO: Implement proper matrix stack
     // For now, return identity matrix
     return matrix_identity_float4x4;
+}
+
+// MARK: - Camera Matrix Stack (Phase 8.1)
+
+void Context::pushView() {
+    Impl::ViewProjectionState state;
+    state.viewMatrix = impl_->currentViewMatrix;
+    state.projectionMatrix = impl_->currentProjectionMatrix;
+    impl_->viewStack.push_back(state);
+}
+
+void Context::popView() {
+    if (impl_->viewStack.empty()) {
+        std::cerr << "[Context] Warning: View stack underflow in popView()" << std::endl;
+        return;
+    }
+
+    const auto& state = impl_->viewStack.back();
+    impl_->currentViewMatrix = state.viewMatrix;
+    impl_->currentProjectionMatrix = state.projectionMatrix;
+    impl_->viewStack.pop_back();
+}
+
+void Context::setViewMatrix(const simd_float4x4& viewMatrix) {
+    impl_->currentViewMatrix = viewMatrix;
+}
+
+simd_float4x4 Context::getViewMatrix() const {
+    return impl_->currentViewMatrix;
+}
+
+void Context::setProjectionMatrix(const simd_float4x4& projectionMatrix) {
+    impl_->currentProjectionMatrix = projectionMatrix;
+}
+
+simd_float4x4 Context::getProjectionMatrix() const {
+    return impl_->currentProjectionMatrix;
+}
+
+simd_float4 Context::getViewport() const {
+    // Return viewport as (x, y, width, height)
+    return simd_make_float4(0.0f, 0.0f,
+                            static_cast<float>(impl_->windowWidth),
+                            static_cast<float>(impl_->windowHeight));
 }
 
 // MARK: - Keyboard State

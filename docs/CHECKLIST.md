@@ -176,8 +176,8 @@ Addons are explicitly last.
 
 ## Phase 8: 3D / Camera / Mesh / Lighting
 
-- [ ] **Implement ofCamera view/proj stack + screen/world conversions.**  
-  Files: `src/oflike/3d/ofCamera.cpp`  
+- [x] **Implement ofCamera view/proj stack + screen/world conversions.**
+  Files: `src/oflike/3d/ofCamera.cpp`
   DoD: all placeholders removed; correct viewport-based transforms.
 
 - [ ] **Implement ofMesh DrawCommand3D path.**  

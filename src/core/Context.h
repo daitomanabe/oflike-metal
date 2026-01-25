@@ -162,6 +162,34 @@ public:
     /// @return Current matrix from the matrix stack
     simd_float4x4 getCurrentMatrix() const;
 
+    // MARK: - Camera Matrix Stack (Phase 8.1)
+
+    /// Push current view and projection matrices onto the stack
+    void pushView();
+
+    /// Pop view and projection matrices from the stack
+    void popView();
+
+    /// Set current view matrix
+    /// @param viewMatrix View matrix to set
+    void setViewMatrix(const simd_float4x4& viewMatrix);
+
+    /// Get current view matrix
+    /// @return Current view matrix
+    simd_float4x4 getViewMatrix() const;
+
+    /// Set current projection matrix
+    /// @param projectionMatrix Projection matrix to set
+    void setProjectionMatrix(const simd_float4x4& projectionMatrix);
+
+    /// Get current projection matrix
+    /// @return Current projection matrix
+    simd_float4x4 getProjectionMatrix() const;
+
+    /// Get current viewport (x, y, width, height)
+    /// @return Viewport as simd_float4 (x, y, width, height)
+    simd_float4 getViewport() const;
+
     // MARK: - Keyboard State
 
     /// Set key state (pressed or released)
