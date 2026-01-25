@@ -295,6 +295,247 @@ target_link_libraries(myProject oflike-metal::oflike-metal)
 
 ---
 
+## Generated Project Build Steps
+
+If you created your project using the `oflike-gen` CLI tool, follow these post-generation steps to build and run your project.
+
+### Prerequisites
+
+- **Xcode 15.0+** installed
+- **XcodeGen** installed (recommended) or **CMake 3.20+**
+- **oflike-metal** framework built and installed
+
+### Install XcodeGen (Recommended)
+
+```bash
+brew install xcodegen
+```
+
+### Step 1: Navigate to Project
+
+```bash
+cd your-project-name
+```
+
+Your generated project structure:
+```
+your-project-name/
+├── src/
+│   ├── YourApp.h           # Application header
+│   ├── YourApp.cpp         # Application implementation
+│   ├── App.swift           # SwiftUI entry (if --entry=swiftui)
+│   └── main.mm             # ofMain entry (if --entry=ofmain)
+├── data/                   # Data files
+├── resources/              # Resources (SwiftUI projects only)
+│   └── Info.plist
+├── addons/                 # Addons (if specified with --addons)
+├── project.yml             # XcodeGen configuration
+├── CMakeLists.txt          # CMake configuration
+├── .gitignore
+└── README.md
+```
+
+### Step 2: Generate Xcode Project
+
+#### Option A: Using XcodeGen (Recommended)
+
+```bash
+xcodegen generate
+```
+
+This creates `YourProjectName.xcodeproj` from `project.yml`.
+
+**Benefits of XcodeGen**:
+- ✅ Clean, version-controllable project configuration
+- ✅ Easy to modify project settings in YAML
+- ✅ No Xcode project file conflicts in git
+- ✅ Regenerate anytime with `xcodegen generate`
+
+#### Option B: Using CMake
+
+```bash
+mkdir build && cd build
+cmake .. -G Xcode
+cd ..
+```
+
+This creates `YourProjectName.xcodeproj` in the `build/` directory.
+
+**Note**: If using CMake, open `build/YourProjectName.xcodeproj`, not the root directory.
+
+### Step 3: Open in Xcode
+
+#### With XcodeGen:
+```bash
+open YourProjectName.xcodeproj
+```
+
+#### With CMake:
+```bash
+open build/YourProjectName.xcodeproj
+```
+
+### Step 4: Configure Framework Path
+
+If oflike-metal framework is not in a standard location, you may need to configure the framework search path:
+
+1. Select your project in Xcode
+2. Select the target
+3. Go to **Build Settings**
+4. Search for "Framework Search Paths"
+5. Add the path to your oflike-metal.framework:
+   ```
+   $(SRCROOT)/../build/Release
+   ```
+   or wherever you built the framework.
+
+### Step 5: Build and Run
+
+1. Select your target from the scheme dropdown (top-left)
+2. Choose **My Mac** as the run destination
+3. Click **Run** (⌘R) or **Product → Run**
+
+Your app should launch in a new window!
+
+### Addon Configuration
+
+If you specified addons with `--addons`, they are automatically configured:
+
+**Reference Mode** (`--addon-mode=reference`):
+- Addons are referenced from oflike-metal installation
+- No files copied
+- Requires oflike-metal to remain in the same location
+
+**Copy Mode** (`--addon-mode=copy`):
+- Addon sources are copied to `addons/` directory
+- Project is self-contained
+- Can move project anywhere
+
+**Symlink Mode** (`--addon-mode=symlink`, Unix only):
+- Symbolic links created in `addons/` directory
+- Lightweight, no duplication
+- Requires oflike-metal to remain in the same location
+
+### Modifying Project Configuration
+
+#### Adding Source Files
+
+**With XcodeGen**:
+1. Add files to `src/` directory
+2. Run `xcodegen generate` to update Xcode project
+3. Reopen the project in Xcode
+
+**With CMake**:
+- CMake uses `file(GLOB ...)` to auto-discover sources
+- Just add files and rebuild
+
+#### Adding Addons After Generation
+
+1. Edit `project.yml` (XcodeGen) or `CMakeLists.txt` (CMake)
+2. Add addon sources to `sources` list:
+   ```yaml
+   sources:
+     - src
+     - addons/ofxOsc
+   ```
+3. Copy or symlink addon to `addons/` directory
+4. Regenerate project:
+   ```bash
+   xcodegen generate  # XcodeGen
+   # or
+   cd build && cmake .. # CMake
+   ```
+
+#### Changing Bundle ID
+
+Edit `project.yml`:
+```yaml
+settings:
+  PRODUCT_BUNDLE_IDENTIFIER: com.yourcompany.yourapp
+```
+
+Then regenerate:
+```bash
+xcodegen generate
+```
+
+### Building for Distribution
+
+#### Debug Build (Development)
+```bash
+xcodebuild -project YourProject.xcodeproj -scheme YourProject -configuration Debug
+```
+
+#### Release Build (Distribution)
+```bash
+xcodebuild -project YourProject.xcodeproj -scheme YourProject -configuration Release
+```
+
+The built app is located in:
+- **Debug**: `build/Debug/YourProject.app`
+- **Release**: `build/Release/YourProject.app`
+
+### Common Issues
+
+**Issue**: "Framework not found oflike-metal"
+```
+Solution: Check framework search paths
+Build Settings → Framework Search Paths → Add path to oflike-metal.framework
+```
+
+**Issue**: "Cannot find oflike/ofMain.h"
+```
+Solution: Build oflike-metal framework first
+cd /path/to/oflike-metal
+xcodebuild -scheme oflike-metal -configuration Release
+```
+
+**Issue**: "Swift Compiler Error" (SwiftUI projects)
+```
+Solution: Check Swift version
+Build Settings → Swift Language Version → 5.9 or later
+```
+
+**Issue**: XcodeGen not found
+```
+Solution: Install XcodeGen
+brew install xcodegen
+```
+
+**Issue**: Addon sources not found
+```
+Solution: Check addon mode and paths
+- Reference mode: Ensure oflike-metal is in expected location
+- Copy mode: Check addons/ directory contains files
+- Symlink mode: Verify symlinks are valid (ls -la addons/)
+```
+
+### Next Steps After Build
+
+1. ✅ Verify the example circle renders at center of window
+2. ✅ Test keyboard and mouse events
+3. ✅ Try modifying `draw()` to add your own graphics
+4. ✅ Add data files to `data/` directory
+5. ✅ Explore addons in `addons/` (if using any)
+6. ✅ Read the [API Documentation](../docs/api/) for available functions
+
+### Example: Adding a New Source File
+
+```bash
+# Create new class
+touch src/Particle.h src/Particle.cpp
+
+# With XcodeGen: regenerate project
+xcodegen generate
+
+# With CMake: just rebuild (auto-discovered)
+cd build && cmake --build .
+```
+
+Your new files are automatically included!
+
+---
+
 ## Code Migration
 
 ### Minimal Changes Example

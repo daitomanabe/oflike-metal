@@ -224,8 +224,8 @@ Addons are explicitly last.
   Files: `tools/project_generator/`
   DoD: addons are reflected in include/link/resources.
 
-- [ ] **Document build steps for generated projects.**  
-  Files: `docs/MIGRATION.md`  
+- [x] **Document build steps for generated projects.**
+  Files: `docs/MIGRATION.md`
   DoD: post-generation build steps are listed.
 
 ---
