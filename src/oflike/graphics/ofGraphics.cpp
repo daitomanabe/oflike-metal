@@ -502,22 +502,68 @@ void ofDrawRectRounded(float x, float y, float w, float h, float r) {
         ofDrawRectangle(x, y1, r, y2 - y1);
         ofDrawRectangle(x2, y1, r, y2 - y1);
 
-        // Draw 4 corner arcs (simplified - will need proper arc implementation)
-        // TODO: Implement proper arc drawing for rounded corners
-        // For now, draw quarter circles at each corner
+        // Draw 4 corner arcs using triangle fans
         uint32_t resolution = state.circleResolution / 4;
+        simd_float4 color = colorToFloat4(state.currentColor[0], state.currentColor[1],
+                                           state.currentColor[2], state.currentColor[3]);
 
-        // Top-left corner
-        for (uint32_t i = 0; i < resolution; i++) {
-            float angle1 = M_PI + i * M_PI_2 / resolution;
-            float angle2 = M_PI + (i + 1) * M_PI_2 / resolution;
-            float cx1 = x1 + r * std::cos(angle1);
-            float cy1 = y1 + r * std::sin(angle1);
-            float cx2 = x1 + r * std::cos(angle2);
-            float cy2 = y1 + r * std::sin(angle2);
-            // TODO: Draw triangle fan segment
-        }
-        // Similar for other 3 corners (top-right, bottom-right, bottom-left)
+        // Helper lambda to draw a quarter circle arc (filled)
+        auto drawQuarterCircle = [&](float cx, float cy, float radius, float startAngle) {
+            std::vector<render::Vertex2D> vertices;
+            vertices.reserve(resolution + 2);
+
+            // Center vertex
+            vertices.push_back(render::Vertex2D(cx, cy, 0.5f, 0.5f, color.x, color.y, color.z, color.w));
+
+            // Arc vertices
+            for (uint32_t i = 0; i <= resolution; i++) {
+                float angle = startAngle + (M_PI_2 * i) / resolution;
+                float vx = cx + radius * std::cos(angle);
+                float vy = cy + radius * std::sin(angle);
+                float u = 0.5f + 0.5f * std::cos(angle);
+                float v = 0.5f + 0.5f * std::sin(angle);
+                vertices.push_back(render::Vertex2D(vx, vy, u, v, color.x, color.y, color.z, color.w));
+            }
+
+            // Create indices for triangle fan
+            std::vector<uint32_t> indices;
+            indices.reserve(resolution * 3);
+            for (uint32_t i = 1; i <= resolution; i++) {
+                indices.push_back(0);
+                indices.push_back(i);
+                indices.push_back(i + 1);
+            }
+
+            // Add to DrawList
+            auto& drawList = Context::instance().getDrawList();
+            uint32_t vtxOffset = drawList.addVertices2D(vertices);
+            uint32_t idxOffset = drawList.addIndices(indices);
+
+            render::DrawCommand2D cmd;
+            cmd.vertexOffset = vtxOffset;
+            cmd.vertexCount = static_cast<uint32_t>(vertices.size());
+            cmd.indexOffset = idxOffset;
+            cmd.indexCount = static_cast<uint32_t>(indices.size());
+            cmd.primitiveType = render::PrimitiveType::Triangle;
+            cmd.blendMode = static_cast<render::BlendMode>(state.blendMode);
+            cmd.texture = nullptr;
+
+            auto& m = state.currentMatrix;
+            cmd.transform = simd_matrix(
+                simd_make_float4(m(0,0), m(1,0), m(2,0), m(3,0)),
+                simd_make_float4(m(0,1), m(1,1), m(2,1), m(3,1)),
+                simd_make_float4(m(0,2), m(1,2), m(2,2), m(3,2)),
+                simd_make_float4(m(0,3), m(1,3), m(2,3), m(3,3))
+            );
+
+            drawList.addCommand(cmd);
+        };
+
+        // Draw 4 corner arcs
+        drawQuarterCircle(x1, y1, r, M_PI);          // Top-left
+        drawQuarterCircle(x2, y1, r, M_PI + M_PI_2); // Top-right
+        drawQuarterCircle(x2, y2, r, 0.0f);          // Bottom-right
+        drawQuarterCircle(x1, y2, r, M_PI_2);        // Bottom-left
     } else {
         // Draw outline with rounded corners
         // Top edge
@@ -529,8 +575,29 @@ void ofDrawRectRounded(float x, float y, float w, float h, float r) {
         // Left edge
         ofDrawLine(x, y2, x, y1);
 
-        // Draw corner arcs
-        // TODO: Implement proper arc drawing
+        // Draw corner arcs (quarter circles)
+        uint32_t resolution = state.circleResolution / 4;
+
+        // Helper lambda to draw a quarter circle arc (outline)
+        auto drawQuarterCircleOutline = [&](float cx, float cy, float radius, float startAngle) {
+            for (uint32_t i = 0; i < resolution; i++) {
+                float angle1 = startAngle + (M_PI_2 * i) / resolution;
+                float angle2 = startAngle + (M_PI_2 * (i + 1)) / resolution;
+
+                float x1 = cx + radius * std::cos(angle1);
+                float y1 = cy + radius * std::sin(angle1);
+                float x2 = cx + radius * std::cos(angle2);
+                float y2 = cy + radius * std::sin(angle2);
+
+                ofDrawLine(x1, y1, x2, y2);
+            }
+        };
+
+        // Draw 4 corner arcs
+        drawQuarterCircleOutline(x1, y1, r, M_PI);          // Top-left
+        drawQuarterCircleOutline(x2, y1, r, M_PI + M_PI_2); // Top-right
+        drawQuarterCircleOutline(x2, y2, r, 0.0f);          // Bottom-right
+        drawQuarterCircleOutline(x1, y2, r, M_PI_2);        // Bottom-left
     }
 }
 

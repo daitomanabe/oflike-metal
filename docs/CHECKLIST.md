@@ -144,16 +144,16 @@ Addons are explicitly last.
   Files: `src/oflike/graphics/ofTrueTypeFont.mm`
   DoD: TODOs for color/transform are removed.
 
-- [ ] **Fill in shape/curve TODOs.**  
-  Files: `src/oflike/graphics/ofGraphics.cpp`  
+- [x] **Fill in shape/curve TODOs.**
+  Files: `src/oflike/graphics/ofGraphics.cpp`
   DoD: rounded rect, arc, curve, bezier placeholders are implemented or removed.
 
 ---
 
 ## Phase 7: Device/Resource Ownership + Texture/FBO
 
-- [ ] **Remove `MTLCreateSystemDefaultDevice` from oflike layer.**  
-  Files: `src/oflike/image/ofTexture.mm`, `src/oflike/graphics/ofFbo.mm`  
+- [x] **Remove `MTLCreateSystemDefaultDevice` from oflike layer.**
+  Files: `src/oflike/image/ofTexture.mm`, `src/oflike/graphics/ofFbo.mm`
   DoD: all devices come from Context/renderer.
 
 - [ ] **Implement ofTexture draw/bind with DrawList.**  

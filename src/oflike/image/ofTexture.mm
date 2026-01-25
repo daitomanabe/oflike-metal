@@ -104,13 +104,10 @@ struct ofTexture::Impl {
     void ensureMetalTexture() {
         if (!metalTexture) {
             @autoreleasepool {
-                // TODO: Get device from Context::instance().getRenderer()
-                // For now, use MTLCreateSystemDefaultDevice()
-                id<MTLDevice> device = MTLCreateSystemDefaultDevice();
-                if (device) {
-                    metalTexture = std::make_unique<render::metal::MetalTexture>(
-                        (__bridge void*)device
-                    );
+                // Get device from Context (Phase 7.1: Device ownership)
+                void* devicePtr = Context::instance().getMetalDevice();
+                if (devicePtr) {
+                    metalTexture = std::make_unique<render::metal::MetalTexture>(devicePtr);
                 }
             }
         }

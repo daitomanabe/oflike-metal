@@ -56,7 +56,6 @@ struct ofFbo::Impl {
     bool bAllocated = false;
 
     // Metal resources
-    id<MTLDevice> device = nil;
     std::vector<id<MTLTexture>> colorTextures;
     id<MTLTexture> depthTexture = nil;
     id<MTLTexture> stencilTexture = nil;
@@ -71,11 +70,13 @@ struct ofFbo::Impl {
     render::Rect previousViewport;
     void* previousRenderTarget = nullptr;
 
-    Impl() {
-        @autoreleasepool {
-            device = MTLCreateSystemDefaultDevice();
-        }
+    // Helper: Get Metal device from Context (Phase 7.1)
+    id<MTLDevice> getDevice() const {
+        void* devicePtr = Context::instance().getMetalDevice();
+        return devicePtr ? (__bridge id<MTLDevice>)devicePtr : nil;
     }
+
+    Impl() = default;
 
     ~Impl() {
         @autoreleasepool {
@@ -94,6 +95,7 @@ struct ofFbo::Impl {
 
     bool allocate(const ofFboSettings& settings) {
         @autoreleasepool {
+            id<MTLDevice> device = getDevice();
             if (!device) {
                 return false;
             }
