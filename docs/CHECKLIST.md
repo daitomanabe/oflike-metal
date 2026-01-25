@@ -247,8 +247,8 @@ Addons are explicitly last.
 ## Phase 12: Addons (Last)
 
 ### Core Addons
-- [ ] **ofxSvg opacity/transform/scale TODOs.**  
-  Files: `src/addons/core/ofxSvg/ofxSvg.cpp`, `src/addons/core/ofxSvg/README.md`  
+- [x] **ofxSvg opacity/transform/scale TODOs.**
+  Files: `addons/core/ofxSvg/ofxSvg.cpp`, `addons/core/ofxSvg/README.md`
   DoD: TODOs removed or explicitly deferred.
 
 - [ ] **ofxGui parameter binding TODO.**  
