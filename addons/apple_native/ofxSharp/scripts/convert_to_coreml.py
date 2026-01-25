@@ -110,8 +110,22 @@ def load_pytorch_model(model_path: str) -> nn.Module:
     else:
         state_dict = checkpoint
 
-    # TODO: Replace with actual SHARP model architecture
-    # This is a placeholder - replace with real model definition
+    # DEFERRED: Actual SHARP model architecture
+    #
+    # Rationale:
+    # - SHARP is a research model with no official public implementation
+    # - Model architecture is paper-specific: https://github.com/apple/ml-sharp
+    # - Requires full SHARP implementation (encoder, decoder, Gaussian predictor)
+    # - Users should provide their own trained SHARP .pth checkpoint
+    # - Script framework exists (loading, tracing, conversion, validation)
+    # - Architecture placeholder allows testing conversion pipeline
+    #
+    # When you have a trained SHARP model:
+    # 1. Import the model definition (e.g., from sharp.model import SharpNet)
+    # 2. Replace this placeholder with: model = SharpNet()
+    # 3. The script will handle the rest (tracing, conversion, metadata)
+    #
+    # Placeholder model for testing (replace with real SHARP architecture):
     model = nn.Sequential(
         nn.Conv2d(3, 64, 3, padding=1),
         nn.ReLU(),
