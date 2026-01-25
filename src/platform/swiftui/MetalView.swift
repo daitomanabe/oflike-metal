@@ -119,74 +119,96 @@ private class MouseTrackingMTKView: MTKView {
 
     override func mouseMoved(with event: NSEvent) {
         let location = convert(event.locationInWindow, from: nil)
-        mouseEventReceiver?.mouseMoved(x: Float(location.x), y: Float(location.y))
+        // Convert to oF convention: Y=0 at top, Y increases downward
+        let ofY = bounds.size.height - location.y
+        mouseEventReceiver?.mouseMoved(x: Float(location.x), y: Float(ofY))
     }
 
     override func mouseEntered(with event: NSEvent) {
         let location = convert(event.locationInWindow, from: nil)
-        mouseEventReceiver?.mouseEntered(x: Float(location.x), y: Float(location.y))
+        // Convert to oF convention: Y=0 at top, Y increases downward
+        let ofY = bounds.size.height - location.y
+        mouseEventReceiver?.mouseEntered(x: Float(location.x), y: Float(ofY))
     }
 
     override func mouseExited(with event: NSEvent) {
         let location = convert(event.locationInWindow, from: nil)
-        mouseEventReceiver?.mouseExited(x: Float(location.x), y: Float(location.y))
+        // Convert to oF convention: Y=0 at top, Y increases downward
+        let ofY = bounds.size.height - location.y
+        mouseEventReceiver?.mouseExited(x: Float(location.x), y: Float(ofY))
     }
 
     override func mouseDragged(with event: NSEvent) {
         let location = convert(event.locationInWindow, from: nil)
+        // Convert to oF convention: Y=0 at top, Y increases downward
+        let ofY = bounds.size.height - location.y
         // Map NSEvent button number to openFrameworks convention
         // NSEvent: 0=left, 1=right, 2=middle
         // oF uses same convention: 0=left, 1=right, 2=middle
         let button = Int(event.buttonNumber)
-        mouseEventReceiver?.mouseDragged(x: Float(location.x), y: Float(location.y), button: button)
+        mouseEventReceiver?.mouseDragged(x: Float(location.x), y: Float(ofY), button: button)
     }
 
     override func mouseDown(with event: NSEvent) {
         let location = convert(event.locationInWindow, from: nil)
+        // Convert to oF convention: Y=0 at top, Y increases downward
+        let ofY = bounds.size.height - location.y
         // Left mouse button (0)
-        mouseEventReceiver?.mousePressed(x: Float(location.x), y: Float(location.y), button: 0)
+        mouseEventReceiver?.mousePressed(x: Float(location.x), y: Float(ofY), button: 0)
     }
 
     override func rightMouseDown(with event: NSEvent) {
         let location = convert(event.locationInWindow, from: nil)
+        // Convert to oF convention: Y=0 at top, Y increases downward
+        let ofY = bounds.size.height - location.y
         // Right mouse button (1)
-        mouseEventReceiver?.mousePressed(x: Float(location.x), y: Float(location.y), button: 1)
+        mouseEventReceiver?.mousePressed(x: Float(location.x), y: Float(ofY), button: 1)
     }
 
     override func otherMouseDown(with event: NSEvent) {
         let location = convert(event.locationInWindow, from: nil)
+        // Convert to oF convention: Y=0 at top, Y increases downward
+        let ofY = bounds.size.height - location.y
         // Middle or other button (2+)
         let button = Int(event.buttonNumber)
-        mouseEventReceiver?.mousePressed(x: Float(location.x), y: Float(location.y), button: button)
+        mouseEventReceiver?.mousePressed(x: Float(location.x), y: Float(ofY), button: button)
     }
 
     override func mouseUp(with event: NSEvent) {
         let location = convert(event.locationInWindow, from: nil)
+        // Convert to oF convention: Y=0 at top, Y increases downward
+        let ofY = bounds.size.height - location.y
         // Left mouse button (0)
-        mouseEventReceiver?.mouseReleased(x: Float(location.x), y: Float(location.y), button: 0)
+        mouseEventReceiver?.mouseReleased(x: Float(location.x), y: Float(ofY), button: 0)
     }
 
     override func rightMouseUp(with event: NSEvent) {
         let location = convert(event.locationInWindow, from: nil)
+        // Convert to oF convention: Y=0 at top, Y increases downward
+        let ofY = bounds.size.height - location.y
         // Right mouse button (1)
-        mouseEventReceiver?.mouseReleased(x: Float(location.x), y: Float(location.y), button: 1)
+        mouseEventReceiver?.mouseReleased(x: Float(location.x), y: Float(ofY), button: 1)
     }
 
     override func otherMouseUp(with event: NSEvent) {
         let location = convert(event.locationInWindow, from: nil)
+        // Convert to oF convention: Y=0 at top, Y increases downward
+        let ofY = bounds.size.height - location.y
         // Middle or other button (2+)
         let button = Int(event.buttonNumber)
-        mouseEventReceiver?.mouseReleased(x: Float(location.x), y: Float(location.y), button: button)
+        mouseEventReceiver?.mouseReleased(x: Float(location.x), y: Float(ofY), button: button)
     }
 
     override func scrollWheel(with event: NSEvent) {
         let location = convert(event.locationInWindow, from: nil)
+        // Convert to oF convention: Y=0 at top, Y increases downward
+        let ofY = bounds.size.height - location.y
         // NSEvent provides scroll deltas in pixels (for precise scrolling)
         // scrollingDeltaX: horizontal scroll amount (positive = right, negative = left)
         // scrollingDeltaY: vertical scroll amount (positive = up, negative = down)
         mouseEventReceiver?.mouseScrolled(
             x: Float(location.x),
-            y: Float(location.y),
+            y: Float(ofY),
             scrollX: Float(event.scrollingDeltaX),
             scrollY: Float(event.scrollingDeltaY)
         )
@@ -218,7 +240,9 @@ private class MouseTrackingMTKView: MTKView {
 
     override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
         let location = convert(sender.draggingLocation, from: nil)
-        mouseEventReceiver?.dragEvent(x: Float(location.x), y: Float(location.y))
+        // Convert to oF convention: Y=0 at top, Y increases downward
+        let ofY = bounds.size.height - location.y
+        mouseEventReceiver?.dragEvent(x: Float(location.x), y: Float(ofY))
         return true
     }
 }
@@ -636,12 +660,12 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject, MouseEv
 
             bridge?.getPerformanceStats(&drawCalls, vertices: &vertices, gpuTime: &gpuTime)
 
-            // Update global PerformanceStats
-            PerformanceStats.shared.updateFrame(
-                drawCalls: drawCalls,
-                vertices: vertices,
-                gpuTime: gpuTime
-            )
+            // TODO Phase 16.2: Update global PerformanceStats when PerformanceMonitor.swift is added to project
+            // PerformanceStats.shared.updateFrame(
+            //     drawCalls: drawCalls,
+            //     vertices: vertices,
+            //     gpuTime: gpuTime
+            // )
         }
     }
 }

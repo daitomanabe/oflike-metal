@@ -60,8 +60,8 @@ Addons are explicitly last.
   Files: `src/core/Engine.h`, `src/core/Engine.mm`, `src/platform/bridge/SwiftBridge.mm`, `docs/ARCHITECTURE.md`
   DoD: either Engine drives setup/update/draw, or Engine is declared non-participating.
 
-- [ ] **Unify Y-axis handling between SwiftUI and ofMain.**  
-  Files: `src/platform/swiftui/MetalView.swift`, `src/oflike/app/ofMain.h`  
+- [x] **Unify Y-axis handling between SwiftUI and ofMain.**
+  Files: `src/platform/swiftui/MetalView.swift`, `src/oflike/app/ofMain.h`
   DoD: mouse coordinates are consistent with oF expectations.
 
 - [ ] **Clarify window control scope (SwiftUI vs AppKit).**  
