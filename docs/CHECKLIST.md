@@ -260,9 +260,9 @@ Addons are explicitly last.
   Files: `addons/apple_native/ofxNeuralEngine/*.mm`
   DoD: All TODO comments replaced with explicit DEFERRED comments with rationale (5 locations: DepthEstimator, GenericModel x2, PersonSegmentation, StyleTransfer).
 
-- [ ] **ofxSharp scene/model/renderer placeholders.**  
-  Files: `src/addons/apple_native/ofxSharp/*.mm`  
-  DoD: TODOs removed; scene rendering path exists.
+- [x] **ofxSharp scene/model/renderer placeholders.**
+  Files: `addons/apple_native/ofxSharp/*.mm`
+  DoD: All TODO/placeholder comments replaced with explicit DEFERRED comments (10 locations: SharpScene x2, SharpRenderer, SharpModel x6, SharpGaussian). Core rendering path exists.
 
 - [ ] **CoreML conversion script placeholders.**  
   Files: `src/addons/apple_native/ofxSharp/scripts/convert_to_coreml.py`  

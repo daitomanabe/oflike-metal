@@ -1,0 +1,18 @@
+# Python dependencies for SHARP PyTorch → Core ML conversion
+# Install: pip install -r requirements.txt
+
+# PyTorch (CPU version for conversion - no CUDA needed)
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Core ML conversion tools
+coremltools>=7.0
+
+# Numerical operations
+numpy>=1.24.0
+
+# Image processing
+pillow>=10.0.0
+
+# Optional: For model inspection
+# protobuf>=3.20.0
