@@ -256,9 +256,9 @@ Addons are explicitly last.
   DoD: UI bindings persist and update via sync() method.
 
 ### Apple Native Addons
-- [ ] **ofxNeuralEngine GPU path placeholders.**  
-  Files: `src/addons/apple_native/ofxNeuralEngine/*.mm`  
-  DoD: placeholder comments replaced with implementation or explicit deferral.
+- [x] **ofxNeuralEngine GPU path placeholders.**
+  Files: `addons/apple_native/ofxNeuralEngine/*.mm`
+  DoD: All TODO comments replaced with explicit DEFERRED comments with rationale (5 locations: DepthEstimator, GenericModel x2, PersonSegmentation, StyleTransfer).
 
 - [ ] **ofxSharp scene/model/renderer placeholders.**  
   Files: `src/addons/apple_native/ofxSharp/*.mm`  
