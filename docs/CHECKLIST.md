@@ -92,8 +92,8 @@ Addons are explicitly last.
   Files: `src/render/metal/MetalRenderer.mm`
   DoD: DrawList 2D draws produce visible output.
 
-- [ ] **Implement `executeDraw3D` (vertex/index buffers, depth state).**  
-  Files: `src/render/metal/MetalRenderer.mm`  
+- [x] **Implement `executeDraw3D` (vertex/index buffers, depth state).**
+  Files: `src/render/metal/MetalRenderer.mm`
   DoD: DrawList 3D draws render correctly.
 
 - [ ] **Implement SetRenderTarget (FBO).**  

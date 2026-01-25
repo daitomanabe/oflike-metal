@@ -739,10 +739,165 @@ bool MetalRenderer::Impl::executeDraw2D(const DrawCommand2D& cmd, const DrawList
 
 bool MetalRenderer::Impl::executeDraw3D(const DrawCommand3D& cmd, const DrawList& drawList) {
     @autoreleasepool {
-        // TODO: Phase 4.7 - Implement with actual shaders
-        // For now, just track statistics
+        // Ensure we have an encoder
+        if (!currentEncoder) {
+            MTLRenderPassDescriptor* renderPass = getCurrentRenderPassDescriptor();
+            if (!renderPass) {
+                NSLog(@"MetalRenderer: Failed to get render pass for draw3D");
+                return false;
+            }
+
+            currentEncoder = [currentCommandBuffer renderCommandEncoderWithDescriptor:renderPass];
+            if (!currentEncoder) {
+                NSLog(@"MetalRenderer: Failed to create render encoder for draw3D");
+                return false;
+            }
+
+            // Apply current viewport and scissor state
+            [currentEncoder setViewport:currentViewport];
+            if (scissorEnabled) {
+                [currentEncoder setScissorRect:currentScissor];
+            }
+        }
+
+        // Upload vertex data to buffer
+        const Vertex3D* vertices = drawList.getVertex3DData();
+        if (!vertices || cmd.vertexCount == 0) {
+            NSLog(@"MetalRenderer: No vertices to draw in draw3D");
+            return false;
+        }
+
+        const size_t vertexDataSize = cmd.vertexCount * sizeof(Vertex3D);
+        const size_t bufferOffset = cmd.vertexOffset * sizeof(Vertex3D);
+
+        // Check buffer bounds
+        if (bufferOffset + vertexDataSize > kMaxVertices3D * sizeof(Vertex3D)) {
+            NSLog(@"MetalRenderer: Vertex data exceeds buffer size in draw3D");
+            return false;
+        }
+
+        // Copy vertex data into current frame's buffer
+        id<MTLBuffer> currentBuffer = vertexBuffer3D[currentFrameIndex];
+        uint8_t* bufferPtr = (uint8_t*)[currentBuffer contents];
+        memcpy(bufferPtr + bufferOffset, vertices + cmd.vertexOffset, vertexDataSize);
+
+        // Set pipeline
+        [currentEncoder setRenderPipelineState:pipeline3D];
+
+        // Set vertex buffer
+        [currentEncoder setVertexBuffer:currentBuffer offset:bufferOffset atIndex:0];
+
+        // Set uniforms (projection + modelView + normal matrices)
+        struct Uniforms3D {
+            simd_float4x4 projectionMatrix;
+            simd_float4x4 modelViewMatrix;
+            simd_float4x4 normalMatrix;
+        };
+
+        Uniforms3D uniforms;
+        uniforms.projectionMatrix = cmd.projectionMatrix;
+        uniforms.modelViewMatrix = cmd.modelViewMatrix;
+
+        // Convert 3x3 normal matrix to 4x4 for uniform buffer
+        simd_float4x4 normalMatrix4x4 = {
+            simd_make_float4(cmd.normalMatrix.columns[0], 0.0f),
+            simd_make_float4(cmd.normalMatrix.columns[1], 0.0f),
+            simd_make_float4(cmd.normalMatrix.columns[2], 0.0f),
+            simd_make_float4(0.0f, 0.0f, 0.0f, 1.0f)
+        };
+        uniforms.normalMatrix = normalMatrix4x4;
+
+        [currentEncoder setVertexBytes:&uniforms length:sizeof(Uniforms3D) atIndex:1];
+
+        // Apply depth state
+        applyDepthState(cmd.depthTestEnabled);
+
+        // Apply culling mode
+        if (cmd.cullBackFace) {
+            [currentEncoder setCullMode:MTLCullModeBack];
+        } else {
+            [currentEncoder setCullMode:MTLCullModeNone];
+        }
+
+        // Set texture if present
+        if (cmd.texture) {
+            id<MTLTexture> texture = (__bridge id<MTLTexture>)cmd.texture;
+            [currentEncoder setFragmentTexture:texture atIndex:0];
+
+            // Create sampler state (linear filtering, clamp to edge)
+            MTLSamplerDescriptor* samplerDesc = [[MTLSamplerDescriptor alloc] init];
+            samplerDesc.minFilter = MTLSamplerMinMagFilterLinear;
+            samplerDesc.magFilter = MTLSamplerMinMagFilterLinear;
+            samplerDesc.sAddressMode = MTLSamplerAddressModeClampToEdge;
+            samplerDesc.tAddressMode = MTLSamplerAddressModeClampToEdge;
+            samplerDesc.mipFilter = MTLSamplerMipFilterNotMipmapped;
+
+            id<MTLSamplerState> sampler = [device newSamplerStateWithDescriptor:samplerDesc];
+            [currentEncoder setFragmentSamplerState:sampler atIndex:0];
+        }
+
+        // Convert PrimitiveType to MTLPrimitiveType
+        MTLPrimitiveType mtlPrimitive;
+        switch (cmd.primitiveType) {
+            case PrimitiveType::Point:
+                mtlPrimitive = MTLPrimitiveTypePoint;
+                break;
+            case PrimitiveType::Line:
+                mtlPrimitive = MTLPrimitiveTypeLine;
+                break;
+            case PrimitiveType::LineStrip:
+                mtlPrimitive = MTLPrimitiveTypeLineStrip;
+                break;
+            case PrimitiveType::Triangle:
+                mtlPrimitive = MTLPrimitiveTypeTriangle;
+                break;
+            case PrimitiveType::TriangleStrip:
+                mtlPrimitive = MTLPrimitiveTypeTriangleStrip;
+                break;
+            default:
+                mtlPrimitive = MTLPrimitiveTypeTriangle;
+                break;
+        }
+
+        // Execute draw call
+        if (cmd.indexCount > 0) {
+            // Indexed draw
+            const uint32_t* indices = drawList.getIndexData();
+            if (!indices) {
+                NSLog(@"MetalRenderer: No indices for indexed draw3D");
+                return false;
+            }
+
+            const size_t indexDataSize = cmd.indexCount * sizeof(uint32_t);
+            const size_t indexBufferOffset = cmd.indexOffset * sizeof(uint32_t);
+
+            // Check buffer bounds
+            if (indexBufferOffset + indexDataSize > kMaxIndices * sizeof(uint32_t)) {
+                NSLog(@"MetalRenderer: Index data exceeds buffer size in draw3D");
+                return false;
+            }
+
+            // Copy index data into current frame's buffer
+            id<MTLBuffer> currentIndexBuffer = indexBuffer[currentFrameIndex];
+            uint8_t* indexBufferPtr = (uint8_t*)[currentIndexBuffer contents];
+            memcpy(indexBufferPtr + indexBufferOffset, indices + cmd.indexOffset, indexDataSize);
+
+            [currentEncoder drawIndexedPrimitives:mtlPrimitive
+                                       indexCount:cmd.indexCount
+                                        indexType:MTLIndexTypeUInt32
+                                      indexBuffer:currentIndexBuffer
+                                indexBufferOffset:indexBufferOffset];
+        } else {
+            // Non-indexed draw
+            [currentEncoder drawPrimitives:mtlPrimitive
+                               vertexStart:0
+                               vertexCount:cmd.vertexCount];
+        }
+
+        // Update statistics
         frameDrawCalls++;
         frameVertices += cmd.vertexCount;
+
         return true;
     }
 }
