@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 #include <simd/simd.h>
 
 // Forward declarations
@@ -189,6 +190,22 @@ public:
     /// Get current viewport (x, y, width, height)
     /// @return Viewport as simd_float4 (x, y, width, height)
     simd_float4 getViewport() const;
+
+    // MARK: - Material State (Phase 8.4)
+
+    /// Push current material state onto the stack
+    void pushMaterial();
+
+    /// Pop material state from the stack
+    void popMaterial();
+
+    /// Set current material data (13 floats: ambient.rgb, diffuse.rgb, specular.rgb, emissive.rgb, shininess)
+    /// @param materialData Material uniform data
+    void setMaterialData(const std::vector<float>& materialData);
+
+    /// Get current material data
+    /// @return Current material uniform data (13 floats)
+    std::vector<float> getMaterialData() const;
 
     // MARK: - Keyboard State
 

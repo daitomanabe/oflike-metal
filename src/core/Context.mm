@@ -55,6 +55,10 @@ struct Context::Impl {
     simd_float4x4 currentViewMatrix = matrix_identity_float4x4;
     simd_float4x4 currentProjectionMatrix = matrix_identity_float4x4;
 
+    // Material state stack (Phase 8.4)
+    std::vector<std::vector<float>> materialStack;
+    std::vector<float> currentMaterialData;
+
     // State
     bool initialized = false;
 
@@ -427,6 +431,40 @@ simd_float4 Context::getViewport() const {
     return simd_make_float4(0.0f, 0.0f,
                             static_cast<float>(impl_->windowWidth),
                             static_cast<float>(impl_->windowHeight));
+}
+
+// MARK: - Material State (Phase 8.4)
+
+void Context::pushMaterial() {
+    // Push current material state onto stack
+    impl_->materialStack.push_back(impl_->currentMaterialData);
+}
+
+void Context::popMaterial() {
+    // Pop material state from stack
+    if (!impl_->materialStack.empty()) {
+        impl_->currentMaterialData = impl_->materialStack.back();
+        impl_->materialStack.pop_back();
+    }
+}
+
+void Context::setMaterialData(const std::vector<float>& materialData) {
+    impl_->currentMaterialData = materialData;
+}
+
+std::vector<float> Context::getMaterialData() const {
+    // If no material set, return default material
+    // Default: ambient(0.2), diffuse(0.8), specular(1.0), emissive(0.0), shininess(64.0)
+    if (impl_->currentMaterialData.empty()) {
+        return {
+            0.2f, 0.2f, 0.2f,   // ambient.rgb
+            0.8f, 0.8f, 0.8f,   // diffuse.rgb
+            1.0f, 1.0f, 1.0f,   // specular.rgb
+            0.0f, 0.0f, 0.0f,   // emissive.rgb
+            64.0f               // shininess
+        };
+    }
+    return impl_->currentMaterialData;
 }
 
 // MARK: - Keyboard State

@@ -188,8 +188,8 @@ Addons are explicitly last.
   Files: `src/oflike/3d/ofEasyCam.cpp`
   DoD: TODO removed with functional logic.
 
-- [ ] **Integrate lighting/material uniforms.**  
-  Files: `src/oflike/lighting/ofMaterial.cpp`  
+- [x] **Integrate lighting/material uniforms.**
+  Files: `src/oflike/lighting/ofMaterial.cpp`
   DoD: material state is uploaded and restored.
 
 ---

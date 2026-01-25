@@ -1,4 +1,5 @@
 #include "ofMaterial.h"
+#include "../../core/Context.h"
 #include <vector>
 #include <algorithm>
 
@@ -33,8 +34,10 @@ void ofMaterial::begin() {
     previousMaterial_ = currentMaterial_;
     currentMaterial_ = this;
 
-    // TODO: When rendering system is integrated, upload material uniforms here
-    // For now, materials are managed through getUniformData() calls
+    // Phase 8.4: Upload material uniforms to Context
+    Context& context = Context::instance();
+    context.pushMaterial();
+    context.setMaterialData(getUniformData());
 }
 
 void ofMaterial::end() {
@@ -42,7 +45,9 @@ void ofMaterial::end() {
     currentMaterial_ = previousMaterial_;
     previousMaterial_ = nullptr;
 
-    // TODO: When rendering system is integrated, restore previous material uniforms
+    // Phase 8.4: Restore previous material uniforms from Context
+    Context& context = Context::instance();
+    context.popMaterial();
 }
 
 // ============================================================================
