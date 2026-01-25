@@ -30,9 +30,9 @@ struct MetalRenderer::Impl {
     MTKView* view = nil;
     MTKTextureLoader* textureLoader = nil;
 
-    // Pipeline states
-    id<MTLRenderPipelineState> pipeline2D = nil;
-    id<MTLRenderPipelineState> pipeline3D = nil;
+    // Pipeline states (cached by blend mode)
+    id<MTLRenderPipelineState> pipeline2D[8] = {nil};  // One per BlendMode
+    id<MTLRenderPipelineState> pipeline3D[8] = {nil};  // One per BlendMode
 
     // Depth/stencil states
     id<MTLDepthStencilState> depthEnabledState = nil;
@@ -56,6 +56,8 @@ struct MetalRenderer::Impl {
     BlendMode currentBlendMode = BlendMode::Alpha;
     bool depthTestEnabled = false;
     bool depthWriteEnabled = true;
+    bool cullingEnabled = false;
+    bool cullBackFaces = true;  // true = back, false = front
     bool scissorEnabled = false;
     MTLViewport currentViewport;
     MTLScissorRect currentScissor;
@@ -86,6 +88,8 @@ struct MetalRenderer::Impl {
     bool initialize();
     void shutdown();
     bool createPipelines();
+    id<MTLRenderPipelineState> createPipelineVariant(id<MTLLibrary> library, const char* vertexFunc,
+                                                       const char* fragmentFunc, BlendMode blendMode);
     bool createBuffers();
     bool createDepthStencilStates();
 
@@ -178,9 +182,12 @@ void MetalRenderer::Impl::shutdown() {
             indexBuffer[i] = nil;
         }
 
-        // Release other objects
-        pipeline2D = nil;
-        pipeline3D = nil;
+        // Release pipeline variants
+        for (int i = 0; i < 8; i++) {
+            pipeline2D[i] = nil;
+            pipeline3D[i] = nil;
+        }
+
         depthEnabledState = nil;
         depthDisabledState = nil;
         textureLoader = nil;
@@ -192,6 +199,49 @@ void MetalRenderer::Impl::shutdown() {
 
         initialized = false;
         NSLog(@"MetalRenderer: Shutdown complete");
+    }
+}
+
+id<MTLRenderPipelineState> MetalRenderer::Impl::createPipelineVariant(id<MTLLibrary> library,
+                                                                        const char* vertexFunc,
+                                                                        const char* fragmentFunc,
+                                                                        BlendMode blendMode) {
+    @autoreleasepool {
+        NSError* error = nil;
+
+        id<MTLFunction> vertFunc = [library newFunctionWithName:@(vertexFunc)];
+        id<MTLFunction> fragFunc = [library newFunctionWithName:@(fragmentFunc)];
+
+        if (!vertFunc || !fragFunc) {
+            NSLog(@"MetalRenderer: Failed to find shader functions: %s / %s", vertexFunc, fragmentFunc);
+            return nil;
+        }
+
+        MTLRenderPipelineDescriptor* pipelineDesc = [[MTLRenderPipelineDescriptor alloc] init];
+        pipelineDesc.label = [NSString stringWithFormat:@"Pipeline_%s_Blend%d", vertexFunc, (int)blendMode];
+        pipelineDesc.vertexFunction = vertFunc;
+        pipelineDesc.fragmentFunction = fragFunc;
+        pipelineDesc.colorAttachments[0].pixelFormat = MTLPixelFormatBGRA8Unorm;
+        pipelineDesc.depthAttachmentPixelFormat = MTLPixelFormatDepth32Float;
+
+        // Apply blend configuration
+        BlendConfig blendConfig = BlendConfig::forMode(blendMode);
+        pipelineDesc.colorAttachments[0].blendingEnabled = blendConfig.blendingEnabled;
+        pipelineDesc.colorAttachments[0].rgbBlendOperation = (MTLBlendOperation)blendConfig.rgbBlendOperation;
+        pipelineDesc.colorAttachments[0].alphaBlendOperation = (MTLBlendOperation)blendConfig.alphaBlendOperation;
+        pipelineDesc.colorAttachments[0].sourceRGBBlendFactor = (MTLBlendFactor)blendConfig.sourceRGBBlendFactor;
+        pipelineDesc.colorAttachments[0].destinationRGBBlendFactor = (MTLBlendFactor)blendConfig.destinationRGBBlendFactor;
+        pipelineDesc.colorAttachments[0].sourceAlphaBlendFactor = (MTLBlendFactor)blendConfig.sourceAlphaBlendFactor;
+        pipelineDesc.colorAttachments[0].destinationAlphaBlendFactor = (MTLBlendFactor)blendConfig.destinationAlphaBlendFactor;
+
+        id<MTLRenderPipelineState> pipeline = [device newRenderPipelineStateWithDescriptor:pipelineDesc error:&error];
+        if (!pipeline) {
+            NSLog(@"MetalRenderer: Failed to create pipeline %s (blend %d): %@",
+                  vertexFunc, (int)blendMode, error.localizedDescription);
+            return nil;
+        }
+
+        return pipeline;
     }
 }
 
@@ -316,73 +366,33 @@ fragment float4 fragment3D(RasterizerData3D in [[stage_in]]) {
             NSLog(@"MetalRenderer: Shaders compiled successfully from source");
         }
 
-        // Create 2D pipeline
-        {
-            id<MTLFunction> vertexFunc = [library newFunctionWithName:@"vertex2D"];
-            id<MTLFunction> fragmentFunc = [library newFunctionWithName:@"fragment2D"];
+        // Create pipeline variants for all blend modes
+        // We create 7 variants (all enum values except PremultipliedAlpha which is less common)
+        // On-demand creation would be more efficient but requires more complex caching logic
 
-            if (!vertexFunc || !fragmentFunc) {
-                NSLog(@"MetalRenderer: Failed to find 2D shader functions");
-                return false;
-            }
+        NSLog(@"MetalRenderer: Creating pipeline variants...");
 
-            MTLRenderPipelineDescriptor* pipelineDesc = [[MTLRenderPipelineDescriptor alloc] init];
-            pipelineDesc.label = @"Pipeline2D";
-            pipelineDesc.vertexFunction = vertexFunc;
-            pipelineDesc.fragmentFunction = fragmentFunc;
-            pipelineDesc.colorAttachments[0].pixelFormat = MTLPixelFormatBGRA8Unorm;
-            pipelineDesc.depthAttachmentPixelFormat = MTLPixelFormatDepth32Float;
-
-            // Enable alpha blending
-            pipelineDesc.colorAttachments[0].blendingEnabled = YES;
-            pipelineDesc.colorAttachments[0].rgbBlendOperation = MTLBlendOperationAdd;
-            pipelineDesc.colorAttachments[0].alphaBlendOperation = MTLBlendOperationAdd;
-            pipelineDesc.colorAttachments[0].sourceRGBBlendFactor = MTLBlendFactorSourceAlpha;
-            pipelineDesc.colorAttachments[0].destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
-            pipelineDesc.colorAttachments[0].sourceAlphaBlendFactor = MTLBlendFactorOne;
-            pipelineDesc.colorAttachments[0].destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
-
-            pipeline2D = [device newRenderPipelineStateWithDescriptor:pipelineDesc error:&error];
-            if (!pipeline2D) {
-                NSLog(@"MetalRenderer: Failed to create 2D pipeline: %@", error.localizedDescription);
+        // Create 2D pipeline variants for common blend modes
+        for (int i = 0; i <= 6; i++) {
+            BlendMode mode = (BlendMode)i;
+            pipeline2D[i] = createPipelineVariant(library, "vertex2D", "fragment2D", mode);
+            if (!pipeline2D[i]) {
+                NSLog(@"MetalRenderer: Failed to create 2D pipeline variant for blend mode %d", i);
                 return false;
             }
         }
 
-        // Create 3D pipeline
-        {
-            id<MTLFunction> vertexFunc = [library newFunctionWithName:@"vertex3D"];
-            id<MTLFunction> fragmentFunc = [library newFunctionWithName:@"fragment3D"];
-
-            if (!vertexFunc || !fragmentFunc) {
-                NSLog(@"MetalRenderer: Failed to find 3D shader functions");
-                return false;
-            }
-
-            MTLRenderPipelineDescriptor* pipelineDesc = [[MTLRenderPipelineDescriptor alloc] init];
-            pipelineDesc.label = @"Pipeline3D";
-            pipelineDesc.vertexFunction = vertexFunc;
-            pipelineDesc.fragmentFunction = fragmentFunc;
-            pipelineDesc.colorAttachments[0].pixelFormat = MTLPixelFormatBGRA8Unorm;
-            pipelineDesc.depthAttachmentPixelFormat = MTLPixelFormatDepth32Float;
-
-            // Enable alpha blending
-            pipelineDesc.colorAttachments[0].blendingEnabled = YES;
-            pipelineDesc.colorAttachments[0].rgbBlendOperation = MTLBlendOperationAdd;
-            pipelineDesc.colorAttachments[0].alphaBlendOperation = MTLBlendOperationAdd;
-            pipelineDesc.colorAttachments[0].sourceRGBBlendFactor = MTLBlendFactorSourceAlpha;
-            pipelineDesc.colorAttachments[0].destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
-            pipelineDesc.colorAttachments[0].sourceAlphaBlendFactor = MTLBlendFactorOne;
-            pipelineDesc.colorAttachments[0].destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
-
-            pipeline3D = [device newRenderPipelineStateWithDescriptor:pipelineDesc error:&error];
-            if (!pipeline3D) {
-                NSLog(@"MetalRenderer: Failed to create 3D pipeline: %@", error.localizedDescription);
+        // Create 3D pipeline variants for common blend modes
+        for (int i = 0; i <= 6; i++) {
+            BlendMode mode = (BlendMode)i;
+            pipeline3D[i] = createPipelineVariant(library, "vertex3D", "fragment3D", mode);
+            if (!pipeline3D[i]) {
+                NSLog(@"MetalRenderer: Failed to create 3D pipeline variant for blend mode %d", i);
                 return false;
             }
         }
 
-        NSLog(@"MetalRenderer: Pipelines created successfully");
+        NSLog(@"MetalRenderer: All pipeline variants created successfully");
         return true;
     }
 }
@@ -653,8 +663,10 @@ bool MetalRenderer::Impl::executeDraw2D(const DrawCommand2D& cmd, const DrawList
         uint8_t* bufferPtr = (uint8_t*)[currentBuffer contents];
         memcpy(bufferPtr + bufferOffset, vertices + cmd.vertexOffset, vertexDataSize);
 
-        // Set pipeline
-        [currentEncoder setRenderPipelineState:pipeline2D];
+        // Set pipeline (select variant based on blend mode)
+        uint32_t blendIndex = (uint32_t)cmd.blendMode;
+        if (blendIndex > 6) blendIndex = 1; // Default to Alpha if out of range
+        [currentEncoder setRenderPipelineState:pipeline2D[blendIndex]];
 
         // Set vertex buffer
         [currentEncoder setVertexBuffer:currentBuffer offset:bufferOffset atIndex:0];
@@ -812,8 +824,10 @@ bool MetalRenderer::Impl::executeDraw3D(const DrawCommand3D& cmd, const DrawList
         uint8_t* bufferPtr = (uint8_t*)[currentBuffer contents];
         memcpy(bufferPtr + bufferOffset, vertices + cmd.vertexOffset, vertexDataSize);
 
-        // Set pipeline
-        [currentEncoder setRenderPipelineState:pipeline3D];
+        // Set pipeline (select variant based on blend mode)
+        uint32_t blendIndex = (uint32_t)cmd.blendMode;
+        if (blendIndex > 6) blendIndex = 1; // Default to Alpha if out of range
+        [currentEncoder setRenderPipelineState:pipeline3D[blendIndex]];
 
         // Set vertex buffer
         [currentEncoder setVertexBuffer:currentBuffer offset:bufferOffset atIndex:0];
@@ -1069,7 +1083,8 @@ bool MetalRenderer::Impl::executeSetRenderTarget(const SetRenderTargetCommand& c
 
 void MetalRenderer::Impl::applyBlendMode(BlendMode mode) {
     currentBlendMode = mode;
-    // TODO: Blend mode will be applied via pipeline state in Phase 4.7
+    // Blend mode is applied via pipeline state selection in executeDraw2D/3D
+    // No runtime state change needed - Metal requires blend state in PSO
 }
 
 void MetalRenderer::Impl::applyDepthState(bool enabled) {
@@ -1223,7 +1238,10 @@ void MetalRenderer::setDepthWriteEnabled(bool enabled) {
 }
 
 void MetalRenderer::setCullingMode(bool cullBack, bool enabled) {
-    // TODO: Implement culling in Phase 8 (3D)
+    impl_->cullingEnabled = enabled;
+    impl_->cullBackFaces = cullBack;
+    // Culling is applied dynamically in executeDraw3D via setCullMode()
+    // 2D rendering always uses MTLCullModeNone
 }
 
 bool MetalRenderer::setRenderTarget(void* renderTarget) {

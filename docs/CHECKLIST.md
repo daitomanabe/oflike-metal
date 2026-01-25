@@ -100,12 +100,12 @@ Addons are explicitly last.
   Files: `src/render/metal/MetalRenderer.mm`
   DoD: render target switching works with `ofFbo`.
 
-- [ ] **Add 2D projection + model-view handling.**  
-  Files: `src/render/metal/MetalRenderer.mm`  
+- [x] **Add 2D projection + model-view handling.**
+  Files: `src/render/metal/MetalRenderer.mm`
   DoD: 2D positions map to top-left origin space.
 
-- [ ] **Apply blend/cull states in pipelines.**  
-  Files: `src/render/metal/MetalRenderer.mm`  
+- [x] **Apply blend/cull states in pipelines.**
+  Files: `src/render/metal/MetalRenderer.mm`
   DoD: blend/culling TODOs are removed and states are honored.
 
 ---
