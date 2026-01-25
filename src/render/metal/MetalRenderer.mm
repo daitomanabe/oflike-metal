@@ -924,5 +924,9 @@ double MetalRenderer::getLastGPUTime() const {
     return impl_->lastGPUTime;
 }
 
+void* MetalRenderer::getDevice() const {
+    return (__bridge void*)impl_->device;
+}
+
 } // namespace metal
 } // namespace render

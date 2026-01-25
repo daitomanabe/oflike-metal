@@ -95,6 +95,13 @@ public:
     // Performance monitoring
     double getLastGPUTime() const;  // Returns GPU time in milliseconds
 
+    // Device Access (Phase 3.3)
+    /**
+     * Get the Metal device used by this renderer.
+     * @return Metal device (id<MTLDevice>) cast to void*
+     */
+    void* getDevice() const;
+
 private:
     struct Impl;
     std::unique_ptr<Impl> impl_;

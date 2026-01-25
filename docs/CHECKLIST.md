@@ -80,8 +80,8 @@ Addons are explicitly last.
   Files: `src/platform/bridge/SwiftBridge.h`, `src/platform/bridge/SwiftBridge.mm`
   DoD: Swift can call `initializeRenderer(device, view)` and `renderFrame()`.
 
-- [ ] **Expose Metal device via renderer or context.**  
-  Files: `src/render/metal/MetalRenderer.h`, `src/render/metal/MetalRenderer.mm`, `src/core/Context.h`  
+- [x] **Expose Metal device via renderer or context.**
+  Files: `src/render/metal/MetalRenderer.h`, `src/render/metal/MetalRenderer.mm`, `src/core/Context.h`
   DoD: oflike layer can access the correct `MTLDevice` without creating a new one.
 
 ---

@@ -48,6 +48,10 @@ public:
     /// @return Reference to the draw list
     render::DrawList& getDrawList();
 
+    /// Get the Metal device (Phase 3.3)
+    /// @return Metal device (id<MTLDevice>) cast to void*, or nullptr if renderer not initialized
+    void* getMetalDevice() const;
+
     // MARK: - Timing
 
     /// Get elapsed time since initialization (seconds)

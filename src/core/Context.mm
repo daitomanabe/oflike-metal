@@ -176,6 +176,13 @@ render::DrawList& Context::getDrawList() {
     return impl_->drawList;
 }
 
+void* Context::getMetalDevice() const {
+    if (!impl_->renderer) {
+        return nullptr;
+    }
+    return impl_->renderer->getDevice();
+}
+
 // MARK: - Timing
 
 double Context::getElapsedTime() const {
