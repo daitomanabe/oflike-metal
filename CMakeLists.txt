@@ -17,6 +17,9 @@ endif()
 # macOS deployment target
 set(CMAKE_OSX_DEPLOYMENT_TARGET "13.0" CACHE STRING "Minimum macOS deployment version")
 
+# Optional frameworks (feature-gated)
+option(OFLIKE_ENABLE_VISIONKIT "Enable VisionKit (macOS 14+, optional)" OFF)
+
 # Compiler flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0 -DDEBUG")
@@ -36,6 +39,16 @@ find_library(COREGRAPHICS_LIBRARY CoreGraphics REQUIRED)
 find_library(IMAGEIO_LIBRARY ImageIO REQUIRED)
 find_library(ACCELERATE_LIBRARY Accelerate REQUIRED)
 
+if(OFLIKE_ENABLE_VISIONKIT)
+    find_library(VISIONKIT_LIBRARY VisionKit)
+    if(NOT VISIONKIT_LIBRARY)
+        message(FATAL_ERROR "VisionKit framework not found (requires macOS 14 SDK).")
+    endif()
+    if(CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS "14.0")
+        message(WARNING "VisionKit is macOS 14+; deployment target is ${CMAKE_OSX_DEPLOYMENT_TARGET}.")
+    endif()
+endif()
+
 # Third-party libraries
 add_subdirectory(third_party)
 
@@ -53,8 +66,18 @@ file(GLOB_RECURSE MATH_SOURCES
 file(GLOB_RECURSE PLATFORM_SOURCES
     src/platform/*.cpp
     src/platform/*.mm
-    src/platform/*.swift
 )
+
+# Add Swift sources only if Swift compiler is available
+if(CMAKE_Swift_COMPILER)
+    file(GLOB_RECURSE PLATFORM_SWIFT_SOURCES
+        src/platform/*.swift
+    )
+    list(APPEND PLATFORM_SOURCES ${PLATFORM_SWIFT_SOURCES})
+    message(STATUS "Swift compiler found - including Swift sources")
+else()
+    message(STATUS "Swift compiler not found - skipping Swift sources (use 'cmake -G Xcode' to enable)")
+endif()
 
 file(GLOB_RECURSE RENDER_SOURCES
     src/render/*.cpp
@@ -117,6 +140,10 @@ target_link_libraries(oflike-metal PUBLIC
     tess2
     utf8
 )
+
+if(OFLIKE_ENABLE_VISIONKIT)
+    target_link_libraries(oflike-metal PUBLIC ${VISIONKIT_LIBRARY})
+endif()
 
 # Link nanosvg if available
 if(TARGET nanosvg)

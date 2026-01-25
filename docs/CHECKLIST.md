@@ -32,8 +32,8 @@ Addons are explicitly last.
 
 ## Phase 1: Build Stabilization (Before Deeper Refactors)
 
-- [ ] **Gate Swift sources in CMake (only when Swift compiler is available).**  
-  Files: `CMakeLists.txt`  
+- [x] **Gate Swift sources in CMake (only when Swift compiler is available).**
+  Files: `CMakeLists.txt`
   DoD: non-Xcode CMake builds do not fail due to Swift sources.
 
 - [ ] **Remove GLM header search path.**  
