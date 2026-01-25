@@ -7,8 +7,11 @@
 #include "../../render/metal/MetalRenderer.h"  // Phase 16.2: For performance stats
 
 @interface OFLBridge() {
-    // C++ test app instance for Phase 1.4 verification
-    std::unique_ptr<TestApp> testApp_;
+    // Phase 2.1: User app instance (created via factory)
+    std::unique_ptr<ofBaseApp> userApp_;
+
+    // Phase 2.1: Factory function to create user app
+    OfAppFactoryFunc appFactory_;
 
     bool isSetup_;
 }
@@ -20,9 +23,17 @@
     self = [super init];
     if (self) {
         isSetup_ = false;
+        appFactory_ = nullptr;
         std::cout << "[OFLBridge] Initialized" << std::endl;
     }
     return self;
+}
+
+- (void)setAppFactory:(OfAppFactoryFunc)factory {
+    @autoreleasepool {
+        appFactory_ = factory;
+        std::cout << "[OFLBridge] App factory registered" << std::endl;
+    }
 }
 
 - (void)initializeContextWithDevice:(id)device {
@@ -52,16 +63,24 @@
 
         std::cout << "[OFLBridge] Setup called" << std::endl;
 
-        // Phase 1.4: Test C++ integration
-        testApp_ = std::make_unique<TestApp>();
+        // Phase 2.1: Create user app via factory
+        if (appFactory_) {
+            userApp_.reset(appFactory_());
+            std::cout << "[OFLBridge] User app created via factory" << std::endl;
+        } else {
+            // Fallback: Create TestApp if no factory is registered
+            // This maintains backward compatibility for Phase 1 verification
+            std::cout << "[OFLBridge] WARNING: No app factory registered, using TestApp fallback" << std::endl;
+            userApp_ = std::make_unique<TestApp>();
+        }
 
         // Phase 13.4: Register app with EventDispatcher
-        EventDispatcher::instance().setApp(testApp_.get());
+        EventDispatcher::instance().setApp(userApp_.get());
 
-        testApp_->setup();
+        userApp_->setup();
 
         isSetup_ = true;
-        std::cout << "[OFLBridge] Setup complete - Swift → C++ calls verified!" << std::endl;
+        std::cout << "[OFLBridge] Setup complete" << std::endl;
     }
 }
 
@@ -74,9 +93,9 @@
         // Phase 2.1: Increment frame counter in context
         Context::instance().incrementFrame();
 
-        // Phase 1.4: Test C++ update
-        if (testApp_) {
-            testApp_->update();
+        // Phase 2.1: Update user app
+        if (userApp_) {
+            userApp_->update();
         }
     }
 }
@@ -87,9 +106,9 @@
             return;
         }
 
-        // Phase 1.4: Test C++ draw
-        if (testApp_) {
-            testApp_->draw();
+        // Phase 2.1: Draw user app
+        if (userApp_) {
+            userApp_->draw();
         }
     }
 }
@@ -102,10 +121,10 @@
 
         std::cout << "[OFLBridge] Exit called" << std::endl;
 
-        // Phase 1.4: Cleanup test app
-        if (testApp_) {
-            testApp_->exit();
-            testApp_.reset();
+        // Phase 2.1: Cleanup user app
+        if (userApp_) {
+            userApp_->exit();
+            userApp_.reset();
         }
 
         // Phase 13.4: Clear EventDispatcher app reference

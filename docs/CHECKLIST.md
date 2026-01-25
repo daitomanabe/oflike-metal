@@ -52,8 +52,8 @@ Addons are explicitly last.
 
 ## Phase 2: App Entry & Lifecycle
 
-- [ ] **Replace TestApp with user app factory.**  
-  Files: `src/platform/bridge/SwiftBridge.h`, `src/platform/bridge/SwiftBridge.mm`, `src/core/TestApp.h`  
+- [x] **Replace TestApp with user app factory.**
+  Files: `src/platform/bridge/SwiftBridge.h`, `src/platform/bridge/SwiftBridge.mm`, `src/core/TestApp.h`
   DoD: SwiftUI path constructs user app via factory (e.g., `ofCreateApp()`); TestApp no longer required.
 
 - [ ] **Decide and implement Engine usage.**  

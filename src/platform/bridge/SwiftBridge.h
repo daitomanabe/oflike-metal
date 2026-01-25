@@ -3,6 +3,13 @@
 
 #import <Foundation/Foundation.h>
 
+// Forward declaration of app factory function pointer type
+// This allows users to register their app creation function
+#ifdef __cplusplus
+class ofBaseApp;
+typedef ofBaseApp* (*OfAppFactoryFunc)();
+#endif
+
 /// Bridge class that connects Swift UI layer to C++ engine
 /// This is the Objective-C++ interface exposed to Swift
 @interface OFLBridge : NSObject
@@ -14,6 +21,13 @@
 /// Must be called before setup()
 /// @param device The MTLDevice instance
 - (void)initializeContextWithDevice:(id)device;
+
+#ifdef __cplusplus
+/// Set the app factory function (Phase 2.1)
+/// This function will be called to create the user's app instance
+/// @param factory Function pointer that creates and returns an ofBaseApp instance
+- (void)setAppFactory:(OfAppFactoryFunc)factory;
+#endif
 
 /// Setup the C++ engine and user app
 - (void)setup;
