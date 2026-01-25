@@ -6,6 +6,10 @@
 using namespace std::chrono;
 
 /// Engine implementation (pImpl pattern)
+///
+/// ARCHITECTURE NOTE (Phase 2.2):
+/// Engine is ONLY used for ofMain legacy entry point.
+/// SwiftUI entry (default) uses SwiftBridge directly without Engine.
 struct Engine::Impl {
     // User application
     std::unique_ptr<ofBaseApp> app = nullptr;

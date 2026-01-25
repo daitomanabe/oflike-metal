@@ -56,8 +56,8 @@ Addons are explicitly last.
   Files: `src/platform/bridge/SwiftBridge.h`, `src/platform/bridge/SwiftBridge.mm`, `src/core/TestApp.h`
   DoD: SwiftUI path constructs user app via factory (e.g., `ofCreateApp()`); TestApp no longer required.
 
-- [ ] **Decide and implement Engine usage.**  
-  Files: `src/core/Engine.h`, `src/core/Engine.mm`, `src/platform/bridge/SwiftBridge.mm`, `docs/ARCHITECTURE.md`  
+- [x] **Decide and implement Engine usage.**
+  Files: `src/core/Engine.h`, `src/core/Engine.mm`, `src/platform/bridge/SwiftBridge.mm`, `docs/ARCHITECTURE.md`
   DoD: either Engine drives setup/update/draw, or Engine is declared non-participating.
 
 - [ ] **Unify Y-axis handling between SwiftUI and ofMain.**  

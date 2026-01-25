@@ -5,14 +5,24 @@
 // Forward declarations
 class ofBaseApp;
 
-/// Core application engine
-/// Manages the main application lifecycle, frame loop, and user app callbacks
-/// Coordinates setup(), update(), and draw() calls
+/// Core application engine (LEGACY PATH ONLY)
 ///
-/// Phase 2.2: Engine class design
+/// ARCHITECTURE NOTE (Phase 2.2):
+/// - SwiftUI Entry (DEFAULT): Engine is NOT used. SwiftBridge drives lifecycle directly.
+/// - ofMain Entry (LEGACY): Engine drives setup/update/draw for backward compatibility.
+///
+/// This class provides lifecycle management for the ofMain legacy entry point.
+/// For SwiftUI applications (the default and recommended path), the lifecycle is
+/// managed directly by SwiftBridge without involving Engine.
+///
+/// Usage:
+/// - SwiftUI apps: Ignore this class, use SwiftBridge (src/platform/bridge/)
+/// - ofMain apps: Engine drives the app lifecycle via ofRunApp()
+///
+/// Phase 2.2: Engine class design (Legacy path only)
 /// - Initialization / Shutdown
-/// - Main loop management
-/// - App lifecycle coordination
+/// - Main loop management (for ofMain)
+/// - App lifecycle coordination (for ofMain)
 class Engine {
 public:
     /// Get the global engine instance (thread-safe singleton)

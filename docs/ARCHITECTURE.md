@@ -98,6 +98,30 @@ int main() {
 - SwiftUI コンポーネント統合 → SwiftUI Entry を使用
 - macOS ネイティブ UI/UX → SwiftUI Entry を使用
 
+#### 1.3.3 ライフサイクル管理の設計 (Phase 2.2)
+
+**Engine クラスの役割:**
+
+oflike-metal は2つの異なるライフサイクル管理パスを持ちます:
+
+**SwiftUI Entry (デフォルト):**
+- `SwiftBridge` (Objective-C++) が直接 setup/update/draw を駆動
+- `Engine` クラスは使用されません
+- MetalView.swift → SwiftBridge.mm → userApp_ の順で呼び出し
+- ライフサイクル: `MetalViewCoordinator` が MTKViewDelegate 経由で管理
+
+**ofMain Entry (レガシー):**
+- `Engine` (C++) が setup/update/draw を駆動
+- ofRunApp() が Engine::tick() を呼び出す
+- Engine が ofBaseApp* を保持して lifecycle を管理
+- ライフサイクル: プラットフォーム層から Engine::tick() を定期的に呼び出し
+
+**設計上の決定 (Phase 2.2):**
+- ✅ SwiftUI Entry: Engine 不使用 (SwiftBridge が直接管理)
+- ✅ ofMain Entry: Engine 使用 (互換性のため)
+- ✅ 重複を避けるため、両方のパスで Engine を使用しない
+- ✅ Engine は将来の ofMain 実装時にのみ有効化
+
 ### 1.4 技術スタック
 
 ```
