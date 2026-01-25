@@ -20,8 +20,8 @@ Addons are explicitly last.
   Files: `docs/ARCHITECTURE.md`
   DoD: renderer responsible for Metal NDC/Y conversion; oflike API remains oF-compatible.
 
-- [ ] **Finalize generator-friendly folder layout.**  
-  Files: `docs/PROJECT_STRUCTURE.md`  
+- [x] **Finalize generator-friendly folder layout.**
+  Files: `docs/PROJECT_STRUCTURE.md`
   DoD: standard generated project layout is documented (src/addons/data/resources/shaders/tools).
 
 - [ ] **Document addon linking strategy (copy/symlink/reference).**  
