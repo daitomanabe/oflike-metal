@@ -190,6 +190,27 @@ public:
      */
     virtual void destroyTexture(void* texture) = 0;
 
+    /**
+     * Read pixels from a texture (GPU->CPU readback).
+     * @param texture Handle to the texture
+     * @param data Destination buffer (must be pre-allocated)
+     * @param width Texture width
+     * @param height Texture height
+     * @param bytesPerRow Bytes per row
+     * @return true on success, false on failure
+     */
+    virtual bool readTexturePixels(void* texture, void* data, uint32_t width, uint32_t height, size_t bytesPerRow) const = 0;
+
+    // ========================================================================
+    // Device Access
+    // ========================================================================
+
+    /**
+     * Get the underlying graphics device.
+     * @return Device handle (e.g., id<MTLDevice> for Metal), or nullptr if not available
+     */
+    virtual void* getDevice() const = 0;
+
     // ========================================================================
     // Information
     // ========================================================================

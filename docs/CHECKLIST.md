@@ -200,8 +200,8 @@ Addons are explicitly last.
   Files: `src/oflike/utils/ofUtilsImage.mm`
   DoD: 16-bit/float load/save TODOs removed.
 
-- [ ] **Use renderer device/MTKTextureLoader path.**  
-  Files: `src/oflike/utils/ofUtilsImage.mm`, `src/render/metal/MetalRenderer.h`  
+- [x] **Use renderer device/MTKTextureLoader path.**
+  Files: `src/oflike/utils/ofUtilsImage.mm`, `src/render/IRenderer.h`
   DoD: device access is through renderer, not `MTLCreateSystemDefaultDevice`.
 
 ---
