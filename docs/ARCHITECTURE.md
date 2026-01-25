@@ -1,7 +1,7 @@
 # oflike-metal Architecture - Absolute Policies
 
-**Version**: 3.0.0  
-**Last Updated**: 2026-01-23  
+**Version**: 3.1.0
+**Last Updated**: 2026-01-25
 **Status**: Active
 
 > このドキュメントはプロジェクトの絶対的な方針を定義します。  
@@ -98,12 +98,154 @@
 - **macOS専用** (最小サポート: macOS 13.0 Ventura)
 - **Apple Silicon最適化** (Intel互換は維持)
 - **Neural Engine活用** (Apple Silicon のみ)
+- **macOS 14 依存機能はオプション化** (VisionKit などは機能有効時のみ)
+
+### 1.5 座標系
+
+- **2D**: oflike API は左上原点 (+X 右, +Y 下) を維持
+- **3D**: oF 互換の右手座標系を維持
+- **Renderer**: Metal の NDC (Z: 0..1) への変換や Y 軸反転は描画層で吸収
 
 ---
 
-## 2. 依存関係ポリシー
+## 2. レイヤー境界 (Layer Boundaries)
 
-### 2.1 必須フレームワーク
+### 2.1 レイヤー分離の原則
+
+oflike-metal は明確なレイヤー境界を持ち、各レイヤーは以下の制約に従います:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                      Layer Boundaries                                │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  Application Layer (User Code)                                       │
+│  ├─ Depends on: oflike/*                                            │
+│  └─ Cannot access: render/*, platform/*                             │
+│                           ▼                                          │
+│  oflike Layer (oF API Compatible)                                    │
+│  ├─ Path: src/oflike/**/*                                           │
+│  ├─ Depends on: render/DrawList, render/DrawCommand, render/Types   │
+│  ├─ Cannot include: render/metal/*, platform/*                      │
+│  └─ Metal code: ❌ FORBIDDEN                                         │
+│                           ▼                                          │
+│  Render Abstraction Layer                                            │
+│  ├─ Path: src/render/ (excluding src/render/metal/)                │
+│  ├─ Files: DrawList.h, DrawCommand.h, RenderTypes.h                │
+│  ├─ Purpose: GPU API 非依存の描画コマンド抽象化                        │
+│  └─ Metal code: ❌ FORBIDDEN                                         │
+│                           ▼                                          │
+│  Metal Implementation Layer                                          │
+│  ├─ Path: src/render/metal/*                                        │
+│  ├─ Files: MetalRenderer.h/.mm, MetalTexture.h/.mm, etc.           │
+│  ├─ Purpose: Metal 固有の実装                                        │
+│  └─ Metal code: ✅ ONLY HERE                                         │
+│                           ▼                                          │
+│  Platform Layer (SwiftUI + Bridge)                                   │
+│  ├─ Path: src/platform/swiftui/*, src/platform/bridge/*            │
+│  └─ Purpose: OS/UI 統合                                              │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### 2.2 具体的な制約
+
+#### 2.2.1 oflike Layer
+
+**許可される依存:**
+- `src/render/DrawList.h` - 描画コマンドリスト
+- `src/render/DrawCommand.h` - 描画コマンド定義
+- `src/render/RenderTypes.h` - レンダリング型定義
+- `src/core/Context.h` - グローバル状態
+- `src/math/*` - 数学ライブラリ
+
+**禁止される依存:**
+- ❌ `src/render/metal/*` - Metal 実装への直接アクセス
+- ❌ `#import <Metal/Metal.h>` - Metal フレームワークの直接使用
+- ❌ `#import <MetalKit/MetalKit.h>` - MetalKit フレームワークの直接使用
+- ❌ `id<MTLDevice>`, `id<MTLTexture>` 等の Metal 型の直接使用
+- ❌ `src/platform/*` - プラットフォーム層への直接アクセス
+
+**例外:**
+- `src/oflike/image/ofTexture.mm` - テクスチャ作成時のみ Context 経由で device にアクセス可能
+- `src/oflike/graphics/ofFbo.mm` - FBO 作成時のみ Context 経由で device にアクセス可能
+
+#### 2.2.2 Render Abstraction Layer
+
+**役割:**
+- GPU API 非依存の描画コマンド定義
+- DrawList によるコマンドバッファリング
+- レンダリング状態の抽象化
+
+**禁止:**
+- ❌ Metal 固有の実装
+- ❌ `#import <Metal/Metal.h>`
+
+#### 2.2.3 Metal Implementation Layer
+
+**役割:**
+- Metal 固有の実装を集約
+- DrawList の Metal への変換
+- Metal リソース管理
+
+**場所:**
+- ✅ `src/render/metal/MetalRenderer.h/.mm`
+- ✅ `src/render/metal/MetalTexture.h/.mm`
+- ✅ `src/render/metal/MetalPipeline.h/.mm`
+- ✅ `src/render/metal/Shaders.metal`
+
+**これ以外の場所で Metal コードを書くことは禁止**
+
+### 2.3 Context 経由のアクセスパターン
+
+oflike レイヤーが Metal リソース (device, renderer) にアクセスする場合は、必ず Context を経由する:
+
+```cpp
+// ✅ CORRECT: Context 経由でアクセス
+#include "ofTexture.h"
+#include "Context.h"
+
+void ofTexture::allocate(int w, int h) {
+    auto* ctx = Context::Get();
+    auto* renderer = ctx->renderer();
+    // renderer 経由で Metal リソースを取得
+}
+```
+
+```cpp
+// ❌ WRONG: Metal を直接使用
+#import <Metal/Metal.h>
+
+void ofTexture::allocate(int w, int h) {
+    id<MTLDevice> device = MTLCreateSystemDefaultDevice();  // ❌ 禁止
+}
+```
+
+### 2.4 検証方法
+
+レイヤー境界違反を検出するための検証コマンド:
+
+```bash
+# oflike レイヤーで Metal ヘッダーを include していないか確認
+grep -r "#import <Metal" src/oflike/
+
+# oflike レイヤーで render/metal を include していないか確認
+grep -r "#include \"render/metal" src/oflike/
+
+# oflike レイヤーで Metal 型を使用していないか確認
+grep -r "id<MTL" src/oflike/
+
+# render/ (metal を除く) で Metal を使用していないか確認
+grep -r "#import <Metal" src/render/*.h src/render/*.cpp
+```
+
+**期待される結果:** すべて 0 件
+
+---
+
+## 3. 依存関係ポリシー
+
+### 3.1 必須フレームワーク (macOS 13.0)
 
 | フレームワーク | 用途 | 最小バージョン |
 |--------------|------|---------------|
@@ -113,7 +255,6 @@
 | **Metal Performance Shaders** | 画像処理 | macOS 13.0 |
 | **Core ML** | ML推論 | macOS 13.0 |
 | **Vision** | 画像認識 | macOS 13.0 |
-| **VisionKit** | OCR | macOS 14.0 |
 | **PHASE** | 空間オーディオ | macOS 13.0 |
 | **VideoToolbox** | ビデオエンコード | macOS 13.0 |
 | **SwiftUI** | ウィンドウ、UI、イベント | macOS 13.0 |
@@ -124,7 +265,13 @@
 | **Network** | TCP/UDP | macOS 13.0 |
 | **Model I/O** | 3Dモデル | macOS 13.0 |
 
-### 2.2 禁止ライブラリ
+### 3.1.1 条件付きフレームワーク (機能有効時)
+
+| フレームワーク | 用途 | 最小バージョン | 備考 |
+|--------------|------|---------------|------|
+| **VisionKit** | OCR / LiveText | macOS 14.0 | ofxLiveText 有効時のみ |
+
+### 3.2 禁止ライブラリ
 
 | ライブラリ | 代替 | 例外 |
 |-----------|------|------|
@@ -140,7 +287,7 @@
 | Assimp | Model I/O | なし |
 | **AppKit (直接使用)** | SwiftUI | 低レベルブリッジのみ許可 |
 
-### 2.3 許可サードパーティ
+### 3.3 許可サードパーティ
 
 | ライブラリ | 用途 | ライセンス | 状態 |
 |-----------|------|-----------|------|
@@ -154,9 +301,9 @@
 
 ---
 
-## 3. Addons アーキテクチャ
+## 4. Addons アーキテクチャ
 
-### 3.1 Addon 分類
+### 4.1 Addon 分類
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -195,7 +342,7 @@
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-### 3.2 ofxSharp アーキテクチャ (⭐ 最優先)
+### 4.2 ofxSharp アーキテクチャ (⭐ 最優先)
 
 **目的**: 単一画像から3D Gaussian Splatting を 1秒以内で生成
 
@@ -234,7 +381,7 @@
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-### 3.3 Addon ディレクトリ構造
+### 4.3 Addon ディレクトリ構造
 
 ```
 src/
@@ -277,7 +424,7 @@ src/
 │       └── ofxObjectCapture/
 ```
 
-### 3.4 Core Addons 移植方針
+### 4.4 Core Addons 移植方針
 
 | oF Addon | 元の依存 | Mac Native 置換 |
 |----------|---------|-----------------|
@@ -293,9 +440,9 @@ src/
 
 ---
 
-## 4. 実装パターン
+## 5. 実装パターン
 
-### 4.1 pImpl パターン (Pure C++ Header)
+### 5.1 pImpl パターン (Pure C++ Header)
 
 ```cpp
 // ofxSharp.h - Pure C++ header
@@ -324,7 +471,7 @@ private:
 };
 ```
 
-### 4.2 Objective-C++ 実装
+### 5.2 Objective-C++ 実装
 
 ```objc
 // ofxSharp.mm
@@ -347,7 +494,7 @@ public:
 };
 ```
 
-### 4.3 Core ML 統合パターン
+### 5.3 Core ML 統合パターン
 
 ```objc
 // NeuralEngine optimized loading
@@ -360,7 +507,7 @@ MLModel* model = [MLModel modelWithContentsOfURL:url
                                            error:&error];
 ```
 
-### 4.4 Metal Compute パターン
+### 5.4 Metal Compute パターン
 
 ```objc
 // Compute shader dispatch
@@ -380,9 +527,9 @@ MTLSize threadsPerGroup = MTLSizeMake(256, 1, 1);
 
 ---
 
-## 5. Apple Silicon 最適化
+## 6. Apple Silicon 最適化
 
-### 5.1 ハードウェア活用
+### 6.1 ハードウェア活用
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -408,7 +555,7 @@ MTLSize threadsPerGroup = MTLSizeMake(256, 1, 1);
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-### 5.2 Unified Memory 活用
+### 6.2 Unified Memory 活用
 
 ```cpp
 // ofxUnifiedBuffer - CPU/GPU Zero-copy
@@ -430,7 +577,7 @@ public:
 };
 ```
 
-### 5.3 Neural Engine 最適化
+### 6.3 Neural Engine 最適化
 
 ```cpp
 // Core ML model with Neural Engine preference
@@ -443,9 +590,9 @@ config.computeUnits = MLComputeUnitsAll;  // Includes Neural Engine
 
 ---
 
-## 6. API 互換性
+## 7. API 互換性
 
-### 6.1 Core Addon API 互換
+### 7.1 Core Addon API 互換
 
 Core Addons は openFrameworks の API を維持:
 
@@ -460,7 +607,7 @@ msg.addFloatArg(0.5f);
 sender.sendMessage(msg);
 ```
 
-### 6.2 Apple Native Addon API 設計
+### 7.2 Apple Native Addon API 設計
 
 Apple Native Addons は新規設計だが、oF スタイルを踏襲:
 
@@ -475,9 +622,9 @@ sharp.drawCloud(cloud, camera);
 
 ---
 
-## 7. ビルド設定
+## 8. ビルド設定
 
-### 7.1 CMake 構成
+### 8.1 CMake 構成
 
 ```cmake
 # Addons
@@ -495,7 +642,7 @@ target_link_libraries(oflike-metal
     "-framework MetalFX"
     "-framework CoreML"
     "-framework Vision"
-    "-framework VisionKit"
+    "-framework VisionKit"        # Optional (macOS 14+, ofxLiveText)
     "-framework PHASE"
     "-framework VideoToolbox"
     "-framework AVFoundation"
@@ -504,22 +651,22 @@ target_link_libraries(oflike-metal
 )
 ```
 
-### 7.2 Xcode 設定
+### 8.2 Xcode 設定
 
 ```
-Build Settings:
-  - C++ Language Dialect: C++20
+Build Settings (推奨):
+  - C++ Language Dialect: C++20 (最小: C++17)
   - Enable Modules: YES
   - Metal Compiler:
-    - Language Revision: Metal 3.1
+    - Language Revision: Metal 3.1 (推奨)
     - Fast Math: YES
 ```
 
 ---
 
-## 8. 命名規則
+## 9. 命名規則
 
-### 8.1 Addon 命名
+### 9.1 Addon 命名
 
 | 種類 | 規則 | 例 |
 |------|------|-----|
@@ -528,7 +675,7 @@ Build Settings:
 | 内部名前空間 | PascalCase | `Sharp::`, `Neural::` |
 | クラス | PascalCase | `GaussianCloud`, `SharpModel` |
 
-### 8.2 ファイル命名
+### 9.2 ファイル命名
 
 | 種類 | 規則 | 例 |
 |------|------|-----|
@@ -539,9 +686,9 @@ Build Settings:
 
 ---
 
-## 9. デバッグ・プロファイリング
+## 10. デバッグ・プロファイリング
 
-### 9.1 Metal デバッグ
+### 10.1 Metal デバッグ
 
 ```cpp
 // Metal GPU Capture
@@ -551,14 +698,14 @@ desc.captureObject = device_;
 [capture startCaptureWithDescriptor:desc error:nil];
 ```
 
-### 9.2 Core ML プロファイリング
+### 10.2 Core ML プロファイリング
 
 ```cpp
 // Instruments で Core ML Trace を使用
 // Neural Engine 使用率を確認
 ```
 
-### 9.3 ログ出力
+### 10.3 ログ出力
 
 ```cpp
 // os_log 統合
@@ -570,13 +717,14 @@ os_log_error(OS_LOG_DEFAULT, "ofxSharp: Failed to load model");
 
 ---
 
-## 10. 変更履歴
+## 11. 変更履歴
 
 | 日付 | バージョン | 変更内容 |
 |------|-----------|---------|
 | 2025-01-22 | 1.0.0 | 初版作成 |
 | 2025-01-23 | 2.0.0 | SwiftUI統一、AppKit禁止 |
 | 2026-01-23 | 3.0.0 | Apple Native Addons追加、ofxSharp設計 |
+| 2026-01-25 | 3.1.0 | レイヤー境界の明確化 (Phase 0.1) |
 
 ---
 
