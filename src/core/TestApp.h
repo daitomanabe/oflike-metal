@@ -1,7 +1,9 @@
 #pragma once
 
 #include <iostream>
+#include <cmath>
 #include "AppBase.h"
+#include "../oflike/graphics/ofGraphics.h"
 
 /// Test application to verify Swift-C++ bridge
 /// Phase 1.5: Basic drawing verification (triangle, FPS)
@@ -41,9 +43,53 @@ public:
     }
 
     void draw() override {
-        // Phase 1.5: Triangle drawing happens in Swift/Metal layer
-        // This method confirms C++ draw() is being called
-        // Actual Metal rendering is in MetalViewCoordinator
+        // Phase 6.3: Test matrix transforms
+
+        // Clear background
+        ofBackground(50, 50, 50);
+
+        // Test 1: Draw a rectangle without transform
+        ofSetColor(255, 0, 0); // Red
+        ofDrawRectangle(50, 50, 100, 100);
+
+        // Test 2: Draw a rectangle with translation
+        ofPushMatrix();
+        ofTranslate(200, 0);
+        ofSetColor(0, 255, 0); // Green
+        ofDrawRectangle(50, 50, 100, 100);
+        ofPopMatrix();
+
+        // Test 3: Draw a circle with rotation
+        ofPushMatrix();
+        ofTranslate(450, 100);
+        ofRotate(frameCount_ * 2.0f); // Rotate based on frame count
+        ofSetColor(0, 0, 255); // Blue
+        ofDrawRectangle(-50, -50, 100, 100); // Centered rectangle
+        ofPopMatrix();
+
+        // Test 4: Draw with scale
+        ofPushMatrix();
+        ofTranslate(100, 300);
+        ofScale(1.0f + sin(frameCount_ * 0.05f) * 0.5f); // Pulsing scale
+        ofSetColor(255, 255, 0); // Yellow
+        ofDrawCircle(0, 0, 50);
+        ofPopMatrix();
+
+        // Test 5: Nested transforms
+        ofPushMatrix();
+        ofTranslate(400, 300);
+        ofRotate(frameCount_ * 1.0f);
+        ofSetColor(255, 0, 255); // Magenta
+        ofDrawRectangle(-25, -25, 50, 50);
+
+        ofPushMatrix();
+        ofTranslate(75, 0);
+        ofRotate(-frameCount_ * 2.0f);
+        ofSetColor(0, 255, 255); // Cyan
+        ofDrawCircle(0, 0, 20);
+        ofPopMatrix();
+
+        ofPopMatrix();
     }
 
     void exit() override {

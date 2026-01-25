@@ -136,8 +136,8 @@ Addons are explicitly last.
   Files: `src/oflike/graphics/ofGraphics.cpp`
   DoD: line/rect/circle/triangle draw commands execute.
 
-- [ ] **Implement matrix stack and transforms.**  
-  Files: `src/oflike/graphics/ofGraphics.cpp`, `src/core/Context.mm`  
+- [x] **Implement matrix stack and transforms.**
+  Files: `src/oflike/graphics/ofGraphics.cpp`, `src/core/Context.mm`
   DoD: `ofPushMatrix/ofPopMatrix/ofTranslate/ofRotate/ofScale` affect rendering.
 
 - [ ] **Integrate graphics state color into text rendering.**  
