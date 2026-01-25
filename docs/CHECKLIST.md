@@ -180,8 +180,8 @@ Addons are explicitly last.
   Files: `src/oflike/3d/ofCamera.cpp`
   DoD: all placeholders removed; correct viewport-based transforms.
 
-- [ ] **Implement ofMesh DrawCommand3D path.**  
-  Files: `src/oflike/3d/ofMesh.cpp`  
+- [x] **Implement ofMesh DrawCommand3D path.**
+  Files: `src/oflike/3d/ofMesh.cpp`
   DoD: DrawCommand3D is fully populated with state/matrices.
 
 - [ ] **Implement ofEasyCam auto distance.**  

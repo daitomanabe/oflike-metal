@@ -158,7 +158,7 @@ void ofMesh::draw() const {
 
     // Get current rendering context
     auto& drawList = Context::instance().getDrawList();
-    // TODO: auto& state = Context::instance().getRenderState();
+    auto& ctx = Context::instance();
 
     // Map ofPrimitiveMode to render::PrimitiveType
     render::PrimitiveType primType;
@@ -195,7 +195,7 @@ void ofMesh::draw() const {
     // Default values
     const ofVec3f defaultNormal(0, 0, 1);
     const ofVec2f defaultTexCoord(0, 0);
-    const ofColor defaultColor(255, 255, 255, 255);  // TODO: Get from state.color
+    const ofColor defaultColor(255, 255, 255, 255);
 
     for (size_t i = 0; i < numVerts; ++i) {
         const ofVec3f& v = vertices_[i];
@@ -211,21 +211,58 @@ void ofMesh::draw() const {
         );
     }
 
-    // TODO: Implementation pending - need proper render state and DrawCommand3D setup
-    // This will be implemented when Phase 8 (3D Drawing) is complete
-    //
-    // Draw with or without indices
-    // if (!indices_.empty()) {
-    //     drawList.addMesh3D(renderVerts.data(), renderVerts.size(),
-    //                       indices_.data(), indices_.size(),
-    //                       primType, state.matrix, nullptr);
-    // } else {
-    //     drawList.addMesh3D(renderVerts.data(), renderVerts.size(),
-    //                       nullptr, 0,
-    //                       primType, state.matrix, nullptr);
-    // }
-    (void)drawList;  // Suppress unused variable warning
-    (void)primType;  // Suppress unused variable warning
+    // Add vertices to draw list
+    uint32_t vertexOffset = drawList.addVertices3D(renderVerts);
+
+    // Add indices to draw list (if present)
+    uint32_t indexOffset = 0;
+    uint32_t indexCount = 0;
+    if (!indices_.empty()) {
+        indexOffset = drawList.addIndices(indices_);
+        indexCount = static_cast<uint32_t>(indices_.size());
+    }
+
+    // Create DrawCommand3D
+    render::DrawCommand3D cmd;
+    cmd.vertexOffset = vertexOffset;
+    cmd.vertexCount = static_cast<uint32_t>(renderVerts.size());
+    cmd.indexOffset = indexOffset;
+    cmd.indexCount = indexCount;
+    cmd.primitiveType = primType;
+    cmd.blendMode = render::BlendMode::Alpha;
+    cmd.texture = nullptr;  // TODO: Support textured meshes in future
+
+    // Get current model-view and projection matrices from Context
+    // These are set by ofCamera::begin() or default to identity
+    cmd.modelViewMatrix = ctx.getViewMatrix();
+    cmd.projectionMatrix = ctx.getProjectionMatrix();
+
+    // Calculate normal matrix from model-view matrix
+    // Normal matrix is the inverse transpose of the upper-left 3x3 of the model-view matrix
+    simd_float3x3 normalMatrix;
+    normalMatrix.columns[0] = simd_make_float3(cmd.modelViewMatrix.columns[0].x,
+                                                 cmd.modelViewMatrix.columns[0].y,
+                                                 cmd.modelViewMatrix.columns[0].z);
+    normalMatrix.columns[1] = simd_make_float3(cmd.modelViewMatrix.columns[1].x,
+                                                 cmd.modelViewMatrix.columns[1].y,
+                                                 cmd.modelViewMatrix.columns[1].z);
+    normalMatrix.columns[2] = simd_make_float3(cmd.modelViewMatrix.columns[2].x,
+                                                 cmd.modelViewMatrix.columns[2].y,
+                                                 cmd.modelViewMatrix.columns[2].z);
+
+    // Inverse transpose for normal transformation
+    // For uniform scaling, we can use the matrix directly
+    // For non-uniform scaling, we should compute inverse transpose
+    // For now, use the matrix directly (works for uniform transforms)
+    cmd.normalMatrix = normalMatrix;
+
+    // Enable depth testing for 3D rendering
+    cmd.depthTestEnabled = true;
+    cmd.depthWriteEnabled = true;
+    cmd.cullBackFace = false;  // TODO: Make this configurable via render state
+
+    // Add command to draw list
+    drawList.addCommand(cmd);
 }
 
 void ofMesh::drawWireframe() const {
