@@ -120,8 +120,8 @@ Addons are explicitly last.
   Files: `src/platform/swiftui/MetalView.swift`
   DoD: `renderFrame()` is called each draw cycle.
 
-- [ ] **Resize/viewport updates propagate to renderer.**  
-  Files: `src/platform/swiftui/MetalView.swift`, `src/render/metal/MetalRenderer.mm`  
+- [x] **Resize/viewport updates propagate to renderer.**
+  Files: `src/platform/swiftui/MetalView.swift`, `src/render/metal/MetalRenderer.mm`
   DoD: viewport changes reflect new MTKView sizes.
 
 ---

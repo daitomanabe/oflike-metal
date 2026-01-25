@@ -196,6 +196,11 @@
         // Phase 2.1: Update global context window size
         Context::instance().setWindowSize((int)width, (int)height);
 
+        // Phase 5.3: Update renderer viewport to match new window size
+        if (auto* renderer = Context::instance().renderer()) {
+            renderer->setViewport(0, 0, width, height);
+        }
+
         // Phase 13.4: Dispatch through EventDispatcher
         EventDispatcher::instance().dispatchWindowResized((int)width, (int)height);
     }
