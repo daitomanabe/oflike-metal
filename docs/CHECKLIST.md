@@ -196,8 +196,8 @@ Addons are explicitly last.
 
 ## Phase 9: Utilities / Image I/O
 
-- [ ] **Add 16-bit/float image I/O support.**  
-  Files: `src/oflike/utils/ofUtilsImage.mm`  
+- [x] **Add 16-bit/float image I/O support.**
+  Files: `src/oflike/utils/ofUtilsImage.mm`
   DoD: 16-bit/float load/save TODOs removed.
 
 - [ ] **Use renderer device/MTKTextureLoader path.**  
