@@ -5,6 +5,8 @@
 #include "../../core/Context.h"
 #include "../../render/metal/MetalRenderer.h"
 #include "../../render/RenderTypes.h"
+#include "../../render/DrawList.h"
+#include "../../render/DrawCommand.h"
 #include <algorithm>
 #include <simd/simd.h>
 #include <vector>
@@ -153,9 +155,17 @@ void ofBackground() {
 
 void ofBackground(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
     // Set background color and trigger clear
-    // (Actual clear command will be issued by graphics system)
     ofSetBackgroundColor(r, g, b, a);
-    // TODO: Issue clear command via graphics system when integrated
+
+    // Emit clear command via DrawList
+    render::ClearCommand clearData;
+    clearData.color = colorToFloat4(r, g, b, a);
+    clearData.clearColor = true;
+    clearData.clearDepth = false;
+    clearData.clearStencil = false;
+
+    render::SetClearCommand clearCmd(clearData);
+    Context::instance().getDrawList().addCommand(clearCmd);
 }
 
 void ofBackground(uint8_t gray, uint8_t a) {
@@ -180,7 +190,16 @@ void ofBackgroundHex(uint32_t hex, uint8_t a) {
 void ofClear(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
     // Set background color and trigger clear (color + depth)
     ofSetBackgroundColor(r, g, b, a);
-    // TODO: Issue clear command via graphics system when integrated
+
+    // Emit clear command via DrawList (clears both color and depth)
+    render::ClearCommand clearData;
+    clearData.color = colorToFloat4(r, g, b, a);
+    clearData.clearColor = true;
+    clearData.clearDepth = true;
+    clearData.clearStencil = false;
+
+    render::SetClearCommand clearCmd(clearData);
+    Context::instance().getDrawList().addCommand(clearCmd);
 }
 
 void ofClear() {
@@ -193,7 +212,13 @@ void ofClear() {
 
 void ofClearDepth() {
     // Clear depth buffer only
-    // TODO: Issue clear depth command via graphics system when integrated
+    render::ClearCommand clearData;
+    clearData.clearColor = false;
+    clearData.clearDepth = true;
+    clearData.clearStencil = false;
+
+    render::SetClearCommand clearCmd(clearData);
+    Context::instance().getDrawList().addCommand(clearCmd);
 }
 
 void ofClearAlpha() {

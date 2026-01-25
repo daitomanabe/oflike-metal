@@ -128,8 +128,8 @@ Addons are explicitly last.
 
 ## Phase 6: oflike Graphics 2D + Matrix
 
-- [ ] **Emit clear/background commands via DrawList.**  
-  Files: `src/oflike/graphics/ofGraphics.cpp`, `src/render/DrawCommand.h`  
+- [x] **Emit clear/background commands via DrawList.**
+  Files: `src/oflike/graphics/ofGraphics.cpp`, `src/render/DrawCommand.h`
   DoD: `ofBackground` and `ofClear` trigger Clear commands.
 
 - [ ] **Implement 2D primitives with DrawList.**  
