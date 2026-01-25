@@ -34,6 +34,12 @@ public:
 
     // MARK: - Renderer Access
 
+    /// Initialize the Metal renderer with device and view
+    /// Must be called after initialize() and before using renderer()
+    /// @param metalDevice Native MTLDevice handle (__bridge void*)
+    /// @param metalView Native MTKView handle (__bridge void*)
+    void initializeRenderer(void* metalDevice, void* metalView);
+
     /// Get the Metal renderer
     /// @return Renderer instance (nullptr if not initialized)
     render::metal::MetalRenderer* renderer() const;

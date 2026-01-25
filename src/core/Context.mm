@@ -4,7 +4,7 @@
 #import <AppKit/AppKit.h>
 #include "Context.h"
 #include "../render/DrawList.h"
-// #include "../render/metal/MetalRenderer.h"  // TODO: Phase 4.4
+#include "../render/metal/MetalRenderer.h"
 #include <iostream>
 #include <mutex>
 #include <unordered_map>
@@ -15,8 +15,8 @@ struct Context::Impl {
     // Metal device
     id<MTLDevice> device = nil;
 
-    // Renderer (TODO: Phase 4.4)
-    // std::unique_ptr<render::metal::MetalRenderer> renderer;
+    // Renderer (Phase 3.1)
+    std::unique_ptr<render::metal::MetalRenderer> renderer;
 
     // Draw list for current frame
     render::DrawList drawList;
@@ -103,8 +103,8 @@ void Context::initialize(void* metalDevice) {
         impl_->fpsUpdateTime = impl_->startTime;
         impl_->frameNum = 0;
 
-        // TODO Phase 4.4: Initialize renderer
-        // impl_->renderer = std::make_unique<render::metal::MetalRenderer>(impl_->device);
+        // Note: Renderer initialization is done separately via initializeRenderer()
+        // which requires both device and view (Phase 3.1)
 
         impl_->initialized = true;
         std::cout << "[Context] Initialization complete" << std::endl;
@@ -121,8 +121,11 @@ void Context::shutdown() {
 
         std::cout << "[Context] Shutting down..." << std::endl;
 
-        // TODO Phase 4.4: Shutdown renderer
-        // impl_->renderer.reset();
+        // Shutdown renderer (Phase 3.1)
+        if (impl_->renderer) {
+            impl_->renderer->shutdown();
+            impl_->renderer.reset();
+        }
 
         impl_->device = nil;
         impl_->initialized = false;
@@ -133,13 +136,40 @@ void Context::shutdown() {
 
 // MARK: - Renderer Access
 
+void Context::initializeRenderer(void* metalDevice, void* metalView) {
+    @autoreleasepool {
+        if (!impl_->initialized) {
+            std::cerr << "[Context] Error: Context must be initialized before renderer" << std::endl;
+            return;
+        }
+
+        if (impl_->renderer) {
+            std::cout << "[Context] Warning: Renderer already initialized" << std::endl;
+            return;
+        }
+
+        std::cout << "[Context] Initializing Metal renderer..." << std::endl;
+
+        // Create renderer with device and view (Phase 3.1)
+        impl_->renderer = std::make_unique<render::metal::MetalRenderer>(metalDevice, metalView);
+
+        // Initialize the renderer
+        if (!impl_->renderer->initialize()) {
+            std::cerr << "[Context] Error: Failed to initialize Metal renderer" << std::endl;
+            impl_->renderer.reset();
+            return;
+        }
+
+        std::cout << "[Context] Metal renderer initialized successfully" << std::endl;
+    }
+}
+
 render::metal::MetalRenderer* Context::renderer() const {
-    // TODO Phase 4.4: Return renderer
-    // if (!impl_->initialized || !impl_->renderer) {
-    //     return nullptr;
-    // }
-    // return impl_->renderer.get();
-    return nullptr;
+    // Phase 3.1: Return renderer pointer
+    if (!impl_->initialized || !impl_->renderer) {
+        return nullptr;
+    }
+    return impl_->renderer.get();
 }
 
 render::DrawList& Context::getDrawList() {

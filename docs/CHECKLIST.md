@@ -64,16 +64,16 @@ Addons are explicitly last.
   Files: `src/platform/swiftui/MetalView.swift`, `src/oflike/app/ofMain.h`
   DoD: mouse coordinates are consistent with oF expectations.
 
-- [ ] **Clarify window control scope (SwiftUI vs AppKit).**  
-  Files: `docs/ARCHITECTURE.md`, `src/platform/swiftui/MetalView.swift`, `src/core/Context.mm`  
+- [x] **Clarify window control scope (SwiftUI vs AppKit).**
+  Files: `docs/ARCHITECTURE.md`, `src/platform/swiftui/MetalView.swift`, `src/core/Context.mm`
   DoD: allowed window operations are defined; AppKit usage is scoped or removed.
 
 ---
 
 ## Phase 3: Renderer Ownership & Bridge
 
-- [ ] **Context owns MetalRenderer.**  
-  Files: `src/core/Context.h`, `src/core/Context.mm`  
+- [x] **Context owns MetalRenderer.**
+  Files: `src/core/Context.h`, `src/core/Context.mm`
   DoD: `Context::renderer()` returns a valid pointer after init.
 
 - [ ] **SwiftBridge exposes renderer init + render entry.**  
