@@ -140,8 +140,8 @@ Addons are explicitly last.
   Files: `src/oflike/graphics/ofGraphics.cpp`, `src/core/Context.mm`
   DoD: `ofPushMatrix/ofPopMatrix/ofTranslate/ofRotate/ofScale` affect rendering.
 
-- [ ] **Integrate graphics state color into text rendering.**  
-  Files: `src/oflike/graphics/ofTrueTypeFont.mm`  
+- [x] **Integrate graphics state color into text rendering.**
+  Files: `src/oflike/graphics/ofTrueTypeFont.mm`
   DoD: TODOs for color/transform are removed.
 
 - [ ] **Fill in shape/curve TODOs.**  

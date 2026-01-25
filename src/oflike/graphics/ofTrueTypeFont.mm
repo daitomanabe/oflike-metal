@@ -1,7 +1,9 @@
 #include "ofTrueTypeFont.h"
 #include "ofPath.h"
+#include "ofGraphics.h"
 #include "../image/ofTexture.h"
 #include "../image/ofPixels.h"
+#include "../math/ofMatrix4x4.h"
 #include "../utils/ofLog.h"
 #include "../utils/ofUtils.h"
 #include "../../core/Context.h"
@@ -434,8 +436,10 @@ void ofTrueTypeFont::drawString(const std::string& text, float x, float y) const
     std::vector<render::Vertex2D> vertices;
     vertices.reserve(utf32.size() * 6);  // 6 vertices per glyph (2 triangles)
 
-    // Default color (white) - TODO: integrate with graphics state color
-    simd_float4 color = simd_make_float4(1.0f, 1.0f, 1.0f, 1.0f);
+    // Get current color from graphics state
+    uint8_t r, g, b, a;
+    ofGetColor(r, g, b, a);
+    simd_float4 color = simd_make_float4(r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f);
 
     for (char32_t ch : utf32) {
         const GlyphInfo* info = impl_->getGlyphInfo(ch);
@@ -508,9 +512,9 @@ void ofTrueTypeFont::drawString(const std::string& text, float x, float y) const
         cmd.blendMode = render::BlendMode::Alpha;
         cmd.texture = impl_->atlasTexture->getNativeHandle();
 
-        // TODO: Get transform matrix from graphics state
-        // For now, use identity matrix
-        cmd.transform = matrix_identity_float4x4;
+        // Get current transform matrix from graphics state
+        oflike::ofMatrix4x4 mat = ofGetCurrentMatrix();
+        cmd.transform = mat.toSimd();
 
         // Add command to draw list
         drawList.addCommand(cmd);
