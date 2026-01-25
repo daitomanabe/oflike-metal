@@ -242,6 +242,23 @@ void ofGetColor(uint8_t& r, uint8_t& g, uint8_t& b, uint8_t& a);
 void ofGetBackgroundColor(uint8_t& r, uint8_t& g, uint8_t& b, uint8_t& a);
 
 // ============================================================================
+// Texture Binding (Phase 7.2)
+// ============================================================================
+
+/**
+ * Set the active texture for subsequent draw calls.
+ * Used by ofMesh and other primitives that rely on bound textures.
+ * @param texture Texture handle (id<MTLTexture> as void*) or nullptr to unbind
+ */
+void ofSetActiveTexture(void* texture);
+
+/**
+ * Get the currently active texture.
+ * @return Texture handle (id<MTLTexture> as void*) or nullptr if no texture is bound
+ */
+void* ofGetActiveTexture();
+
+// ============================================================================
 // Matrix Stack (Forward Declaration)
 // ============================================================================
 

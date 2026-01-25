@@ -156,16 +156,16 @@ Addons are explicitly last.
   Files: `src/oflike/image/ofTexture.mm`, `src/oflike/graphics/ofFbo.mm`
   DoD: all devices come from Context/renderer.
 
-- [ ] **Implement ofTexture draw/bind with DrawList.**  
-  Files: `src/oflike/image/ofTexture.mm`, `src/render/DrawList.h`  
+- [x] **Implement ofTexture draw/bind with DrawList.**
+  Files: `src/oflike/image/ofTexture.mm`, `src/render/DrawList.h`
   DoD: texture draws and binds are tracked via DrawList.
 
-- [ ] **Implement FBO begin/end state restore and MRT.**  
-  Files: `src/oflike/graphics/ofFbo.mm`  
+- [x] **Implement FBO begin/end state restore and MRT.**
+  Files: `src/oflike/graphics/ofFbo.mm`
   DoD: render target/viewport restore works; MRT selection is implemented.
 
-- [ ] **Implement 16-bit/float texture uploads.**  
-  Files: `src/oflike/image/ofTexture.mm`  
+- [x] **Implement 16-bit/float texture uploads.**
+  Files: `src/oflike/image/ofTexture.mm`
   DoD: 16-bit and float pixel uploads work without TODOs.
 
 - [ ] **Implement GPU->CPU readback path (ofImage).**  

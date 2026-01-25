@@ -59,6 +59,9 @@ namespace {
         std::stack<oflike::ofMatrix4x4> matrixStack;
         oflike::ofMatrix4x4 currentMatrix;
 
+        // Texture binding (Phase 7.2)
+        void* activeTexture = nullptr;  // Currently bound texture (id<MTLTexture> handle)
+
         // Shape API state
         bool shapeBegun = false;
         std::vector<std::vector<ShapeVertex>> shapeContours;  // Multiple contours for holes
@@ -244,6 +247,18 @@ void ofNoFill() {
 
 bool ofGetFill() {
     return getGraphicsState().fillEnabled;
+}
+
+// ============================================================================
+// Texture Binding (Phase 7.2)
+// ============================================================================
+
+void ofSetActiveTexture(void* texture) {
+    getGraphicsState().activeTexture = texture;
+}
+
+void* ofGetActiveTexture() {
+    return getGraphicsState().activeTexture;
 }
 
 // ============================================================================

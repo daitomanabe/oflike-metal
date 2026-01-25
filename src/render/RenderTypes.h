@@ -123,4 +123,33 @@ struct BlendConfig {
     static BlendConfig forMode(BlendMode mode);
 };
 
+// ============================================================================
+// Texture Types (API-agnostic)
+// ============================================================================
+
+/// Texture wrap mode
+enum class TextureWrap : uint32_t {
+    Clamp   = 0,    // Clamp to edge
+    Repeat  = 1,    // Repeat
+    Mirror  = 2,    // Mirrored repeat
+};
+
+/// Texture filter mode
+enum class TextureFilter : uint32_t {
+    Nearest = 0,    // Nearest neighbor
+    Linear  = 1,    // Linear interpolation
+};
+
+/// Texture format (API-agnostic)
+enum class TextureFormat : uint32_t {
+    R8       = 0,    // 8-bit single channel (grayscale)
+    RGBA8    = 1,    // 8-bit RGBA
+    R16F     = 2,    // 16-bit float single channel
+    RGBA16F  = 3,    // 16-bit float RGBA
+    R32F     = 4,    // 32-bit float single channel
+    RGBA32F  = 5,    // 32-bit float RGBA
+    R16      = 6,    // 16-bit unsigned integer single channel
+    RGBA16   = 7,    // 16-bit unsigned integer RGBA
+};
+
 } // namespace render

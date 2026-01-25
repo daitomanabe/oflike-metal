@@ -3,6 +3,7 @@
 #import "../../render/DrawList.h"
 #import "../../render/DrawCommand.h"
 #import "../../render/metal/MetalTexture.h"
+#import "../../render/metal/MetalRenderer.h"  // Phase 7.3: For viewport/render target queries
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
 #include <vector>
@@ -69,10 +70,14 @@ struct ofFbo::Impl {
     std::vector<ofTexture> textureWrappers;
     ofTexture depthTextureWrapper;
 
-    // State tracking
+    // State tracking for begin/end restore
     bool isRendering = false;
-    render::Rect previousViewport;
+    render::Rect previousViewport{0, 0, 0, 0};
     void* previousRenderTarget = nullptr;
+
+    // MRT (Multiple Render Targets) state
+    int activeDrawBuffer = 0;
+    std::vector<int> activeDrawBuffers;  // For simultaneous MRT rendering
 
     // Helper: Get Metal device from Context (Phase 7.1)
     id<MTLDevice> getDevice() const {
@@ -208,16 +213,46 @@ struct ofFbo::Impl {
             return;
         }
 
-        // Get current context and draw list
+        // Get current context and renderer
         auto& ctx = Context::instance();
+        auto* renderer = ctx.renderer();
         auto& drawList = ctx.getDrawList();
 
-        // TODO: Save current render target state
-        // For now, we'll just set this FBO as the render target
+        if (!renderer) {
+            return;
+        }
 
-        // Add render target command
+        // Phase 7.3: Save current render target state for restore
+        previousRenderTarget = renderer->getDefaultRenderTarget();
+        previousViewport = render::Rect(
+            0, 0,
+            (float)renderer->getViewportWidth(),
+            (float)renderer->getViewportHeight()
+        );
+
+        // Determine which texture to use (MRT support)
+        void* targetTexture = nullptr;
+        if (!activeDrawBuffers.empty()) {
+            // Use first buffer in active set (Metal limitation: single active attachment)
+            int index = activeDrawBuffers[0];
+            if (index >= 0 && index < (int)colorTextures.size()) {
+                targetTexture = (__bridge void*)colorTextures[index];
+            }
+        } else {
+            // Use active draw buffer
+            if (activeDrawBuffer >= 0 && activeDrawBuffer < (int)colorTextures.size()) {
+                targetTexture = (__bridge void*)colorTextures[activeDrawBuffer];
+            }
+        }
+
+        // Fallback to first texture
+        if (!targetTexture && !colorTextures.empty()) {
+            targetTexture = (__bridge void*)colorTextures[0];
+        }
+
+        // Set FBO as render target
         render::SetRenderTargetCommand rtCmd;
-        rtCmd.renderTarget = (__bridge void*)colorTextures[0];
+        rtCmd.renderTarget = targetTexture;
         drawList.addCommand(rtCmd);
 
         // Set viewport to FBO dimensions
@@ -237,15 +272,14 @@ struct ofFbo::Impl {
         auto& ctx = Context::instance();
         auto& drawList = ctx.getDrawList();
 
-        // Restore default render target (nullptr = screen)
+        // Phase 7.3: Restore previous render target state
         render::SetRenderTargetCommand rtCmd;
-        rtCmd.renderTarget = nullptr;
+        rtCmd.renderTarget = previousRenderTarget;
         drawList.addCommand(rtCmd);
 
-        // TODO: Restore previous viewport
-        // For now, reset to window size
+        // Phase 7.3: Restore previous viewport
         render::SetViewportCommand vpCmd;
-        vpCmd.viewport = render::Rect(0, 0, (float)ctx.getWidth(), (float)ctx.getHeight());
+        vpCmd.viewport = previousViewport;
         drawList.addCommand(vpCmd);
 
         isRendering = false;
@@ -511,8 +545,19 @@ void ofFbo::setActiveDrawBuffer(int attachmentIndex) {
         return;
     }
 
-    // TODO: Implement MRT buffer selection
-    // For now, this is a no-op since we only support single attachment rendering
+    // Phase 7.3: Implement MRT buffer selection
+    impl_->activeDrawBuffer = attachmentIndex;
+    impl_->activeDrawBuffers.clear();  // Clear simultaneous MRT mode
+
+    // If currently rendering, update render target immediately
+    if (impl_->isRendering) {
+        auto& ctx = Context::instance();
+        auto& drawList = ctx.getDrawList();
+
+        render::SetRenderTargetCommand rtCmd;
+        rtCmd.renderTarget = (__bridge void*)impl_->colorTextures[attachmentIndex];
+        drawList.addCommand(rtCmd);
+    }
 }
 
 void ofFbo::setActiveDrawBuffers(const std::vector<int>& attachmentIndices) {
@@ -520,8 +565,33 @@ void ofFbo::setActiveDrawBuffers(const std::vector<int>& attachmentIndices) {
         return;
     }
 
-    // TODO: Implement MRT buffer selection
-    // For now, this is a no-op since we only support single attachment rendering
+    if (attachmentIndices.empty()) {
+        return;
+    }
+
+    // Phase 7.3: Implement MRT buffer selection
+    // Note: Metal supports multiple render targets, but our current DrawCommand
+    // architecture only supports a single active target. This implementation
+    // stores the request and uses the first valid attachment.
+    // TODO(Future): Extend DrawCommand to support multiple simultaneous color attachments
+
+    impl_->activeDrawBuffers.clear();
+    for (int index : attachmentIndices) {
+        if (index >= 0 && index < impl_->numColorAttachments) {
+            impl_->activeDrawBuffers.push_back(index);
+        }
+    }
+
+    // If currently rendering, update to first valid attachment
+    if (impl_->isRendering && !impl_->activeDrawBuffers.empty()) {
+        auto& ctx = Context::instance();
+        auto& drawList = ctx.getDrawList();
+
+        int firstAttachment = impl_->activeDrawBuffers[0];
+        render::SetRenderTargetCommand rtCmd;
+        rtCmd.renderTarget = (__bridge void*)impl_->colorTextures[firstAttachment];
+        drawList.addCommand(rtCmd);
+    }
 }
 
 // ============================================================================
