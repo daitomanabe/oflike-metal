@@ -24,8 +24,8 @@ Addons are explicitly last.
   Files: `docs/PROJECT_STRUCTURE.md`
   DoD: standard generated project layout is documented (src/addons/data/resources/shaders/tools).
 
-- [ ] **Document addon linking strategy (copy/symlink/reference).**  
-  Files: `docs/IMPLEMENTATION.md`  
+- [x] **Document addon linking strategy (copy/symlink/reference).**
+  Files: `docs/IMPLEMENTATION.md`
   DoD: generator strategy + constraints are explicit.
 
 ---
