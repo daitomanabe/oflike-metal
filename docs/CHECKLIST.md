@@ -232,13 +232,15 @@ Addons are explicitly last.
 
 ## Phase 11: Validation
 
-- [ ] **SwiftUI path renders ofDrawCircle/ofImage/ofTrueTypeFont.**  
-  Files: `examples/` (or new SwiftUI example)  
-  DoD: visual confirmation + no runtime errors.
+> **Note**: Validation tests require human visual confirmation. See `docs/VALIDATION_TESTS.md` for detailed test procedures.
 
-- [ ] **PerformanceStats returns non-zero values.**  
-  Files: `src/platform/swiftui/MetalView.swift`  
-  DoD: drawCalls/vertices/gpuTime update during render.
+- [ ] **SwiftUI path renders ofDrawCircle/ofImage/ofTrueTypeFont.**
+  Files: `examples/` (or new SwiftUI example), `docs/VALIDATION_TESTS.md` (Test 11.1)
+  DoD: visual confirmation + no runtime errors. Follow validation test procedure and document results.
+
+- [ ] **PerformanceStats returns non-zero values.**
+  Files: `src/platform/swiftui/MetalView.swift`, `docs/VALIDATION_TESTS.md` (Test 11.2)
+  DoD: drawCalls/vertices/gpuTime update during render. Verify with performance overlay.
 
 ---
 
