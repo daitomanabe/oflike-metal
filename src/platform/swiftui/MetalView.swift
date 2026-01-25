@@ -266,6 +266,9 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject, MouseEv
     // Static weak reference for accessing coordinator from C callbacks
     private static weak var sharedCoordinator: MetalViewCoordinator?
 
+    // Phase 5.2: Command queue for renderFrame
+    private var commandQueue: MTLCommandQueue?
+
     // Phase 1.5: Frame tracking for FPS display
     @Published var frameCount: UInt64 = 0
     @Published var currentFPS: Double = 0.0
@@ -290,6 +293,9 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject, MouseEv
     }
 
     func setup(device: MTLDevice) {
+        // Phase 5.2: Create command queue for renderFrame
+        self.commandQueue = device.makeCommandQueue()
+
         // Phase 3: Initialize global context with Metal device
         bridge?.initializeContext(withDevice: device)
 
@@ -350,9 +356,17 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject, MouseEv
     /// Render logic (called every frame)
     private func render(view: MTKView) {
         autoreleasepool {
-            // Phase 5: All Metal rendering is now handled by C++ MetalRenderer
-            // Swift only calls the C++ bridge to execute DrawList commands
-            bridge?.draw()
+            guard let drawable = view.currentDrawable,
+                  let renderPassDescriptor = view.currentRenderPassDescriptor,
+                  let commandQueue = commandQueue else {
+                return
+            }
+
+            // Phase 5.2: Call C++ renderFrame with Metal resources
+            // All Metal rendering is handled by C++ MetalRenderer via DrawList
+            bridge?.renderFrame(drawable,
+                               renderPassDescriptor: renderPassDescriptor,
+                               commandQueue: commandQueue)
         }
     }
 

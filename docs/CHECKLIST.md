@@ -116,8 +116,8 @@ Addons are explicitly last.
   Files: `src/platform/swiftui/MetalView.swift`
   DoD: Swift does not issue any Metal draw commands directly.
 
-- [ ] **Call C++ render entry per frame.**  
-  Files: `src/platform/swiftui/MetalView.swift`  
+- [x] **Call C++ render entry per frame.**
+  Files: `src/platform/swiftui/MetalView.swift`
   DoD: `renderFrame()` is called each draw cycle.
 
 - [ ] **Resize/viewport updates propagate to renderer.**  
