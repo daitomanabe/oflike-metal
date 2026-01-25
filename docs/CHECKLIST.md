@@ -251,9 +251,9 @@ Addons are explicitly last.
   Files: `addons/core/ofxSvg/ofxSvg.cpp`, `addons/core/ofxSvg/README.md`
   DoD: TODOs removed or explicitly deferred.
 
-- [ ] **ofxGui parameter binding TODO.**  
-  Files: `src/addons/core/ofxGui/ofxGui.mm`  
-  DoD: UI bindings persist and update.
+- [x] **ofxGui parameter binding TODO.**
+  Files: `addons/core/ofxGui/ofxGui.mm`, `addons/core/ofxGui/ofxGui.h`, `addons/core/ofxGui/README.md`
+  DoD: UI bindings persist and update via sync() method.
 
 ### Apple Native Addons
 - [ ] **ofxNeuralEngine GPU path placeholders.**  

@@ -44,6 +44,9 @@ public:
     void addColor(const std::string& name, ofColor& color);
     void addLabel(const std::string& name, std::string& value);
 
+    /// Sync parameter values from GUI (call in update() loop)
+    void sync();
+
 private:
     class Impl;
     std::unique_ptr<Impl> impl_;
@@ -78,6 +81,9 @@ public:
 
     /// Clear all parameters
     void clear();
+
+    /// Sync all parameter values from GUI (call in update() loop)
+    void sync();
 
 private:
     class Impl;

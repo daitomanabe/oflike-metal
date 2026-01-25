@@ -35,9 +35,52 @@ static id getGuiParameterStore() {
 
 // MARK: - ofxGuiGroup Implementation
 
+// Parameter binding structures
+struct FloatParamBinding {
+    std::string name;
+    std::string group;
+    float* valuePtr;
+    id swiftParam; // GuiFloatParameter reference
+};
+
+struct IntParamBinding {
+    std::string name;
+    std::string group;
+    int* valuePtr;
+    id swiftParam; // GuiIntParameter reference
+};
+
+struct BoolParamBinding {
+    std::string name;
+    std::string group;
+    bool* valuePtr;
+    id swiftParam; // GuiBoolParameter reference
+};
+
+struct ColorParamBinding {
+    std::string name;
+    std::string group;
+    ofColor* colorPtr;
+    id swiftParam; // GuiColorParameter reference
+};
+
+struct StringParamBinding {
+    std::string name;
+    std::string group;
+    std::string* valuePtr;
+    id swiftParam; // GuiStringParameter reference
+};
+
 class ofxGuiGroup::Impl {
 public:
     std::string name;
+
+    // Parameter bindings storage
+    std::vector<FloatParamBinding> floatBindings;
+    std::vector<IntParamBinding> intBindings;
+    std::vector<BoolParamBinding> boolBindings;
+    std::vector<ColorParamBinding> colorBindings;
+    std::vector<StringParamBinding> stringBindings;
 
     Impl() : name("General") {}
 
@@ -78,7 +121,17 @@ void ofxGuiGroup::addSlider(const std::string& name, float& value, float min, fl
                 [invocation setArgument:&max atIndex:6];
                 [invocation invoke];
 
-                // TODO: Store parameter and update value binding
+                // Get return value (GuiFloatParameter)
+                id __unsafe_unretained returnValue;
+                [invocation getReturnValue:&returnValue];
+
+                // Store parameter binding
+                FloatParamBinding binding;
+                binding.name = name;
+                binding.group = impl_->name;
+                binding.valuePtr = &value;
+                binding.swiftParam = returnValue;
+                impl_->floatBindings.push_back(binding);
             }
         }
     }
@@ -103,6 +156,18 @@ void ofxGuiGroup::addSlider(const std::string& name, int& value, int min, int ma
                 [invocation setArgument:&min atIndex:5];
                 [invocation setArgument:&max atIndex:6];
                 [invocation invoke];
+
+                // Get return value (GuiIntParameter)
+                id __unsafe_unretained returnValue;
+                [invocation getReturnValue:&returnValue];
+
+                // Store parameter binding
+                IntParamBinding binding;
+                binding.name = name;
+                binding.group = impl_->name;
+                binding.valuePtr = &value;
+                binding.swiftParam = returnValue;
+                impl_->intBindings.push_back(binding);
             }
         }
     }
@@ -125,6 +190,18 @@ void ofxGuiGroup::addToggle(const std::string& name, bool& value) {
                 [invocation setArgument:&nsGroup atIndex:3];
                 [invocation setArgument:&value atIndex:4];
                 [invocation invoke];
+
+                // Get return value (GuiBoolParameter)
+                id __unsafe_unretained returnValue;
+                [invocation getReturnValue:&returnValue];
+
+                // Store parameter binding
+                BoolParamBinding binding;
+                binding.name = name;
+                binding.group = impl_->name;
+                binding.valuePtr = &value;
+                binding.swiftParam = returnValue;
+                impl_->boolBindings.push_back(binding);
             }
         }
     }
@@ -182,6 +259,18 @@ void ofxGuiGroup::addColor(const std::string& name, ofColor& color) {
                 [invocation setArgument:&g atIndex:5];
                 [invocation setArgument:&b atIndex:6];
                 [invocation invoke];
+
+                // Get return value (GuiColorParameter)
+                id __unsafe_unretained returnValue;
+                [invocation getReturnValue:&returnValue];
+
+                // Store parameter binding
+                ColorParamBinding binding;
+                binding.name = name;
+                binding.group = impl_->name;
+                binding.colorPtr = &color;
+                binding.swiftParam = returnValue;
+                impl_->colorBindings.push_back(binding);
             }
         }
     }
@@ -205,6 +294,108 @@ void ofxGuiGroup::addLabel(const std::string& name, std::string& value) {
                 [invocation setArgument:&nsGroup atIndex:3];
                 [invocation setArgument:&nsValue atIndex:4];
                 [invocation invoke];
+
+                // Get return value (GuiStringParameter)
+                id __unsafe_unretained returnValue;
+                [invocation getReturnValue:&returnValue];
+
+                // Store parameter binding
+                StringParamBinding binding;
+                binding.name = name;
+                binding.group = impl_->name;
+                binding.valuePtr = &value;
+                binding.swiftParam = returnValue;
+                impl_->stringBindings.push_back(binding);
+            }
+        }
+    }
+}
+
+void ofxGuiGroup::sync() {
+    @autoreleasepool {
+        // Sync float parameters
+        for (auto& binding : impl_->floatBindings) {
+            if (binding.swiftParam && binding.valuePtr) {
+                SEL selector = NSSelectorFromString(@"value");
+                if ([binding.swiftParam respondsToSelector:selector]) {
+                    #pragma clang diagnostic push
+                    #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+                    NSNumber* num = [binding.swiftParam performSelector:selector];
+                    #pragma clang diagnostic pop
+                    if (num) {
+                        *binding.valuePtr = [num floatValue];
+                    }
+                }
+            }
+        }
+
+        // Sync int parameters
+        for (auto& binding : impl_->intBindings) {
+            if (binding.swiftParam && binding.valuePtr) {
+                SEL selector = NSSelectorFromString(@"value");
+                if ([binding.swiftParam respondsToSelector:selector]) {
+                    #pragma clang diagnostic push
+                    #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+                    NSNumber* num = [binding.swiftParam performSelector:selector];
+                    #pragma clang diagnostic pop
+                    if (num) {
+                        *binding.valuePtr = [num intValue];
+                    }
+                }
+            }
+        }
+
+        // Sync bool parameters
+        for (auto& binding : impl_->boolBindings) {
+            if (binding.swiftParam && binding.valuePtr) {
+                SEL selector = NSSelectorFromString(@"value");
+                if ([binding.swiftParam respondsToSelector:selector]) {
+                    #pragma clang diagnostic push
+                    #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+                    NSNumber* num = [binding.swiftParam performSelector:selector];
+                    #pragma clang diagnostic pop
+                    if (num) {
+                        *binding.valuePtr = [num boolValue];
+                    }
+                }
+            }
+        }
+
+        // Sync color parameters
+        for (auto& binding : impl_->colorBindings) {
+            if (binding.swiftParam && binding.colorPtr) {
+                SEL selector = NSSelectorFromString(@"rgb");
+                if ([binding.swiftParam respondsToSelector:selector]) {
+                    #pragma clang diagnostic push
+                    #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+                    NSValue* rgbTuple = [binding.swiftParam performSelector:selector];
+                    #pragma clang diagnostic pop
+                    if (rgbTuple) {
+                        // RGB tuple is returned as (Int, Int, Int)
+                        // Access via tuple interface
+                        int rgb[3];
+                        [rgbTuple getValue:&rgb];
+                        binding.colorPtr->r = static_cast<uint8_t>(rgb[0]);
+                        binding.colorPtr->g = static_cast<uint8_t>(rgb[1]);
+                        binding.colorPtr->b = static_cast<uint8_t>(rgb[2]);
+                    }
+                }
+            }
+        }
+
+        // Sync string parameters
+        for (auto& binding : impl_->stringBindings) {
+            if (binding.swiftParam && binding.valuePtr) {
+                SEL selector = NSSelectorFromString(@"value");
+                if ([binding.swiftParam respondsToSelector:selector]) {
+                    #pragma clang diagnostic push
+                    #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+                    NSString* str = [binding.swiftParam performSelector:selector];
+                    #pragma clang diagnostic pop
+                    if (str) {
+                        *binding.valuePtr = [str UTF8String];
+                    }
+                }
             }
         }
     }
@@ -284,6 +475,15 @@ void ofxPanel::clear() {
         }
     }
     impl_->groups.clear();
+}
+
+void ofxPanel::sync() {
+    // Sync all registered groups
+    for (auto* group : impl_->groups) {
+        if (group) {
+            group->sync();
+        }
+    }
 }
 
 // MARK: - Convenience Type Implementations

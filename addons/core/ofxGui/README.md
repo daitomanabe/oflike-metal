@@ -76,6 +76,10 @@ class MyApp : public ofBaseApp {
         gui.addColor("Background", bgColor);
     }
 
+    void update() {
+        gui.sync(); // Sync parameter values from GUI
+    }
+
     void draw() {
         ofBackground(bgColor);
 
@@ -149,7 +153,21 @@ void draw() {
 
 ### Parameter Binding
 
-Parameters are bound using reference semantics. When you call `gui.addSlider("Name", value, min, max)`, the GUI maintains a pointer to your `value` variable. Changes in the SwiftUI interface will update your C++ variable automatically through the Objective-C++ bridge.
+Parameters are bound using reference semantics. When you call `gui.addSlider("Name", value, min, max)`, the GUI maintains a pointer to your `value` variable.
+
+**Important**: To sync GUI changes back to your C++ variables, call `gui.sync()` in your `update()` loop:
+
+```cpp
+void update() {
+    gui.sync(); // Sync all parameter values from GUI
+}
+```
+
+This bidirectional binding system allows:
+- **C++ → GUI**: Setting a C++ variable updates the GUI (on registration)
+- **GUI → C++**: User interactions in the GUI update C++ variables (via sync())
+
+Without calling `sync()`, your C++ variables will retain their initial values and won't reflect GUI changes.
 
 ### Thread Safety
 
