@@ -184,8 +184,8 @@ Addons are explicitly last.
   Files: `src/oflike/3d/ofMesh.cpp`
   DoD: DrawCommand3D is fully populated with state/matrices.
 
-- [ ] **Implement ofEasyCam auto distance.**  
-  Files: `src/oflike/3d/ofEasyCam.cpp`  
+- [x] **Implement ofEasyCam auto distance.**
+  Files: `src/oflike/3d/ofEasyCam.cpp`
   DoD: TODO removed with functional logic.
 
 - [ ] **Integrate lighting/material uniforms.**  

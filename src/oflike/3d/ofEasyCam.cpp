@@ -1,4 +1,5 @@
 #include "ofEasyCam.h"
+#include "../../core/Context.h"
 #include <cmath>
 
 namespace oflike {
@@ -64,7 +65,10 @@ ofVec3f ofEasyCam::getTarget() const {
 
 void ofEasyCam::setAutoDistance(bool autoDistance) {
     autoDistance_ = autoDistance;
-    // TODO: Implement auto distance calculation based on scene bounds
+    if (autoDistance_) {
+        // When enabling auto distance, calculate and set appropriate distance
+        updateAutoDistance();
+    }
 }
 
 bool ofEasyCam::getAutoDistance() const {
@@ -215,6 +219,11 @@ void ofEasyCam::update() {
     if (inertiaEnabled_ && !isDragging_) {
         applyInertia();
     }
+
+    // Update auto distance if enabled
+    if (autoDistance_) {
+        updateAutoDistance();
+    }
 }
 
 // ========================================================================
@@ -296,6 +305,38 @@ void ofEasyCam::applyInertia() {
     }
 
     if (needsUpdate) {
+        updateCameraPosition();
+    }
+}
+
+void ofEasyCam::updateAutoDistance() {
+    // Calculate appropriate viewing distance based on viewport and FOV
+    // This ensures the camera is positioned to view the scene appropriately
+    // Formula: distance = (viewport.height / 2.0) / tan(fov / 2.0)
+
+    // Get viewport dimensions from Context (matches Phase 8.1 worldToScreen/screenToWorld)
+    simd_float4 viewport = Context::instance().getViewport();
+    float viewportHeight = viewport.w;
+
+    // Get field of view from camera
+    float fovRadians = getFov() * 3.14159265f / 180.0f;
+
+    // Calculate distance based on viewport height and FOV
+    // This positions the camera so that vertical FOV matches viewport height at target plane
+    float calculatedDistance = (viewportHeight / 2.0f) / std::tan(fovRadians / 2.0f);
+
+    // Apply a reasonable scale factor (openFrameworks uses similar approach)
+    // This ensures comfortable viewing distance
+    calculatedDistance *= 0.5f;
+
+    // Clamp to reasonable range
+    if (calculatedDistance < 1.0f) calculatedDistance = 1.0f;
+    if (calculatedDistance > 10000.0f) calculatedDistance = 10000.0f;
+
+    // Update distance only if significantly different (avoid jitter)
+    float threshold = 0.1f;
+    if (std::abs(distance_ - calculatedDistance) > threshold) {
+        distance_ = calculatedDistance;
         updateCameraPosition();
     }
 }

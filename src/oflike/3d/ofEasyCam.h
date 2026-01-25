@@ -190,6 +190,9 @@ private:
 
     /// \brief Apply inertia to rotation and distance
     void applyInertia();
+
+    /// \brief Update distance automatically based on viewport and FOV
+    void updateAutoDistance();
 };
 
 } // namespace oflike
