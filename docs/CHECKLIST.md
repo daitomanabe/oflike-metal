@@ -208,8 +208,8 @@ Addons are explicitly last.
 
 ## Phase 10: Project Generator (CLI First)
 
-- [ ] **Define CLI spec and input schema.**  
-  Files: `docs/IMPLEMENTATION.md`, `tools/project_generator/README.md`  
+- [x] **Define CLI spec and input schema.**
+  Files: `docs/IMPLEMENTATION.md`, `tools/project_generator/README.md`
   DoD: CLI usage and example config are documented.
 
 - [ ] **Implement CLI generator.**  

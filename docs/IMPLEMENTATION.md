@@ -267,6 +267,14 @@ targets:
 
 ## Project Generator Specification
 
+### Overview
+
+**Full CLI reference**: [tools/project_generator/README.md](../tools/project_generator/README.md)
+
+このセクションは CLI 仕様の概要を提供します。詳細は [tools/project_generator/README.md](../tools/project_generator/README.md) を参照してください。
+
+---
+
 ### Command: `oflike-gen new`
 
 新規プロジェクトを生成します。
@@ -279,13 +287,16 @@ oflike-gen new <project-name> [options]
 
 #### Options
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--entry <swiftui\|ofmain>` | エントリーポイント | `swiftui` |
-| `--addons <addon1,addon2>` | 初期 addon リスト | なし |
-| `--addon-mode <reference\|copy\|symlink>` | Addon 統合方法 | `reference` |
-| `--path <dir>` | プロジェクト作成先 | `./<project-name>` |
-| `--template <basic\|swiftui\|metal>` | テンプレート | `basic` |
+| Option | Type | Description | Default |
+|--------|------|-------------|---------|
+| `--entry <MODE>` | `swiftui \| ofmain` | エントリーポイント | `swiftui` |
+| `--addons <LIST>` | comma-separated | 初期 addon リスト | なし |
+| `--addon-mode <MODE>` | `reference \| copy \| symlink` | Addon 統合方法 | `reference` |
+| `--path <DIR>` | path | プロジェクト作成先 | `./<project-name>` |
+| `--template <NAME>` | `basic \| swiftui \| metal \| 3d` | テンプレート | `basic` |
+| `--bundle-id <ID>` | string | macOS bundle identifier | `com.example.<project>` |
+| `--author <NAME>` | string | Project author name | Git config user.name |
+| `--no-git` | flag | Skip git initialization | false |
 
 #### Examples
 
@@ -303,8 +314,12 @@ myProject/
 │   └── App.swift         # SwiftUI Entry
 ├── data/
 ├── resources/
+│   ├── Info.plist
+│   └── Assets.xcassets/
 ├── CMakeLists.txt
-└── project.yml
+├── project.yml
+├── .gitignore
+└── README.md
 ```
 
 **ofMain Entry で生成**:
@@ -316,8 +331,8 @@ oflike-gen new myProject --entry ofmain
 ```
 myProject/
 ├── src/
-│   ├── MyApp.h
-│   ├── MyApp.cpp
+│   ├── MyProject.h
+│   ├── MyProject.cpp
 │   └── main.mm           # ofMain Entry
 ├── data/
 ├── CMakeLists.txt
@@ -335,9 +350,9 @@ oflike-gen new myProject --addons ofxOsc,ofxGui
 # ofxOsc, ofxGui は oflike-metal に含まれる
 ```
 
-**カスタム addon を copy**:
+**3D Template**:
 ```bash
-oflike-gen new myProject --addons ofxMyAddon --addon-mode copy
+oflike-gen new modelViewer --template 3d --addons ofxSharp
 ```
 
 ---
@@ -354,11 +369,12 @@ oflike-gen add-addon <addon-name> [options]
 
 #### Options
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--mode <reference\|copy\|symlink>` | 統合方法 | `reference` |
-| `--source <path>` | Addon ソースパス | Core/Native の場合は不要 |
-| `--project <path>` | プロジェクトパス | `.` |
+| Option | Type | Description | Default |
+|--------|------|-------------|---------|
+| `--mode <MODE>` | `reference \| copy \| symlink` | 統合方法 | `reference` |
+| `--source <PATH>` | path | Addon ソースパス | auto-detect |
+| `--project <PATH>` | path | プロジェクトパス | `.` |
+| `--update-build` | flag | Update build files | true |
 
 #### Examples
 
@@ -392,10 +408,10 @@ oflike-gen remove-addon <addon-name> [options]
 
 #### Options
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--project <path>` | プロジェクトパス | `.` |
-| `--keep-files` | ファイルを残す (ビルド設定のみ削除) | false |
+| Option | Type | Description | Default |
+|--------|------|-------------|---------|
+| `--project <PATH>` | path | プロジェクトパス | `.` |
+| `--keep-files` | flag | ファイルを残す (ビルド設定のみ削除) | false |
 
 #### Examples
 
@@ -409,6 +425,131 @@ oflike-gen remove-addon ofxMyAddon
 ```bash
 oflike-gen remove-addon ofxMyAddon --keep-files
 ```
+
+---
+
+### Command: `oflike-gen list-addons`
+
+利用可能な addon またはプロジェクト内の addon を一覧表示します。
+
+#### Syntax
+
+```bash
+oflike-gen list-addons [options]
+```
+
+#### Options
+
+| Option | Type | Description | Default |
+|--------|------|-------------|---------|
+| `--available` | flag | 利用可能な全 addon を表示 | false |
+| `--project <PATH>` | path | プロジェクト内の addon を表示 | `.` |
+
+#### Example
+
+```bash
+# 利用可能な addon 一覧
+oflike-gen list-addons --available
+
+# プロジェクト内の addon 一覧
+cd myProject
+oflike-gen list-addons
+```
+
+---
+
+### Input Schema
+
+プロジェクト設定は `oflike-gen.toml` または `project.json` で定義できます。
+
+#### TOML Format (`oflike-gen.toml`)
+
+```toml
+[project]
+name = "myProject"
+version = "1.0.0"
+author = "John Doe"
+bundle_id = "com.example.myproject"
+
+[entry]
+mode = "swiftui"  # "swiftui" | "ofmain"
+
+[addons]
+core = ["ofxOsc", "ofxGui", "ofxSharp"]
+custom = [
+    { name = "ofxMyAddon", mode = "copy", source = "~/addons/ofxMyAddon" }
+]
+
+[build]
+cmake = true
+xcodegen = true
+min_macos = "13.0"
+swift_version = "5.9"
+cpp_standard = "c++20"
+
+[paths]
+src = "src"
+data = "data"
+resources = "resources"
+addons = "addons"
+```
+
+#### JSON Format (`project.json`)
+
+```json
+{
+  "project": {
+    "name": "myProject",
+    "version": "1.0.0",
+    "author": "John Doe",
+    "bundle_id": "com.example.myproject"
+  },
+  "entry": {
+    "mode": "swiftui"
+  },
+  "addons": {
+    "core": ["ofxOsc", "ofxGui"],
+    "custom": [
+      {
+        "name": "ofxMyAddon",
+        "mode": "copy",
+        "source": "~/addons/ofxMyAddon"
+      }
+    ]
+  },
+  "build": {
+    "cmake": true,
+    "xcodegen": true,
+    "min_macos": "13.0",
+    "swift_version": "5.9",
+    "cpp_standard": "c++20"
+  }
+}
+```
+
+#### Schema Validation
+
+| Field | Type | Required | Default | Constraints |
+|-------|------|----------|---------|-------------|
+| `project.name` | string | ✅ | - | PascalCase or kebab-case |
+| `project.version` | string | ❌ | `1.0.0` | Semantic versioning |
+| `project.bundle_id` | string | ❌ | `com.example.<name>` | Reverse DNS format |
+| `entry.mode` | enum | ❌ | `swiftui` | `swiftui` \| `ofmain` |
+| `addons.core` | array | ❌ | `[]` | Valid Core/Native addon names |
+| `addons.custom` | array | ❌ | `[]` | Objects with `name`, `mode`, `source` |
+| `build.min_macos` | string | ❌ | `13.0` | >= 13.0 |
+| `build.cpp_standard` | string | ❌ | `c++20` | `c++17` \| `c++20` |
+
+---
+
+### Templates
+
+| Template | Description | Use Case |
+|----------|-------------|----------|
+| `basic` | 最小構成プロジェクト | 汎用的な開始点 |
+| `swiftui` | SwiftUI 統合プロジェクト | macOS アプリ開発 |
+| `metal` | Metal compute/shader プロジェクト | GPU 計算、シェーダー開発 |
+| `3d` | 3D グラフィックスプロジェクト | 3D 可視化、モデルビューア |
 
 ---
 
