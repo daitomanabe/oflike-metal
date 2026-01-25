@@ -1,6 +1,4 @@
 #import <Foundation/Foundation.h>
-#import <Metal/Metal.h>
-#import <MetalKit/MetalKit.h>
 #import <ImageIO/ImageIO.h>
 
 #include "ofUtils.h"

@@ -8,6 +8,10 @@
 #include <vector>
 #include <stdexcept>
 
+// TODO(Phase 7.3): Remove Metal imports once FBO creation is delegated to renderer
+// Currently ofFbo::Impl directly creates Metal textures with MTLTextureDescriptor
+// which requires Metal types. This needs refactoring to use renderer abstraction.
+
 namespace oflike {
 
 // ============================================================================

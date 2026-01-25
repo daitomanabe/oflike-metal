@@ -1,12 +1,9 @@
 #import <Foundation/Foundation.h>
-#import <Metal/Metal.h>
-#import <MetalKit/MetalKit.h>
 #import <ImageIO/ImageIO.h>
 #import <Accelerate/Accelerate.h>
 
 #include "ofImage.h"
 #include "../../core/Context.h"
-#include "../../render/metal/MetalRenderer.h"
 #include "../utils/ofLog.h"
 #include <algorithm>
 
