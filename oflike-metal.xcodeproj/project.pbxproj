@@ -830,7 +830,9 @@
 					"$(inherited)",
 					"-ObjC",
 				"-framework",
-				Accelerate,				);
+				Accelerate,					"-weak_framework",
+					VisionKit,
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.oflike.oflike-metal";
 				PRODUCT_NAME = "oflike-metal";
 				SDKROOT = macosx;
@@ -859,6 +861,8 @@
 					"$(inherited)",
 				"-framework",
 				Accelerate,					"-ObjC",
+					"-weak_framework",
+					VisionKit,
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.oflike.oflike-metal";
 				PRODUCT_NAME = "oflike-metal";

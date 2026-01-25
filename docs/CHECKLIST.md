@@ -40,8 +40,8 @@ Addons are explicitly last.
   Files: `project.yml`
   DoD: `third_party/glm` is not referenced unless explicitly justified.
 
-- [ ] **Align VisionKit optional link in XcodeGen.**  
-  Files: `project.yml`  
+- [x] **Align VisionKit optional link in XcodeGen.**
+  Files: `project.yml`
   DoD: VisionKit is weak-linked or conditionally linked, consistent with CMake.
 
 - [ ] **Merge duplicate Swift PerformanceStats.**  
