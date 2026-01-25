@@ -3,6 +3,7 @@
 #import <QuartzCore/QuartzCore.h>
 #import <AppKit/AppKit.h>
 #include "Context.h"
+#include "../render/IRenderer.h"
 #include "../render/DrawList.h"
 #include "../render/metal/MetalRenderer.h"
 #include <iostream>
@@ -164,8 +165,8 @@ void Context::initializeRenderer(void* metalDevice, void* metalView) {
     }
 }
 
-render::metal::MetalRenderer* Context::renderer() const {
-    // Phase 3.1: Return renderer pointer
+render::IRenderer* Context::renderer() const {
+    // Phase 3.1: Return renderer pointer (Phase 7 fix: return as IRenderer* for layer abstraction)
     if (!impl_->initialized || !impl_->renderer) {
         return nullptr;
     }
@@ -181,6 +182,13 @@ void* Context::getMetalDevice() const {
         return nullptr;
     }
     return impl_->renderer->getDevice();
+}
+
+bool Context::readTexturePixels(void* texture, void* data, uint32_t width, uint32_t height, size_t bytesPerRow) const {
+    if (!impl_->renderer) {
+        return false;
+    }
+    return impl_->renderer->readTexturePixels(texture, data, width, height, bytesPerRow);
 }
 
 // MARK: - Timing

@@ -168,8 +168,8 @@ Addons are explicitly last.
   Files: `src/oflike/image/ofTexture.mm`
   DoD: 16-bit and float pixel uploads work without TODOs.
 
-- [ ] **Implement GPU->CPU readback path (ofImage).**  
-  Files: `src/oflike/image/ofImage.mm`  
+- [x] **Implement GPU->CPU readback path (ofImage).**
+  Files: `src/oflike/image/ofImage.mm`
   DoD: readback TODO removed or clearly deferred with alternate path.
 
 ---

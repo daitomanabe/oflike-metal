@@ -5,6 +5,7 @@
 
 // Forward declarations
 namespace render {
+class IRenderer;
 class DrawList;
 namespace metal {
 class MetalRenderer;
@@ -40,9 +41,9 @@ public:
     /// @param metalView Native MTKView handle (__bridge void*)
     void initializeRenderer(void* metalDevice, void* metalView);
 
-    /// Get the Metal renderer
+    /// Get the renderer
     /// @return Renderer instance (nullptr if not initialized)
-    render::metal::MetalRenderer* renderer() const;
+    render::IRenderer* renderer() const;
 
     /// Get the current frame's draw list
     /// @return Reference to the draw list
@@ -51,6 +52,15 @@ public:
     /// Get the Metal device (Phase 3.3)
     /// @return Metal device (id<MTLDevice>) cast to void*, or nullptr if renderer not initialized
     void* getMetalDevice() const;
+
+    /// Read pixels from a texture (GPU->CPU readback) (Phase 7.5)
+    /// @param texture Texture handle (id<MTLTexture>) cast to void*
+    /// @param data Destination buffer (must be pre-allocated)
+    /// @param width Texture width
+    /// @param height Texture height
+    /// @param bytesPerRow Bytes per row
+    /// @return true on success, false on failure
+    bool readTexturePixels(void* texture, void* data, uint32_t width, uint32_t height, size_t bytesPerRow) const;
 
     // MARK: - Timing
 

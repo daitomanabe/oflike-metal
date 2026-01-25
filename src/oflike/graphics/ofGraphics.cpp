@@ -3,7 +3,7 @@
 #include "../math/ofVec3f.h"
 #include "ofPath.h"
 #include "../../core/Context.h"
-#include "../../render/metal/MetalRenderer.h"
+#include "../../render/IRenderer.h"
 #include "../../render/RenderTypes.h"
 #include "../../render/DrawList.h"
 #include "../../render/DrawCommand.h"
