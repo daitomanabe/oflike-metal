@@ -112,8 +112,8 @@ Addons are explicitly last.
 
 ## Phase 5: SwiftUI Integration (DrawList Path)
 
-- [ ] **Remove Swift-side pipeline and test triangle.**  
-  Files: `src/platform/swiftui/MetalView.swift`  
+- [x] **Remove Swift-side pipeline and test triangle.**
+  Files: `src/platform/swiftui/MetalView.swift`
   DoD: Swift does not issue any Metal draw commands directly.
 
 - [ ] **Call C++ render entry per frame.**  

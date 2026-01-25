@@ -266,11 +266,6 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject, MouseEv
     // Static weak reference for accessing coordinator from C callbacks
     private static weak var sharedCoordinator: MetalViewCoordinator?
 
-    private var device: MTLDevice?
-    private var commandQueue: MTLCommandQueue?
-    private var library: MTLLibrary?
-    private var pipelineState: MTLRenderPipelineState?
-
     // Phase 1.5: Frame tracking for FPS display
     @Published var frameCount: UInt64 = 0
     @Published var currentFPS: Double = 0.0
@@ -295,26 +290,7 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject, MouseEv
     }
 
     func setup(device: MTLDevice) {
-        self.device = device
-        self.commandQueue = device.makeCommandQueue()
-
-        // Load shader library
-        guard let library = loadShaderLibrary(device: device) else {
-            print("Warning: Failed to load shader library")
-            return
-        }
-        self.library = library
-
-        // Create render pipeline state
-        guard let pipelineState = createBasic2DPipeline(device: device, library: library) else {
-            print("Warning: Failed to create render pipeline state")
-            return
-        }
-        self.pipelineState = pipelineState
-
-        print("Metal initialization complete: Device, CommandQueue, Library, PipelineState")
-
-        // Phase 2.1: Initialize global context with Metal device
+        // Phase 3: Initialize global context with Metal device
         bridge?.initializeContext(withDevice: device)
 
         // Phase 14.1: Register window callbacks
@@ -322,69 +298,6 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject, MouseEv
 
         // Initialize C++ bridge
         bridge?.setup()
-    }
-
-    // MARK: - Metal Initialization
-
-    /// Load the default Metal shader library
-    private func loadShaderLibrary(device: MTLDevice) -> MTLLibrary? {
-        do {
-            // Try to load default library (compiled shaders)
-            if let library = device.makeDefaultLibrary() {
-                print("Loaded default shader library")
-                return library
-            }
-
-            // Fallback: Try to load from file
-            let shaderPath = Bundle.main.path(forResource: "default", ofType: "metallib")
-            if let path = shaderPath {
-                let library = try device.makeLibrary(filepath: path)
-                print("Loaded shader library from: \(path)")
-                return library
-            }
-
-            print("Error: Could not find shader library")
-            return nil
-        } catch {
-            print("Error loading shader library: \(error)")
-            return nil
-        }
-    }
-
-    /// Create a basic 2D render pipeline state
-    private func createBasic2DPipeline(device: MTLDevice, library: MTLLibrary) -> MTLRenderPipelineState? {
-        let vertexFunction = library.makeFunction(name: "vertex2D")
-        let fragmentFunction = library.makeFunction(name: "fragment2D")
-
-        guard vertexFunction != nil && fragmentFunction != nil else {
-            print("Error: Could not find vertex2D or fragment2D functions")
-            return nil
-        }
-
-        let pipelineDescriptor = MTLRenderPipelineDescriptor()
-        pipelineDescriptor.label = "Basic2D Pipeline"
-        pipelineDescriptor.vertexFunction = vertexFunction
-        pipelineDescriptor.fragmentFunction = fragmentFunction
-        pipelineDescriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
-        pipelineDescriptor.depthAttachmentPixelFormat = .depth32Float
-
-        // Configure blending for alpha transparency
-        pipelineDescriptor.colorAttachments[0].isBlendingEnabled = true
-        pipelineDescriptor.colorAttachments[0].rgbBlendOperation = .add
-        pipelineDescriptor.colorAttachments[0].alphaBlendOperation = .add
-        pipelineDescriptor.colorAttachments[0].sourceRGBBlendFactor = .sourceAlpha
-        pipelineDescriptor.colorAttachments[0].sourceAlphaBlendFactor = .sourceAlpha
-        pipelineDescriptor.colorAttachments[0].destinationRGBBlendFactor = .oneMinusSourceAlpha
-        pipelineDescriptor.colorAttachments[0].destinationAlphaBlendFactor = .oneMinusSourceAlpha
-
-        do {
-            let pipelineState = try device.makeRenderPipelineState(descriptor: pipelineDescriptor)
-            print("Created Basic2D render pipeline state")
-            return pipelineState
-        } catch {
-            print("Error creating pipeline state: \(error)")
-            return nil
-        }
     }
 
     // MARK: - MTKViewDelegate
@@ -437,100 +350,10 @@ class MetalViewCoordinator: NSObject, MTKViewDelegate, ObservableObject, MouseEv
     /// Render logic (called every frame)
     private func render(view: MTKView) {
         autoreleasepool {
-            guard let drawable = view.currentDrawable,
-                  let renderPassDescriptor = view.currentRenderPassDescriptor,
-                  let commandQueue = commandQueue,
-                  let pipelineState = pipelineState,
-                  let device = device else {
-                return
-            }
-
-            // Create command buffer
-            guard let commandBuffer = commandQueue.makeCommandBuffer() else {
-                return
-            }
-
-            // Create render command encoder
-            guard let renderEncoder = commandBuffer.makeRenderCommandEncoder(
-                descriptor: renderPassDescriptor
-            ) else {
-                return
-            }
-
-            // Execute C++ draw commands through bridge
+            // Phase 5: All Metal rendering is now handled by C++ MetalRenderer
+            // Swift only calls the C++ bridge to execute DrawList commands
             bridge?.draw()
-
-            // Phase 1.5: Render test triangle
-            renderTestTriangle(encoder: renderEncoder, device: device, pipelineState: pipelineState)
-
-            // End encoding
-            renderEncoder.endEncoding()
-
-            // Present drawable
-            commandBuffer.present(drawable)
-
-            // Commit command buffer
-            commandBuffer.commit()
         }
-    }
-
-    // MARK: - Phase 1.5 Triangle Test
-
-    /// Render a simple test triangle (Phase 1.5 verification)
-    private func renderTestTriangle(
-        encoder: MTLRenderCommandEncoder,
-        device: MTLDevice,
-        pipelineState: MTLRenderPipelineState
-    ) {
-        // Define triangle vertices (Vertex2D structure from Common.h)
-        // position (float2), texCoord (float2), color (float4)
-        let vertices: [Float] = [
-            // Position      TexCoord    Color (RGBA)
-            0.0,  0.5,      0.5, 0.0,   1.0, 0.0, 0.0, 1.0,  // Top (red)
-           -0.5, -0.5,      0.0, 1.0,   0.0, 1.0, 0.0, 1.0,  // Bottom-left (green)
-            0.5, -0.5,      1.0, 1.0,   0.0, 0.0, 1.0, 1.0,  // Bottom-right (blue)
-        ]
-
-        // Create vertex buffer
-        guard let vertexBuffer = device.makeBuffer(
-            bytes: vertices,
-            length: vertices.count * MemoryLayout<Float>.stride,
-            options: .cpuCacheModeWriteCombined
-        ) else {
-            return
-        }
-
-        // Create identity uniforms (Uniforms2D from Common.h)
-        var uniforms: [Float] = [
-            // Projection matrix (identity)
-            1, 0, 0, 0,
-            0, 1, 0, 0,
-            0, 0, 1, 0,
-            0, 0, 0, 1,
-            // ModelView matrix (identity)
-            1, 0, 0, 0,
-            0, 1, 0, 0,
-            0, 0, 1, 0,
-            0, 0, 0, 1,
-        ]
-
-        guard let uniformBuffer = device.makeBuffer(
-            bytes: &uniforms,
-            length: uniforms.count * MemoryLayout<Float>.stride,
-            options: .cpuCacheModeWriteCombined
-        ) else {
-            return
-        }
-
-        // Set render pipeline state
-        encoder.setRenderPipelineState(pipelineState)
-
-        // Set vertex buffers
-        encoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
-        encoder.setVertexBuffer(uniformBuffer, offset: 0, index: 1)
-
-        // Draw triangle
-        encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
     }
 
     // MARK: - Public API
