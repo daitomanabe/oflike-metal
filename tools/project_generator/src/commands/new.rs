@@ -81,9 +81,15 @@ pub fn execute(
         &author_name,
     )?;
 
+    // Parse and link/copy addons
+    let addon_list = parse_addons(addons)?;
+    if !addon_list.is_empty() {
+        setup_addons(&project_path, &addon_list, addon_mode, verbose)?;
+    }
+
     // Generate build files
-    generate_cmake_file(&project_path, project_name, entry, addons)?;
-    generate_xcodegen_file(&project_path, project_name, entry, &bundle_id)?;
+    generate_cmake_file(&project_path, project_name, entry, &addon_list)?;
+    generate_xcodegen_file(&project_path, project_name, entry, &bundle_id, &addon_list)?;
 
     // Generate .gitignore
     generate_gitignore(&project_path)?;
@@ -316,11 +322,144 @@ fn generate_info_plist(project_path: &Path, project_name: &str, bundle_id: &str)
     Ok(())
 }
 
+fn parse_addons(addons: Option<&str>) -> Result<Vec<String>> {
+    if let Some(addon_str) = addons {
+        let mut addon_list = Vec::new();
+        for addon in addon_str.split(',') {
+            let addon = addon.trim();
+            if !addon.is_empty() {
+                // Validate addon exists
+                if !is_builtin_addon(addon) {
+                    eprintln!("Warning: {} is not a builtin addon", addon);
+                }
+                addon_list.push(addon.to_string());
+            }
+        }
+        Ok(addon_list)
+    } else {
+        Ok(Vec::new())
+    }
+}
+
+fn setup_addons(
+    project_path: &Path,
+    addon_list: &[String],
+    addon_mode: &str,
+    verbose: bool,
+) -> Result<()> {
+    let addons_dir = project_path.join("addons");
+    fs::create_dir_all(&addons_dir)?;
+
+    // Find oflike-metal root (assume it's in parent directories)
+    let oflike_root = find_oflike_root()?;
+
+    for addon in addon_list {
+        let addon_category = if core_addons().contains(&addon.as_str()) {
+            "core"
+        } else {
+            "apple_native"
+        };
+
+        let source_addon_path = oflike_root
+            .join("addons")
+            .join(addon_category)
+            .join(addon);
+
+        if !source_addon_path.exists() {
+            eprintln!(
+                "Warning: Addon source not found: {}",
+                source_addon_path.display()
+            );
+            continue;
+        }
+
+        let dest_addon_path = addons_dir.join(addon);
+
+        match addon_mode {
+            "reference" => {
+                // Don't copy anything, just record the reference
+                // (CMakeLists.txt will reference the oflike-metal installation)
+                if verbose {
+                    println!("  Referencing addon: {}", addon);
+                }
+            }
+            "copy" => {
+                // Copy addon files
+                if verbose {
+                    println!("  Copying addon: {}", addon);
+                }
+                copy_dir_recursive(&source_addon_path, &dest_addon_path)?;
+            }
+            "symlink" => {
+                // Create symlink
+                if verbose {
+                    println!("  Symlinking addon: {}", addon);
+                }
+                #[cfg(unix)]
+                {
+                    std::os::unix::fs::symlink(&source_addon_path, &dest_addon_path)?;
+                }
+                #[cfg(not(unix))]
+                {
+                    return Err(GeneratorError::Other(
+                        "Symlinks are only supported on Unix systems".to_string(),
+                    ));
+                }
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    Ok(())
+}
+
+fn find_oflike_root() -> Result<PathBuf> {
+    // Try to find oflike-metal root by looking for addons/ directory
+    let mut current = std::env::current_dir()?;
+
+    loop {
+        let addons_path = current.join("addons");
+        if addons_path.exists() && addons_path.is_dir() {
+            // Check if it has core/apple_native subdirectories
+            if addons_path.join("core").exists() || addons_path.join("apple_native").exists() {
+                return Ok(current);
+            }
+        }
+
+        if !current.pop() {
+            break;
+        }
+    }
+
+    Err(GeneratorError::Other(
+        "Could not find oflike-metal root directory. Run this command from within the oflike-metal project.".to_string(),
+    ))
+}
+
+fn copy_dir_recursive(src: &Path, dst: &Path) -> Result<()> {
+    fs::create_dir_all(dst)?;
+
+    for entry in fs::read_dir(src)? {
+        let entry = entry?;
+        let file_type = entry.file_type()?;
+        let src_path = entry.path();
+        let dst_path = dst.join(entry.file_name());
+
+        if file_type.is_dir() {
+            copy_dir_recursive(&src_path, &dst_path)?;
+        } else if file_type.is_file() {
+            fs::copy(&src_path, &dst_path)?;
+        }
+    }
+
+    Ok(())
+}
+
 fn generate_cmake_file(
     project_path: &Path,
     project_name: &str,
     entry: &str,
-    addons: Option<&str>,
+    addon_list: &[String],
 ) -> Result<()> {
     let class_name = to_pascal_case(project_name);
 
@@ -373,10 +512,27 @@ target_link_libraries({} oflike-metal::oflike-metal)
     ));
 
     // Add addons if specified
-    if let Some(addon_list) = addons {
-        cmake_content.push_str("# Core/Native Addons (included in oflike-metal)\n");
-        for addon in addon_list.split(',') {
-            cmake_content.push_str(&format!("# - {}\n", addon.trim()));
+    if !addon_list.is_empty() {
+        cmake_content.push_str("# Addons\n");
+        for addon in addon_list {
+            cmake_content.push_str(&format!(
+                r#"file(GLOB_RECURSE {}_SOURCES "addons/{}/*.cpp" "addons/{}/*.mm")
+file(GLOB_RECURSE {}_HEADERS "addons/{}/*.h")
+target_sources({} PRIVATE ${{{}_SOURCES}} ${{{}_HEADERS}})
+target_include_directories({} PRIVATE addons/{})
+
+"#,
+                addon.to_uppercase(),
+                addon,
+                addon,
+                addon.to_uppercase(),
+                addon,
+                project_name,
+                addon.to_uppercase(),
+                addon.to_uppercase(),
+                project_name,
+                addon
+            ));
         }
         cmake_content.push('\n');
     }
@@ -404,7 +560,21 @@ fn generate_xcodegen_file(
     project_name: &str,
     entry: &str,
     bundle_id: &str,
+    addon_list: &[String],
 ) -> Result<()> {
+    let mut sources_list = vec!["src".to_string()];
+    if !addon_list.is_empty() {
+        for addon in addon_list {
+            sources_list.push(format!("addons/{}", addon));
+        }
+    }
+
+    let sources_yaml = sources_list
+        .iter()
+        .map(|s| format!("      - {}", s))
+        .collect::<Vec<_>>()
+        .join("\n");
+
     let xcodegen_content = if entry == "swiftui" {
         format!(
             r#"name: {}
@@ -418,7 +588,7 @@ targets:
     type: application
     platform: macOS
     sources:
-      - src
+{}
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: {}
       INFOPLIST_FILE: resources/Info.plist
@@ -430,7 +600,7 @@ targets:
     scheme:
       testTargets: []
 "#,
-            project_name, bundle_id, project_name, bundle_id
+            project_name, bundle_id, project_name, sources_yaml, bundle_id
         )
     } else {
         format!(
@@ -445,7 +615,7 @@ targets:
     type: application
     platform: macOS
     sources:
-      - src
+{}
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: {}
       ENABLE_HARDENED_RUNTIME: YES
@@ -455,7 +625,7 @@ targets:
     scheme:
       testTargets: []
 "#,
-            project_name, bundle_id, project_name, bundle_id
+            project_name, bundle_id, project_name, sources_yaml, bundle_id
         )
     };
 

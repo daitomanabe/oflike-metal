@@ -220,8 +220,8 @@ Addons are explicitly last.
   Files: `tools/project_generator/templates/`
   DoD: includes `ofApp.*`, `main.mm`, `project.yml`, `Info.plist`.
 
-- [ ] **Add addons selection + link/copy logic.**  
-  Files: `tools/project_generator/`  
+- [x] **Add addons selection + link/copy logic.**
+  Files: `tools/project_generator/`
   DoD: addons are reflected in include/link/resources.
 
 - [ ] **Document build steps for generated projects.**  
