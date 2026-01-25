@@ -60,6 +60,10 @@ struct MetalRenderer::Impl {
     MTLViewport currentViewport;
     MTLScissorRect currentScissor;
 
+    // Render target state
+    id<MTLTexture> currentRenderTarget = nil;  // nil = render to view (default)
+    id<MTLTexture> depthTarget = nil;          // Depth buffer for current render target
+
     // Statistics
     uint32_t frameDrawCalls = 0;
     uint32_t frameVertices = 0;
@@ -96,6 +100,7 @@ struct MetalRenderer::Impl {
     bool executeSetViewport(const SetViewportCommand& cmd);
     bool executeSetScissor(const SetScissorCommand& cmd);
     bool executeClear(const SetClearCommand& cmd);
+    bool executeSetRenderTarget(const SetRenderTargetCommand& cmd);
 
     // State management
     void applyBlendMode(BlendMode mode);
@@ -180,6 +185,10 @@ void MetalRenderer::Impl::shutdown() {
         depthDisabledState = nil;
         textureLoader = nil;
         commandQueue = nil;
+
+        // Release render target state
+        currentRenderTarget = nil;
+        depthTarget = nil;
 
         initialized = false;
         NSLog(@"MetalRenderer: Shutdown complete");
@@ -519,6 +528,10 @@ bool MetalRenderer::Impl::endFrame() {
         currentEncoder = nil;
         currentRenderPass = nil;
 
+        // Reset render target state to default (screen)
+        currentRenderTarget = nil;
+        // Keep depthTarget allocated for reuse in next frame
+
         return true;
     }
 }
@@ -535,14 +548,34 @@ MTLRenderPassDescriptor* MetalRenderer::Impl::getCurrentRenderPassDescriptor() {
         return currentRenderPass;
     }
 
-    // Get default render pass from view
-    currentRenderPass = view.currentRenderPassDescriptor;
-    if (!currentRenderPass) {
-        NSLog(@"MetalRenderer: No render pass descriptor available");
-        return nil;
-    }
+    @autoreleasepool {
+        // Check if rendering to a custom render target (FBO) or the view
+        if (currentRenderTarget) {
+            // Create render pass for custom render target (FBO)
+            currentRenderPass = [MTLRenderPassDescriptor renderPassDescriptor];
 
-    return currentRenderPass;
+            // Set color attachment
+            currentRenderPass.colorAttachments[0].texture = currentRenderTarget;
+            currentRenderPass.colorAttachments[0].loadAction = MTLLoadActionLoad;
+            currentRenderPass.colorAttachments[0].storeAction = MTLStoreActionStore;
+
+            // Set depth attachment if available
+            if (depthTarget) {
+                currentRenderPass.depthAttachment.texture = depthTarget;
+                currentRenderPass.depthAttachment.loadAction = MTLLoadActionLoad;
+                currentRenderPass.depthAttachment.storeAction = MTLStoreActionStore;
+            }
+        } else {
+            // Get default render pass from view (render to screen)
+            currentRenderPass = view.currentRenderPassDescriptor;
+            if (!currentRenderPass) {
+                NSLog(@"MetalRenderer: No render pass descriptor available");
+                return nil;
+            }
+        }
+
+        return currentRenderPass;
+    }
 }
 
 // ============================================================================
@@ -567,9 +600,7 @@ bool MetalRenderer::Impl::executeCommand(const DrawCommand& cmd, const DrawList&
             return executeClear(cmd.clear);
 
         case CommandType::SetRenderTarget:
-            // TODO: Implement in Phase 11 (FBO)
-            NSLog(@"MetalRenderer: SetRenderTarget not yet implemented");
-            return true;
+            return executeSetRenderTarget(cmd.renderTarget);
 
         default:
             NSLog(@"MetalRenderer: Unknown command type %u", (uint32_t)cmd.type);
@@ -979,6 +1010,59 @@ bool MetalRenderer::Impl::executeClear(const SetClearCommand& cmd) {
     }
 }
 
+bool MetalRenderer::Impl::executeSetRenderTarget(const SetRenderTargetCommand& cmd) {
+    @autoreleasepool {
+        // End current encoder - switching render targets requires a new encoder
+        endCurrentEncoder();
+
+        // Clear current render pass descriptor - will be recreated with new target
+        currentRenderPass = nil;
+
+        // Set new render target
+        if (cmd.renderTarget) {
+            // Render to custom texture (FBO)
+            id<MTLTexture> targetTexture = (__bridge id<MTLTexture>)cmd.renderTarget;
+            currentRenderTarget = targetTexture;
+
+            // Try to find or create a matching depth buffer
+            // For now, we'll check if there's a depth texture with matching dimensions
+            // This is a simplified approach; a full implementation would maintain
+            // a depth buffer pool or allow explicit depth buffer specification
+            NSUInteger width = targetTexture.width;
+            NSUInteger height = targetTexture.height;
+
+            // Check if we need to create a depth buffer
+            if (!depthTarget || depthTarget.width != width || depthTarget.height != height) {
+                // Create depth texture matching the render target dimensions
+                MTLTextureDescriptor* depthDesc = [MTLTextureDescriptor
+                    texture2DDescriptorWithPixelFormat:MTLPixelFormatDepth32Float
+                    width:width
+                    height:height
+                    mipmapped:NO];
+                depthDesc.usage = MTLTextureUsageRenderTarget;
+                depthDesc.storageMode = MTLStorageModePrivate;
+
+                depthTarget = [device newTextureWithDescriptor:depthDesc];
+                if (!depthTarget) {
+                    NSLog(@"MetalRenderer: Failed to create depth buffer for FBO");
+                    // Continue without depth buffer
+                }
+            }
+
+            NSLog(@"MetalRenderer: Switched to FBO render target (%lu x %lu)",
+                  (unsigned long)width, (unsigned long)height);
+        } else {
+            // Render to screen (default)
+            currentRenderTarget = nil;
+            depthTarget = nil;  // View provides its own depth buffer
+
+            NSLog(@"MetalRenderer: Switched to screen render target");
+        }
+
+        return true;
+    }
+}
+
 // ============================================================================
 // State Management
 // ============================================================================
@@ -1143,8 +1227,13 @@ void MetalRenderer::setCullingMode(bool cullBack, bool enabled) {
 }
 
 bool MetalRenderer::setRenderTarget(void* renderTarget) {
-    // TODO: Implement in Phase 11 (FBO)
-    return true;
+    if (!impl_->initialized) {
+        return false;
+    }
+
+    SetRenderTargetCommand cmd;
+    cmd.renderTarget = renderTarget;
+    return impl_->executeSetRenderTarget(cmd);
 }
 
 void* MetalRenderer::getDefaultRenderTarget() const {

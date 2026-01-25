@@ -96,8 +96,8 @@ Addons are explicitly last.
   Files: `src/render/metal/MetalRenderer.mm`
   DoD: DrawList 3D draws render correctly.
 
-- [ ] **Implement SetRenderTarget (FBO).**  
-  Files: `src/render/metal/MetalRenderer.mm`  
+- [x] **Implement SetRenderTarget (FBO).**
+  Files: `src/render/metal/MetalRenderer.mm`
   DoD: render target switching works with `ofFbo`.
 
 - [ ] **Add 2D projection + model-view handling.**  
