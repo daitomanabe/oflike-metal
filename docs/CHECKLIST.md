@@ -44,8 +44,8 @@ Addons are explicitly last.
   Files: `project.yml`
   DoD: VisionKit is weak-linked or conditionally linked, consistent with CMake.
 
-- [ ] **Merge duplicate Swift PerformanceStats.**  
-  Files: `src/platform/swiftui/MetalView.swift`, `src/platform/swiftui/PerformanceMonitor.swift`  
+- [x] **Merge duplicate Swift PerformanceStats.**
+  Files: `src/platform/swiftui/MetalView.swift`, `src/platform/swiftui/PerformanceMonitor.swift`
   DoD: only one `PerformanceStats` type remains and is used.
 
 ---
