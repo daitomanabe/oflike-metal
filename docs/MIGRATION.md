@@ -1,23 +1,27 @@
 # Migration Guide: openFrameworks → oflike-metal
 
-**Version**: 1.0.0
-**Last Updated**: 2026-01-24
+**Version**: 1.1.0
+**Last Updated**: 2026-01-25
 
 This guide helps you migrate existing openFrameworks projects to oflike-metal, the macOS-native implementation using SwiftUI and Metal.
+
+> **重要**: oflike-metal は **SwiftUI をデフォルトのエントリーポイント**として採用しています。
+> `ofMain()` による従来のエントリーポイントは **レガシー互換性のみのために提供**されています。
 
 ---
 
 ## Table of Contents
 
 1. [Overview](#overview)
-2. [Key Differences](#key-differences)
-3. [Platform Support](#platform-support)
-4. [Project Setup](#project-setup)
-5. [Code Migration](#code-migration)
-6. [API Compatibility](#api-compatibility)
-7. [Rendering Differences](#rendering-differences)
-8. [Performance Considerations](#performance-considerations)
-9. [Troubleshooting](#troubleshooting)
+2. [Entry Point Strategy](#entry-point-strategy)
+3. [Key Differences](#key-differences)
+4. [Platform Support](#platform-support)
+5. [Project Setup](#project-setup)
+6. [Code Migration](#code-migration)
+7. [API Compatibility](#api-compatibility)
+8. [Rendering Differences](#rendering-differences)
+9. [Performance Considerations](#performance-considerations)
+10. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -47,6 +51,126 @@ oflike-metal is a ground-up reimplementation of openFrameworks specifically for 
 | Core API only | **Low** | Change headers, rebuild |
 | Using addons | **Medium** | Check addon compatibility |
 | Custom OpenGL | **High** | Rewrite with Metal shaders |
+
+---
+
+## Entry Point Strategy
+
+### SwiftUI Entry (Default, Recommended)
+
+**oflike-metal のデフォルトエントリーポイントは SwiftUI です。** 新規プロジェクトには SwiftUI Entry を使用してください。
+
+#### SwiftUI Entry の利点
+
+✅ **モダンな macOS アプリケーション**:
+- ネイティブな UI/UX
+- 複数ウィンドウサポート
+- メニューバー、ツールバー、設定画面の統合
+- SwiftUI コンポーネントと C++ レンダリングの組み合わせ
+
+✅ **将来性**:
+- Apple が推奨する UI フレームワーク
+- 新機能は SwiftUI Entry で優先実装
+- macOS の最新機能への迅速な対応
+
+✅ **柔軟性**:
+- SwiftUI で UI を構築し、C++ で描画ロジックを記述
+- リアルタイムパラメータ調整、デバッグUI が容易
+- Inspector パネル、サイドバー、オーバーレイ UI
+
+**SwiftUI Entry の例**:
+```swift
+// App.swift
+import SwiftUI
+
+@main
+struct MyApp: App {
+    @StateObject private var appState = AppState()
+
+    var body: some Scene {
+        WindowGroup {
+            ContentView(appState: appState)
+        }
+        .commands {
+            CommandMenu("Render") {
+                Button("Toggle Fullscreen") { appState.toggleFullscreen() }
+                Button("Take Screenshot") { appState.screenshot() }
+            }
+        }
+    }
+}
+
+// ContentView.swift
+struct ContentView: View {
+    @ObservedObject var appState: AppState
+
+    var body: some View {
+        HStack(spacing: 0) {
+            // C++ レンダリングビュー
+            MetalView(appState: appState)
+                .frame(minWidth: 800, minHeight: 600)
+
+            // SwiftUI コントロールパネル
+            Sidebar(appState: appState)
+                .frame(width: 250)
+        }
+    }
+}
+```
+
+### ofMain Entry (Legacy, Compatibility Only)
+
+**ofMain Entry はレガシー互換性のためのみに提供されています。** 既存の openFrameworks プロジェクトを最小限の変更で移行する場合にのみ使用してください。
+
+#### ofMain Entry の制約
+
+⚠️ **単一ウィンドウのみ**: 複数ウィンドウ不可
+⚠️ **限定的なUI**: SwiftUI コンポーネント統合不可
+⚠️ **レガシー**: 新機能は SwiftUI Entry で優先実装
+⚠️ **将来性**: メンテナンスモードのみ
+
+**ofMain Entry の例**:
+```cpp
+// main.mm (レガシー)
+#include <oflike/ofMain.h>
+#include "MyApp.h"
+
+int main() {
+    ofRunApp<MyApp>(1024, 768, "My App");  // レガシーエントリー
+    return 0;
+}
+```
+
+#### 使用すべき場合
+
+- ✅ 既存の oF プロジェクトを最小限の変更で移行
+- ✅ 単純なフルスクリーン描画アプリ (VJ, インスタレーション)
+- ✅ 一時的な互換性ブリッジ (後で SwiftUI に移行予定)
+
+#### 使用すべきでない場合
+
+- ❌ 新規プロジェクト → **SwiftUI Entry を使用**
+- ❌ 複数ウィンドウが必要 → **SwiftUI Entry を使用**
+- ❌ SwiftUI コンポーネント統合 → **SwiftUI Entry を使用**
+- ❌ macOS ネイティブ UI/UX → **SwiftUI Entry を使用**
+
+### 移行パス
+
+既存の oF プロジェクトの推奨移行ステップ:
+
+1. **Phase 1**: ofMain Entry で動作確認 (最小限の変更)
+2. **Phase 2**: SwiftUI Entry に移行 (ネイティブ UI の恩恵)
+3. **Phase 3**: SwiftUI コンポーネントで UI を拡張
+
+```
+openFrameworks (GLFW)
+        ↓
+oflike-metal (ofMain Entry)  ← Phase 1: 最小限の移行
+        ↓
+oflike-metal (SwiftUI Entry)  ← Phase 2: 推奨パス
+        ↓
+SwiftUI + C++ Rendering       ← Phase 3: フル活用
+```
 
 ---
 
@@ -81,7 +205,7 @@ class MyApp : public ofBaseApp {
 | **Window** | GLFW/SDL | SwiftUI + MTKView |
 | **Fonts** | FreeType | Core Text |
 | **Image Loading** | FreeImage/stb_image | ImageIO / MTKTextureLoader |
-| **Coordinate System** | OpenGL right-hand | Metal left-hand (handled internally) |
+| **Coordinate System** | OpenGL right-hand | oF right-hand (2D top-left); Metal NDC handled internally |
 | **Shaders** | GLSL | MSL (Metal Shading Language) |
 
 ---
@@ -152,7 +276,7 @@ General:
   - Minimum Deployment: macOS 13.0
 
 Build Settings:
-  - C++ Language Dialect: C++20
+  - C++ Language Dialect: C++20 (recommended, min C++17)
   - Header Search Paths: $(SRCROOT)/../src
   - Framework Search Paths: $(SRCROOT)/../build/Release
 ```
@@ -162,7 +286,7 @@ Build Settings:
 cmake_minimum_required(VERSION 3.20)
 project(myProject)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 20) # Recommended (min: 17)
 find_package(oflike-metal REQUIRED)
 
 add_executable(myProject main.cpp MyApp.cpp)
@@ -228,25 +352,37 @@ void MyApp::draw() {
 // No changes to implementation!
 ```
 
-**Main Entry Point** (`main.cpp`):
-```cpp
-// openFrameworks
-#include "ofMain.h"
-#include "ofApp.h"
+**Main Entry Point**:
 
-int main() {
-    ofSetupOpenGL(1024, 768, OF_WINDOW);
-    ofRunApp(new ofApp());
+**Option A: SwiftUI Entry (推奨)**:
+```swift
+// App.swift (推奨)
+import SwiftUI
+
+@main
+struct MyApp: App {
+    var body: some Scene {
+        WindowGroup {
+            MetalView()
+                .frame(minWidth: 1024, minHeight: 768)
+        }
+    }
 }
+```
 
-// oflike-metal
+**Option B: ofMain Entry (レガシー互換性)**:
+```cpp
+// main.mm (レガシー)
 #include <oflike/ofMain.h>
 #include "MyApp.h"
 
 int main() {
-    ofRunApp<MyApp>(1024, 768, "My App");  // Slightly simplified
+    ofRunApp<MyApp>(1024, 768, "My App");  // レガシーエントリー
+    return 0;
 }
 ```
+
+> **推奨**: 新規プロジェクトには SwiftUI Entry を使用してください。ofMain Entry はレガシー互換性のためのみに提供されています。
 
 ### Header Migration
 
@@ -371,8 +507,8 @@ ofDrawCircle(100, 100, 50);  // Same in both
 
 **3D Rendering**:
 ```cpp
-// openFrameworks: OpenGL right-handed coordinate system
-// oflike-metal: Metal left-handed (handled internally)
+// openFrameworks: right-handed coordinate system
+// oflike-metal: keeps oF right-hand; renderer handles Metal NDC/Y flip
 
 // Your code is the same:
 camera.setPosition(0, 0, 10);
@@ -541,7 +677,7 @@ Solution: Link against oflike-metal framework
 
 **Issue**: "This decl requires std=c++20 or later"
 ```
-Solution: Update C++ standard in build settings
+Solution: Use C++20 (recommended) or refactor to C++17
 C++ Language Dialect: C++20
 ```
 
@@ -592,14 +728,18 @@ int main() {
 
 - [ ] Install Xcode 15.0+
 - [ ] Clone and build oflike-metal
+- [ ] **決定: エントリーポイント戦略**
+  - [ ] Option A: SwiftUI Entry (推奨) - 新規プロジェクト、複数ウィンドウ、UI統合
+  - [ ] Option B: ofMain Entry (レガシー) - 既存oFプロジェクト最小限移行
 - [ ] Update includes (`ofMain.h` → `<oflike/ofMain.h>`)
-- [ ] Update main() entry point
+- [ ] Implement chosen entry point (SwiftUI App.swift or ofMain main.mm)
 - [ ] Rewrite custom shaders (GLSL → MSL) if any
 - [ ] Remove direct OpenGL calls if any
 - [ ] Test on macOS 13.0+ / Apple Silicon
 - [ ] Verify rendering output matches original
 - [ ] Profile performance
 - [ ] Update CI/CD to macOS-only builds
+- [ ] (推奨) Plan migration from ofMain to SwiftUI Entry if using ofMain
 
 ---
 

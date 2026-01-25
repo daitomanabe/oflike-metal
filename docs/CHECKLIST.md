@@ -12,8 +12,8 @@ Addons are explicitly last.
   Files: `docs/ARCHITECTURE.md`
   DoD: oflike layer cannot include `render/metal/*`; Metal code is restricted to `src/render/metal/`.
 
-- [ ] **Declare SwiftUI as default, ofMain as legacy/compat.**  
-  Files: `docs/ARCHITECTURE.md`, `docs/MIGRATION.md`  
+- [x] **Declare SwiftUI as default, ofMain as legacy/compat.**
+  Files: `docs/ARCHITECTURE.md`, `docs/MIGRATION.md`
   DoD: docs explicitly state SwiftUI is the default entry; ofMain is legacy.
 
 - [ ] **Clarify coordinate responsibilities (2D top-left; renderer handles NDC/Y).**  

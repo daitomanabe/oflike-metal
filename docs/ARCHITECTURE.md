@@ -1,6 +1,6 @@
 # oflike-metal Architecture - Absolute Policies
 
-**Version**: 3.1.0
+**Version**: 3.2.0
 **Last Updated**: 2026-01-25
 **Status**: Active
 
@@ -25,13 +25,80 @@
 
 | 柱 | 内容 |
 |---|------|
-| **SwiftUI** | ウィンドウ、イベント、UI |
+| **SwiftUI** | ウィンドウ、イベント、UI (デフォルト) |
 | **Metal** | GPUレンダリング、シェーダー、Compute |
 | **C++記述** | アプリケーションロジックはC++で記述 |
 | **oF API互換** | openFrameworks の API シグネチャを維持 |
 | **Apple Native** | Neural Engine, Core ML, Vision, PHASE 等を活用 |
 
-### 1.3 技術スタック
+### 1.3 エントリーポイント方針
+
+**SwiftUI がデフォルト、ofMain は互換性のためのレガシーパス**
+
+oflike-metal は2つのアプリケーションエントリーポイントを提供します:
+
+#### 1.3.1 SwiftUI Entry (デフォルト・推奨)
+
+**これがデフォルトです。** 新規プロジェクトは SwiftUI エントリーを使用してください。
+
+```swift
+// App.swift - SwiftUI Entry Point (推奨)
+import SwiftUI
+
+@main
+struct MyApp: App {
+    @StateObject private var appState = AppState()
+
+    var body: some Scene {
+        WindowGroup {
+            MetalView(appState: appState)
+                .frame(minWidth: 800, minHeight: 600)
+        }
+        .windowStyle(.titleBar)
+        .windowToolbarStyle(.unified)
+    }
+}
+```
+
+**利点**:
+- ✅ **モダンな macOS アプリ**: SwiftUI によるネイティブな UI/UX
+- ✅ **フル機能**: 複数ウィンドウ、設定画面、メニューバー、ツールバー
+- ✅ **統合**: SwiftUI コンポーネントと C++ レンダリングの組み合わせ
+- ✅ **将来性**: Apple の推奨する UI フレームワーク
+
+#### 1.3.2 ofMain Entry (レガシー・互換性)
+
+**openFrameworks 互換性のみのために提供。** 既存の oF プロジェクトの移行用です。
+
+```cpp
+// main.mm - ofMain Entry Point (レガシー)
+#include <oflike/ofMain.h>
+#include "MyApp.h"
+
+int main() {
+    ofRunApp<MyApp>(1024, 768, "My App");
+    return 0;
+}
+```
+
+**制約**:
+- ⚠️ **単一ウィンドウのみ**: 複数ウィンドウ不可
+- ⚠️ **限定的なUI**: SwiftUI コンポーネント統合不可
+- ⚠️ **レガシー**: 新機能は SwiftUI エントリーで優先実装
+- ⚠️ **将来性**: メンテナンスモードのみ
+
+**使用すべき場合**:
+- 既存の openFrameworks プロジェクトを最小限の変更で移行する場合
+- 単純なフルスクリーン描画アプリ (VJ, インスタレーション)
+- 一時的な互換性ブリッジとして使用し、後で SwiftUI に移行予定
+
+**使用すべきでない場合**:
+- 新規プロジェクト → SwiftUI Entry を使用
+- 複数ウィンドウが必要 → SwiftUI Entry を使用
+- SwiftUI コンポーネント統合 → SwiftUI Entry を使用
+- macOS ネイティブ UI/UX → SwiftUI Entry を使用
+
+### 1.4 技術スタック
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -93,14 +160,14 @@
 └───────────────────────────────────────────────────────────────────────┘
 ```
 
-### 1.4 プラットフォーム要件
+### 1.5 プラットフォーム要件
 
 - **macOS専用** (最小サポート: macOS 13.0 Ventura)
 - **Apple Silicon最適化** (Intel互換は維持)
 - **Neural Engine活用** (Apple Silicon のみ)
 - **macOS 14 依存機能はオプション化** (VisionKit などは機能有効時のみ)
 
-### 1.5 座標系
+### 1.6 座標系
 
 - **2D**: oflike API は左上原点 (+X 右, +Y 下) を維持
 - **3D**: oF 互換の右手座標系を維持
@@ -725,6 +792,7 @@ os_log_error(OS_LOG_DEFAULT, "ofxSharp: Failed to load model");
 | 2025-01-23 | 2.0.0 | SwiftUI統一、AppKit禁止 |
 | 2026-01-23 | 3.0.0 | Apple Native Addons追加、ofxSharp設計 |
 | 2026-01-25 | 3.1.0 | レイヤー境界の明確化 (Phase 0.1) |
+| 2026-01-25 | 3.2.0 | SwiftUIデフォルト、ofMainレガシー明記 (Phase 0.2) |
 
 ---
 
