@@ -819,7 +819,6 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/third_party/utf8",
-					"$(SRCROOT)/third_party/glm",
 					"$(SRCROOT)/third_party/tess2/Include",
 				);
 				INFOPLIST_FILE = resources/Info.plist;
@@ -849,7 +848,6 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/third_party/utf8",
-					"$(SRCROOT)/third_party/glm",
 					"$(SRCROOT)/third_party/tess2/Include",
 				);
 				INFOPLIST_FILE = resources/Info.plist;

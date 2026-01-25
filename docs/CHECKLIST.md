@@ -36,8 +36,8 @@ Addons are explicitly last.
   Files: `CMakeLists.txt`
   DoD: non-Xcode CMake builds do not fail due to Swift sources.
 
-- [ ] **Remove GLM header search path.**  
-  Files: `project.yml`  
+- [x] **Remove GLM header search path.**
+  Files: `project.yml`
   DoD: `third_party/glm` is not referenced unless explicitly justified.
 
 - [ ] **Align VisionKit optional link in XcodeGen.**  
