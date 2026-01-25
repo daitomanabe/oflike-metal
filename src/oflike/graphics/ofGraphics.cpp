@@ -393,13 +393,36 @@ void ofDrawLine(float x1, float y1, float x2, float y2) {
 void ofDrawLine(float x1, float y1, float z1, float x2, float y2, float z2) {
     auto& state = getGraphicsState();
 
-    // Apply current transformation matrix
-    simd_float4 p1 = simd_make_float4(x1, y1, z1, 1.0f);
-    simd_float4 p2 = simd_make_float4(x2, y2, z2, 1.0f);
+    // Create line vertices (2D rendering)
+    simd_float4 color = colorToFloat4(state.currentColor[0], state.currentColor[1],
+                                       state.currentColor[2], state.currentColor[3]);
 
-    // TODO: Transform points by currentMatrix
-    // TODO: Issue line draw command via graphics system
-    // For now, this is a placeholder for when DrawList is integrated
+    render::Vertex2D vertices[2];
+    vertices[0] = render::Vertex2D(x1, y1, 0.0f, 0.0f, color.x, color.y, color.z, color.w);
+    vertices[1] = render::Vertex2D(x2, y2, 0.0f, 0.0f, color.x, color.y, color.z, color.w);
+
+    // Add vertices to DrawList
+    auto& drawList = Context::instance().getDrawList();
+    uint32_t vtxOffset = drawList.addVertices2D(vertices, 2);
+
+    // Create draw command
+    render::DrawCommand2D cmd;
+    cmd.vertexOffset = vtxOffset;
+    cmd.vertexCount = 2;
+    cmd.primitiveType = render::PrimitiveType::Line;
+    cmd.blendMode = static_cast<render::BlendMode>(state.blendMode);
+    cmd.texture = nullptr;
+
+    // Convert ofMatrix4x4 to simd_float4x4
+    auto& m = state.currentMatrix;
+    cmd.transform = simd_matrix(
+        simd_make_float4(m(0,0), m(1,0), m(2,0), m(3,0)),
+        simd_make_float4(m(0,1), m(1,1), m(2,1), m(3,1)),
+        simd_make_float4(m(0,2), m(1,2), m(2,2), m(3,2)),
+        simd_make_float4(m(0,3), m(1,3), m(2,3), m(3,3))
+    );
+
+    drawList.addCommand(cmd);
 }
 
 void ofDrawRectangle(float x, float y, float w, float h) {
@@ -407,15 +430,44 @@ void ofDrawRectangle(float x, float y, float w, float h) {
 
     if (state.fillEnabled) {
         // Draw filled rectangle (2 triangles)
-        // Vertices: (x,y), (x+w,y), (x+w,y+h), (x,y+h)
-        simd_float4 v1 = simd_make_float4(x, y, 0.0f, 1.0f);
-        simd_float4 v2 = simd_make_float4(x + w, y, 0.0f, 1.0f);
-        simd_float4 v3 = simd_make_float4(x + w, y + h, 0.0f, 1.0f);
-        simd_float4 v4 = simd_make_float4(x, y + h, 0.0f, 1.0f);
+        simd_float4 color = colorToFloat4(state.currentColor[0], state.currentColor[1],
+                                           state.currentColor[2], state.currentColor[3]);
 
-        // TODO: Transform vertices by currentMatrix
-        // TODO: Issue draw command via graphics system
-        // Triangles: (v1, v2, v3) and (v1, v3, v4)
+        // Create 4 vertices for the rectangle
+        render::Vertex2D vertices[4];
+        vertices[0] = render::Vertex2D(x, y, 0.0f, 0.0f, color.x, color.y, color.z, color.w);
+        vertices[1] = render::Vertex2D(x + w, y, 1.0f, 0.0f, color.x, color.y, color.z, color.w);
+        vertices[2] = render::Vertex2D(x + w, y + h, 1.0f, 1.0f, color.x, color.y, color.z, color.w);
+        vertices[3] = render::Vertex2D(x, y + h, 0.0f, 1.0f, color.x, color.y, color.z, color.w);
+
+        // Create indices for 2 triangles (0,1,2) and (0,2,3)
+        uint32_t indices[6] = {0, 1, 2, 0, 2, 3};
+
+        // Add vertices and indices to DrawList
+        auto& drawList = Context::instance().getDrawList();
+        uint32_t vtxOffset = drawList.addVertices2D(vertices, 4);
+        uint32_t idxOffset = drawList.addIndices(indices, 6);
+
+        // Create draw command
+        render::DrawCommand2D cmd;
+        cmd.vertexOffset = vtxOffset;
+        cmd.vertexCount = 4;
+        cmd.indexOffset = idxOffset;
+        cmd.indexCount = 6;
+        cmd.primitiveType = render::PrimitiveType::Triangle;
+        cmd.blendMode = static_cast<render::BlendMode>(state.blendMode);
+        cmd.texture = nullptr;
+
+        // Convert ofMatrix4x4 to simd_float4x4
+        auto& m = state.currentMatrix;
+        cmd.transform = simd_matrix(
+            simd_make_float4(m(0,0), m(1,0), m(2,0), m(3,0)),
+            simd_make_float4(m(0,1), m(1,1), m(2,1), m(3,1)),
+            simd_make_float4(m(0,2), m(1,2), m(2,2), m(3,2)),
+            simd_make_float4(m(0,3), m(1,3), m(2,3), m(3,3))
+        );
+
+        drawList.addCommand(cmd);
     } else {
         // Draw rectangle outline (4 lines)
         ofDrawLine(x, y, x + w, y);           // Top
@@ -492,22 +544,61 @@ void ofDrawCircle(float x, float y, float z, float radius) {
 
     if (state.fillEnabled) {
         // Draw filled circle using triangle fan
-        std::vector<simd_float4> vertices;
+        simd_float4 color = colorToFloat4(state.currentColor[0], state.currentColor[1],
+                                           state.currentColor[2], state.currentColor[3]);
+
+        // Create vertices: center + perimeter
+        std::vector<render::Vertex2D> vertices;
         vertices.reserve(resolution + 2);
 
         // Center vertex
-        vertices.push_back(simd_make_float4(x, y, z, 1.0f));
+        vertices.push_back(render::Vertex2D(x, y, 0.5f, 0.5f, color.x, color.y, color.z, color.w));
 
         // Perimeter vertices
         for (uint32_t i = 0; i <= resolution; i++) {
             float angle = (2.0f * M_PI * i) / resolution;
             float vx = x + radius * std::cos(angle);
             float vy = y + radius * std::sin(angle);
-            vertices.push_back(simd_make_float4(vx, vy, z, 1.0f));
+            // Texture coordinates map to circle (for potential texture mapping)
+            float u = 0.5f + 0.5f * std::cos(angle);
+            float v = 0.5f + 0.5f * std::sin(angle);
+            vertices.push_back(render::Vertex2D(vx, vy, u, v, color.x, color.y, color.z, color.w));
         }
 
-        // TODO: Transform vertices by currentMatrix
-        // TODO: Issue triangle fan draw command via graphics system
+        // Create indices for triangle fan
+        std::vector<uint32_t> indices;
+        indices.reserve(resolution * 3);
+        for (uint32_t i = 1; i <= resolution; i++) {
+            indices.push_back(0);       // Center
+            indices.push_back(i);       // Current perimeter point
+            indices.push_back(i + 1);   // Next perimeter point
+        }
+
+        // Add vertices and indices to DrawList
+        auto& drawList = Context::instance().getDrawList();
+        uint32_t vtxOffset = drawList.addVertices2D(vertices);
+        uint32_t idxOffset = drawList.addIndices(indices);
+
+        // Create draw command
+        render::DrawCommand2D cmd;
+        cmd.vertexOffset = vtxOffset;
+        cmd.vertexCount = static_cast<uint32_t>(vertices.size());
+        cmd.indexOffset = idxOffset;
+        cmd.indexCount = static_cast<uint32_t>(indices.size());
+        cmd.primitiveType = render::PrimitiveType::Triangle;
+        cmd.blendMode = static_cast<render::BlendMode>(state.blendMode);
+        cmd.texture = nullptr;
+
+        // Convert ofMatrix4x4 to simd_float4x4
+        auto& m = state.currentMatrix;
+        cmd.transform = simd_matrix(
+            simd_make_float4(m(0,0), m(1,0), m(2,0), m(3,0)),
+            simd_make_float4(m(0,1), m(1,1), m(2,1), m(3,1)),
+            simd_make_float4(m(0,2), m(1,2), m(2,2), m(3,2)),
+            simd_make_float4(m(0,3), m(1,3), m(2,3), m(3,3))
+        );
+
+        drawList.addCommand(cmd);
     } else {
         // Draw circle outline using line loop
         for (uint32_t i = 0; i < resolution; i++) {
@@ -533,22 +624,61 @@ void ofDrawEllipse(float x, float y, float width, float height) {
 
     if (state.fillEnabled) {
         // Draw filled ellipse using triangle fan
-        std::vector<simd_float4> vertices;
+        simd_float4 color = colorToFloat4(state.currentColor[0], state.currentColor[1],
+                                           state.currentColor[2], state.currentColor[3]);
+
+        // Create vertices: center + perimeter
+        std::vector<render::Vertex2D> vertices;
         vertices.reserve(resolution + 2);
 
         // Center vertex
-        vertices.push_back(simd_make_float4(x, y, 0.0f, 1.0f));
+        vertices.push_back(render::Vertex2D(x, y, 0.5f, 0.5f, color.x, color.y, color.z, color.w));
 
         // Perimeter vertices
         for (uint32_t i = 0; i <= resolution; i++) {
             float angle = (2.0f * M_PI * i) / resolution;
             float vx = x + radiusX * std::cos(angle);
             float vy = y + radiusY * std::sin(angle);
-            vertices.push_back(simd_make_float4(vx, vy, 0.0f, 1.0f));
+            // Texture coordinates map to ellipse
+            float u = 0.5f + 0.5f * std::cos(angle);
+            float v = 0.5f + 0.5f * std::sin(angle);
+            vertices.push_back(render::Vertex2D(vx, vy, u, v, color.x, color.y, color.z, color.w));
         }
 
-        // TODO: Transform vertices by currentMatrix
-        // TODO: Issue triangle fan draw command via graphics system
+        // Create indices for triangle fan
+        std::vector<uint32_t> indices;
+        indices.reserve(resolution * 3);
+        for (uint32_t i = 1; i <= resolution; i++) {
+            indices.push_back(0);       // Center
+            indices.push_back(i);       // Current perimeter point
+            indices.push_back(i + 1);   // Next perimeter point
+        }
+
+        // Add vertices and indices to DrawList
+        auto& drawList = Context::instance().getDrawList();
+        uint32_t vtxOffset = drawList.addVertices2D(vertices);
+        uint32_t idxOffset = drawList.addIndices(indices);
+
+        // Create draw command
+        render::DrawCommand2D cmd;
+        cmd.vertexOffset = vtxOffset;
+        cmd.vertexCount = static_cast<uint32_t>(vertices.size());
+        cmd.indexOffset = idxOffset;
+        cmd.indexCount = static_cast<uint32_t>(indices.size());
+        cmd.primitiveType = render::PrimitiveType::Triangle;
+        cmd.blendMode = static_cast<render::BlendMode>(state.blendMode);
+        cmd.texture = nullptr;
+
+        // Convert ofMatrix4x4 to simd_float4x4
+        auto& m = state.currentMatrix;
+        cmd.transform = simd_matrix(
+            simd_make_float4(m(0,0), m(1,0), m(2,0), m(3,0)),
+            simd_make_float4(m(0,1), m(1,1), m(2,1), m(3,1)),
+            simd_make_float4(m(0,2), m(1,2), m(2,2), m(3,2)),
+            simd_make_float4(m(0,3), m(1,3), m(2,3), m(3,3))
+        );
+
+        drawList.addCommand(cmd);
     } else {
         // Draw ellipse outline
         for (uint32_t i = 0; i < resolution; i++) {
@@ -574,12 +704,39 @@ void ofDrawTriangle(float x1, float y1, float z1, float x2, float y2, float z2, 
 
     if (state.fillEnabled) {
         // Draw filled triangle
-        simd_float4 v1 = simd_make_float4(x1, y1, z1, 1.0f);
-        simd_float4 v2 = simd_make_float4(x2, y2, z2, 1.0f);
-        simd_float4 v3 = simd_make_float4(x3, y3, z3, 1.0f);
+        simd_float4 color = colorToFloat4(state.currentColor[0], state.currentColor[1],
+                                           state.currentColor[2], state.currentColor[3]);
 
-        // TODO: Transform vertices by currentMatrix
-        // TODO: Issue triangle draw command via graphics system
+        // Create 3 vertices for the triangle
+        render::Vertex2D vertices[3];
+        vertices[0] = render::Vertex2D(x1, y1, 0.0f, 0.0f, color.x, color.y, color.z, color.w);
+        vertices[1] = render::Vertex2D(x2, y2, 1.0f, 0.0f, color.x, color.y, color.z, color.w);
+        vertices[2] = render::Vertex2D(x3, y3, 0.5f, 1.0f, color.x, color.y, color.z, color.w);
+
+        // Add vertices to DrawList
+        auto& drawList = Context::instance().getDrawList();
+        uint32_t vtxOffset = drawList.addVertices2D(vertices, 3);
+
+        // Create draw command (no indices needed for a single triangle)
+        render::DrawCommand2D cmd;
+        cmd.vertexOffset = vtxOffset;
+        cmd.vertexCount = 3;
+        cmd.indexOffset = 0;
+        cmd.indexCount = 0;  // No indices
+        cmd.primitiveType = render::PrimitiveType::Triangle;
+        cmd.blendMode = static_cast<render::BlendMode>(state.blendMode);
+        cmd.texture = nullptr;
+
+        // Convert ofMatrix4x4 to simd_float4x4
+        auto& m = state.currentMatrix;
+        cmd.transform = simd_matrix(
+            simd_make_float4(m(0,0), m(1,0), m(2,0), m(3,0)),
+            simd_make_float4(m(0,1), m(1,1), m(2,1), m(3,1)),
+            simd_make_float4(m(0,2), m(1,2), m(2,2), m(3,2)),
+            simd_make_float4(m(0,3), m(1,3), m(2,3), m(3,3))
+        );
+
+        drawList.addCommand(cmd);
     } else {
         // Draw triangle outline (3 lines)
         ofDrawLine(x1, y1, z1, x2, y2, z2);

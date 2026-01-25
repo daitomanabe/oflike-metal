@@ -132,8 +132,8 @@ Addons are explicitly last.
   Files: `src/oflike/graphics/ofGraphics.cpp`, `src/render/DrawCommand.h`
   DoD: `ofBackground` and `ofClear` trigger Clear commands.
 
-- [ ] **Implement 2D primitives with DrawList.**  
-  Files: `src/oflike/graphics/ofGraphics.cpp`  
+- [x] **Implement 2D primitives with DrawList.**
+  Files: `src/oflike/graphics/ofGraphics.cpp`
   DoD: line/rect/circle/triangle draw commands execute.
 
 - [ ] **Implement matrix stack and transforms.**  
