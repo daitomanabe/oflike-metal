@@ -212,8 +212,8 @@ Addons are explicitly last.
   Files: `docs/IMPLEMENTATION.md`, `tools/project_generator/README.md`
   DoD: CLI usage and example config are documented.
 
-- [ ] **Implement CLI generator.**  
-  Files: `tools/project_generator/`  
+- [x] **Implement CLI generator.**
+  Files: `tools/project_generator/`
   DoD: `oflike-gen --help` works; generates project skeleton.
 
 - [ ] **Add templates for generated projects.**  
