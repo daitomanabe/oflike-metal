@@ -22,6 +22,12 @@ typedef ofBaseApp* (*OfAppFactoryFunc)();
 /// @param device The MTLDevice instance
 - (void)initializeContextWithDevice:(id)device;
 
+/// Initialize the Metal renderer with device and view (Phase 3.2)
+/// Must be called after initializeContextWithDevice and before renderFrame
+/// @param device The MTLDevice instance
+/// @param view The MTKView instance
+- (void)initializeRenderer:(id)device view:(id)view;
+
 #ifdef __cplusplus
 /// Set the app factory function (Phase 2.1)
 /// This function will be called to create the user's app instance
@@ -37,6 +43,16 @@ typedef ofBaseApp* (*OfAppFactoryFunc)();
 
 /// Draw the C++ engine and user app (called every frame)
 - (void)draw;
+
+/// Execute frame rendering through the Metal renderer (Phase 3.2)
+/// This method handles the full render pipeline: command buffer creation,
+/// render pass encoding, DrawList execution, and presentation
+/// @param drawable The current MTLDrawable
+/// @param renderPassDescriptor The render pass descriptor
+/// @param commandQueue The command queue for creating command buffers
+- (void)renderFrame:(id)drawable
+    renderPassDescriptor:(id)renderPassDescriptor
+           commandQueue:(id)commandQueue;
 
 /// Cleanup and shutdown
 - (void)exit;

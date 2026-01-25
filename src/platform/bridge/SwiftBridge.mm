@@ -51,6 +51,21 @@
     }
 }
 
+- (void)initializeRenderer:(id)device view:(id)view {
+    @autoreleasepool {
+        std::cout << "[OFLBridge] Initializing Metal renderer" << std::endl;
+
+        // Phase 3.2: Initialize renderer through Context
+        Context::instance().initializeRenderer((__bridge void*)device, (__bridge void*)view);
+
+        if (Context::instance().renderer()) {
+            std::cout << "[OFLBridge] Renderer initialization successful" << std::endl;
+        } else {
+            std::cerr << "[OFLBridge] Renderer initialization failed!" << std::endl;
+        }
+    }
+}
+
 - (void)dealloc {
     [self exit];
 }
@@ -109,6 +124,39 @@
         // Phase 2.1: Draw user app
         if (userApp_) {
             userApp_->draw();
+        }
+    }
+}
+
+- (void)renderFrame:(id)drawable
+    renderPassDescriptor:(id)renderPassDescriptor
+           commandQueue:(id)commandQueue {
+    @autoreleasepool {
+        // Phase 3.2: Execute rendering through MetalRenderer
+        auto* renderer = Context::instance().renderer();
+        if (!renderer) {
+            std::cerr << "[OFLBridge] Cannot render: renderer not initialized" << std::endl;
+            return;
+        }
+
+        // Begin frame
+        if (!renderer->beginFrame()) {
+            std::cerr << "[OFLBridge] beginFrame() failed" << std::endl;
+            return;
+        }
+
+        // Execute DrawList (populated by user app's draw() calls)
+        render::DrawList& drawList = Context::instance().getDrawList();
+        if (!renderer->executeDrawList(drawList)) {
+            std::cerr << "[OFLBridge] executeDrawList() failed" << std::endl;
+            renderer->endFrame();
+            return;
+        }
+
+        // End frame (submits command buffer and presents)
+        if (!renderer->endFrame()) {
+            std::cerr << "[OFLBridge] endFrame() failed" << std::endl;
+            return;
         }
     }
 }

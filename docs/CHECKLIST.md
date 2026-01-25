@@ -76,8 +76,8 @@ Addons are explicitly last.
   Files: `src/core/Context.h`, `src/core/Context.mm`
   DoD: `Context::renderer()` returns a valid pointer after init.
 
-- [ ] **SwiftBridge exposes renderer init + render entry.**  
-  Files: `src/platform/bridge/SwiftBridge.h`, `src/platform/bridge/SwiftBridge.mm`  
+- [x] **SwiftBridge exposes renderer init + render entry.**
+  Files: `src/platform/bridge/SwiftBridge.h`, `src/platform/bridge/SwiftBridge.mm`
   DoD: Swift can call `initializeRenderer(device, view)` and `renderFrame()`.
 
 - [ ] **Expose Metal device via renderer or context.**  
