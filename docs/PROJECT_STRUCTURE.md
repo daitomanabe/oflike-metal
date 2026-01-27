@@ -1,6 +1,6 @@
 # Project Structure - Generator-Friendly Layout
 
-**Version**: 1.0.0
+**Version**: 1.0.1
 **Last Updated**: 2026-01-25
 **Status**: Active
 
@@ -29,8 +29,7 @@ myProject/                          # プロジェクトルート
 ├── src/                            # アプリケーションソースコード
 │   ├── MyApp.h                     # アプリケーションヘッダー
 │   ├── MyApp.cpp                   # アプリケーション実装 (C++)
-│   ├── main.mm                     # エントリーポイント (ofMain 使用時)
-│   └── App.swift                   # エントリーポイント (SwiftUI 使用時)
+│   └── App.swift                   # エントリーポイント (SwiftUI)
 │
 ├── addons/                         # プロジェクト固有の addons
 │   ├── ofxMyAddon/                 # カスタム addon 例
@@ -103,8 +102,7 @@ myProject/                          # プロジェクトルート
 **標準ファイル**:
 - `MyApp.h` - アプリケーションクラス定義
 - `MyApp.cpp` - アプリケーション実装
-- `main.mm` - ofMain エントリーポイント (レガシー)
-- `App.swift` - SwiftUI エントリーポイント (デフォルト)
+- `App.swift` - SwiftUI エントリーポイント
 
 **ユーザー追加ファイル**:
 - 追加のクラス、ヘルパー、ユーティリティ
@@ -115,7 +113,7 @@ myProject/                          # プロジェクトルート
 src/
 ├── MyApp.h
 ├── MyApp.cpp
-├── App.swift              # SwiftUI Entry (デフォルト)
+├── App.swift              # SwiftUI Entry
 ├── ParticleSystem.h       # ユーザー追加
 ├── ParticleSystem.cpp
 └── Utils.h
@@ -286,7 +284,7 @@ cmake --build . --config Release
 **例**:
 ```cpp
 // tests/TestApp.cpp
-#include "oflike/ofMain.h"
+#include "oflike/ofApp.h"
 
 void testParticleSystem() {
     ParticleSystem ps;
@@ -321,15 +319,6 @@ oflike-gen new myProject --addons ofxOsc ofxGui
 追加される内容:
 - `CMakeLists.txt` に addon リンク追加
 - `project.yml` に addon ソース追加
-
-**ofMain Entry で生成**:
-```bash
-oflike-gen new myProject --entry ofMain
-```
-
-生成されるファイル:
-- `src/main.mm` (ofMain Entry)
-- SwiftUI ファイルは生成されない
 
 ---
 

@@ -38,8 +38,9 @@ cd examples/validation_swiftui
 Create `src/ValidationApp.h`:
 ```cpp
 #pragma once
-#include <core/AppBase.h>
-#include <oflike/ofMain.h>
+#include <oflike/ofApp.h>
+#include <oflike/graphics/ofTrueTypeFont.h>
+#include <oflike/image/ofImage.h>
 
 class ValidationApp : public ofBaseApp {
 public:
@@ -101,6 +102,10 @@ void ValidationApp::draw() {
     ofSetColor(255);
     testFont.drawString("FPS: " + ofToString(ofGetFrameRate(), 1),
                        ofGetWidth() - 150, 50);
+}
+
+extern "C" ofBaseApp* ofCreateApp() {
+    return new ValidationApp();
 }
 ```
 

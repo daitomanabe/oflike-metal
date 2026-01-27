@@ -1,0 +1,8 @@
+/Users/rhizomacbookproretina30/Abstract Engine Dropbox/daito manabe/dm_web/sub-domain/daito-lab/oflike-metal/implementation/oflike_metal_skeleton/tools/project_generator/target/release/deps/serde_spanned-bfb3559cfeef9eff.d: /Users/rhizomacbookproretina30/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_spanned-0.6.9/src/lib.rs /Users/rhizomacbookproretina30/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_spanned-0.6.9/src/spanned.rs
+
+/Users/rhizomacbookproretina30/Abstract Engine Dropbox/daito manabe/dm_web/sub-domain/daito-lab/oflike-metal/implementation/oflike_metal_skeleton/tools/project_generator/target/release/deps/libserde_spanned-bfb3559cfeef9eff.rlib: /Users/rhizomacbookproretina30/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_spanned-0.6.9/src/lib.rs /Users/rhizomacbookproretina30/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_spanned-0.6.9/src/spanned.rs
+
+/Users/rhizomacbookproretina30/Abstract Engine Dropbox/daito manabe/dm_web/sub-domain/daito-lab/oflike-metal/implementation/oflike_metal_skeleton/tools/project_generator/target/release/deps/libserde_spanned-bfb3559cfeef9eff.rmeta: /Users/rhizomacbookproretina30/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_spanned-0.6.9/src/lib.rs /Users/rhizomacbookproretina30/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_spanned-0.6.9/src/spanned.rs
+
+/Users/rhizomacbookproretina30/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_spanned-0.6.9/src/lib.rs:
+/Users/rhizomacbookproretina30/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_spanned-0.6.9/src/spanned.rs:

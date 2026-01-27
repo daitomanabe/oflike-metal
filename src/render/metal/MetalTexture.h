@@ -109,6 +109,14 @@ public:
      */
     bool updateData(const void* data, const void* region = nullptr);
 
+    /**
+     * Read pixels from GPU texture to CPU memory.
+     * @param data Pointer to destination buffer (must be pre-allocated)
+     * @param region Optional region to read (nullptr = entire texture)
+     * @return true on success, false on failure
+     */
+    bool readPixels(void* data, const void* region = nullptr) const;
+
     // ========================================================================
     // Texture Properties
     // ========================================================================

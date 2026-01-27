@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::path::PathBuf;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -14,8 +13,6 @@ pub struct Config {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Defaults {
-    #[serde(default = "default_entry_mode")]
-    pub entry_mode: String,
     #[serde(default = "default_addon_mode")]
     pub addon_mode: String,
     #[serde(default)]
@@ -36,10 +33,10 @@ pub struct Templates {
     pub default_template: String,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ProjectConfig {
     pub project: ProjectInfo,
-    pub entry: EntryConfig,
     #[serde(default)]
     pub addons: AddonsConfig,
     #[serde(default)]
@@ -48,6 +45,7 @@ pub struct ProjectConfig {
     pub paths: ProjectPaths,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ProjectInfo {
     pub name: String,
@@ -58,12 +56,7 @@ pub struct ProjectInfo {
     pub bundle_id: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct EntryConfig {
-    #[serde(default = "default_entry_mode")]
-    pub mode: String,
-}
-
+#[allow(dead_code)]
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct AddonsConfig {
     #[serde(default)]
@@ -72,6 +65,7 @@ pub struct AddonsConfig {
     pub custom: Vec<CustomAddon>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CustomAddon {
     pub name: String,
@@ -79,6 +73,7 @@ pub struct CustomAddon {
     pub source: String,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct BuildConfig {
     #[serde(default = "default_true")]
@@ -93,6 +88,7 @@ pub struct BuildConfig {
     pub cpp_standard: String,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ProjectPaths {
     #[serde(default = "default_src")]
@@ -108,7 +104,6 @@ pub struct ProjectPaths {
 impl Default for Defaults {
     fn default() -> Self {
         Self {
-            entry_mode: default_entry_mode(),
             addon_mode: default_addon_mode(),
             author: String::new(),
             bundle_id_prefix: default_bundle_id_prefix(),
@@ -156,10 +151,6 @@ impl Default for ProjectPaths {
     }
 }
 
-fn default_entry_mode() -> String {
-    "swiftui".to_string()
-}
-
 fn default_addon_mode() -> String {
     "reference".to_string()
 }
@@ -172,38 +163,47 @@ fn default_template() -> String {
     "basic".to_string()
 }
 
+#[allow(dead_code)]
 fn default_version() -> String {
     "1.0.0".to_string()
 }
 
+#[allow(dead_code)]
 fn default_min_macos() -> String {
     "13.0".to_string()
 }
 
+#[allow(dead_code)]
 fn default_swift_version() -> String {
     "5.9".to_string()
 }
 
+#[allow(dead_code)]
 fn default_cpp_standard() -> String {
     "c++20".to_string()
 }
 
+#[allow(dead_code)]
 fn default_src() -> String {
     "src".to_string()
 }
 
+#[allow(dead_code)]
 fn default_data() -> String {
     "data".to_string()
 }
 
+#[allow(dead_code)]
 fn default_resources() -> String {
     "resources".to_string()
 }
 
+#[allow(dead_code)]
 fn default_addons() -> String {
     "addons".to_string()
 }
 
+#[allow(dead_code)]
 fn default_true() -> bool {
     true
 }

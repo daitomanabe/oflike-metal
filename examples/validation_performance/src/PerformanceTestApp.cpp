@@ -48,3 +48,7 @@ void PerformanceTestApp::draw() {
     // Note: Text rendering would add more draw calls
     // ofDrawBitmapString("Check performance overlay (top-left)", 10, ofGetHeight() - 20);
 }
+
+extern "C" ofBaseApp* ofCreateApp() {
+    return new PerformanceTestApp();
+}

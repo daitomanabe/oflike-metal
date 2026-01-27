@@ -1,6 +1,5 @@
 #pragma once
-#include <core/AppBase.h>
-#include <oflike/ofMain.h>
+#include <oflike/ofApp.h>
 
 /// Phase 11.2: Performance statistics validation test
 /// This app renders multiple primitives to generate draw calls and verify

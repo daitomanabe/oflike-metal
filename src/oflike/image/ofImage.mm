@@ -14,11 +14,11 @@ namespace oflike {
 // ============================================================================
 
 struct ofImage::Impl {
-    ofPixels pixels;              // CPU pixel data
-    ofTexture texture;            // GPU texture
-    bool bUseTexture = true;      // Whether to use texture for drawing
-    bool pixelsDirty = false;     // Pixels modified, need to sync to texture
-    bool textureDirty = false;    // Texture modified, need to sync to pixels
+    mutable ofPixels pixels;           // CPU pixel data
+    ofTexture texture;                 // GPU texture
+    bool bUseTexture = true;           // Whether to use texture for drawing
+    mutable bool pixelsDirty = false;  // Pixels modified, need to sync to texture
+    mutable bool textureDirty = false; // Texture modified, need to sync to pixels
 
     ~Impl() = default;
 };
@@ -52,8 +52,15 @@ void ofImage::ensureImpl() {
 }
 
 void ofImage::syncPixelsFromTexture() const {
-    // TODO: Implement GPU->CPU readback if needed in future
-    // For now, we maintain pixels on CPU side
+    if (!impl_ || !impl_->textureDirty || !impl_->texture.isAllocated()) {
+        return;  // No need to sync or not allocated
+    }
+
+    // Read pixels from GPU texture to CPU memory
+    if (impl_->texture.readToPixels(impl_->pixels)) {
+        impl_->textureDirty = false;
+        impl_->pixelsDirty = false;
+    }
 }
 
 void ofImage::syncTextureFromPixels() {

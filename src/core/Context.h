@@ -81,7 +81,7 @@ public:
     /// @param fps Target frames per second (default: 60)
     void setFrameRate(float fps);
 
-    /// Increment frame counter (called internally by Engine)
+    /// Increment frame counter (called internally by the render loop)
     void incrementFrame();
 
     // MARK: - Window

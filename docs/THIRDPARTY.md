@@ -156,11 +156,11 @@ oflike-metal minimizes external dependencies by leveraging Apple's native framew
 
 ---
 
-## 4. Apple Native Frameworks (Required)
+## 4. Apple Native Frameworks
 
 These are part of the Apple SDK and do not require separate attribution:
 
-### 4.1 Core Frameworks
+### 4.1 Core Frameworks (Required, macOS 13.0)
 
 | Framework | Purpose | Min Version |
 |-----------|---------|-------------|
@@ -170,7 +170,12 @@ These are part of the Apple SDK and do not require separate attribution:
 | **Metal Performance Shaders** | Optimized image processing | macOS 13.0 |
 | **Core ML** | Machine learning inference | macOS 13.0 |
 | **Vision** | Image analysis, detection | macOS 13.0 |
-| **VisionKit** | OCR, Live Text | macOS 13.0 |
+
+### 4.1.1 Conditional Frameworks (macOS 14+)
+
+| Framework | Purpose | Min Version | Note |
+|-----------|---------|-------------|------|
+| **VisionKit** | OCR, Live Text | macOS 14.0 | ofxLiveText only |
 
 ### 4.2 Media Frameworks
 
@@ -238,7 +243,7 @@ These are part of the Apple SDK and do not require separate attribution:
 | **ofxSpatialAudio** | PHASE | 3D spatial audio |
 | **ofxMetalFX** | MetalFX | AI upscaling |
 | **ofxUnifiedMemory** | Metal Shared Memory | Zero-copy CPU/GPU buffers |
-| **ofxLiveText** | VisionKit | OCR, text recognition |
+| **ofxLiveText** | VisionKit (macOS 14+) | OCR, text recognition |
 | **ofxObjectCapture** | Object Capture API | Photo → 3D model |
 
 ---
@@ -377,5 +382,5 @@ thirdparty/
 | Vision | ✅ | ✅ | ✅ |
 | PHASE | ✅ | ✅ | ✅ |
 | Object Capture | ✅ | ✅ | ✅ |
-| VisionKit (macOS) | - | ✅ | ✅ |
+| VisionKit (macOS, optional) | - | ✅ | ✅ |
 | Apple Intelligence | - | - | ✅ |

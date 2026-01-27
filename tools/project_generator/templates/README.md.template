@@ -1,21 +1,27 @@
 # {{PROJECT_NAME}}
 
-{{#if_swiftui}}
 SwiftUI-based macOS app with Metal rendering.
-{{else}}
-Legacy ofMain entry point (openFrameworks compatible).
-{{/if_swiftui}}
 
 ## Build Instructions
 
 ### Using XcodeGen (Recommended)
 
 ```bash
-# Generate Xcode project
-xcodegen generate
-
-# Open project
 open {{PROJECT_NAME}}.xcodeproj
+```
+
+Re-generate the Xcode project after editing `project.yml`:
+
+```bash
+xcodegen generate
+```
+
+### Using repo scripts (from oflike-metal root)
+
+```bash
+./scripts/build_app.sh {{PROJECT_NAME}}
+./scripts/run_app.sh {{PROJECT_NAME}}
+./scripts/run_app.sh {{PROJECT_NAME}} --metal-debug
 ```
 
 ### Using CMake
@@ -41,11 +47,9 @@ make -j8
 ├── src/                # Application source code
 │   ├── {{CLASS_NAME}}.h       # App class header
 │   ├── {{CLASS_NAME}}.cpp     # App class implementation
-{{#if_swiftui}}
-│   └── App.swift       # SwiftUI entry point
-{{else}}
-│   └── main.mm         # ofMain entry point
-{{/if_swiftui}}
+│   ├── App.swift       # SwiftUI entry point
+│   ├── MetalView.swift # MTKView + bridge
+│   └── PerformanceMonitor.swift # FPS/stats overlay
 ├── data/               # Runtime data files
 ├── resources/          # Build resources (Info.plist, Assets)
 ├── CMakeLists.txt      # CMake configuration
@@ -55,25 +59,21 @@ make -j8
 
 ## Entry Point
 
-{{#if_swiftui}}
 This project uses **SwiftUI entry** (modern macOS app structure).
 
 - Entry point: `src/App.swift`
 - App class: `src/{{CLASS_NAME}}.h/cpp`
 - Multiple windows, native UI components supported
-{{else}}
-This project uses **ofMain entry** (legacy openFrameworks compatible).
-
-- Entry point: `src/main.mm`
-- App class: `src/{{CLASS_NAME}}.h/cpp`
-- Single window, openFrameworks API
-{{/if_swiftui}}
 
 ## Requirements
 
 - macOS 13.0 or later
 - Xcode 15.0 or later
 - oflike-metal framework
+
+## Debug
+
+- Set `OFL_METAL_DEBUG=1` to log Metal library probing at app startup.
 
 ## Author
 

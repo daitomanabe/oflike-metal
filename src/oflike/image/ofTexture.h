@@ -119,6 +119,15 @@ public:
     void loadData(const void* data, int w, int h, int glFormat);
 
     // ========================================================================
+    // Data Readback
+    // ========================================================================
+
+    /// \brief Read pixel data from GPU texture to CPU memory
+    /// \param pix Destination pixel buffer (will be allocated if needed)
+    /// \return true on success, false on failure
+    bool readToPixels(ofPixels& pix) const;
+
+    // ========================================================================
     // Drawing
     // ========================================================================
 

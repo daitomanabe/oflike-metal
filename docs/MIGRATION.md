@@ -1,12 +1,12 @@
 # Migration Guide: openFrameworks → oflike-metal
 
-**Version**: 1.1.0
+**Version**: 1.2.0
 **Last Updated**: 2026-01-25
 
 This guide helps you migrate existing openFrameworks projects to oflike-metal, the macOS-native implementation using SwiftUI and Metal.
 
-> **重要**: oflike-metal は **SwiftUI をデフォルトのエントリーポイント**として採用しています。
-> `ofMain()` による従来のエントリーポイントは **レガシー互換性のみのために提供**されています。
+> **重要**: oflike-metal は **SwiftUI を唯一のエントリーポイント**として採用しています。
+> `ofMain()` による従来のエントリーポイントは **撤廃済み**です。
 
 ---
 
@@ -56,27 +56,9 @@ oflike-metal is a ground-up reimplementation of openFrameworks specifically for 
 
 ## Entry Point Strategy
 
-### SwiftUI Entry (Default, Recommended)
+**oflike-metal は SwiftUI エントリのみをサポート**します (ofMain は撤廃済み)。
 
-**oflike-metal のデフォルトエントリーポイントは SwiftUI です。** 新規プロジェクトには SwiftUI Entry を使用してください。
-
-#### SwiftUI Entry の利点
-
-✅ **モダンな macOS アプリケーション**:
-- ネイティブな UI/UX
-- 複数ウィンドウサポート
-- メニューバー、ツールバー、設定画面の統合
-- SwiftUI コンポーネントと C++ レンダリングの組み合わせ
-
-✅ **将来性**:
-- Apple が推奨する UI フレームワーク
-- 新機能は SwiftUI Entry で優先実装
-- macOS の最新機能への迅速な対応
-
-✅ **柔軟性**:
-- SwiftUI で UI を構築し、C++ で描画ロジックを記述
-- リアルタイムパラメータ調整、デバッグUI が容易
-- Inspector パネル、サイドバー、オーバーレイ UI
+### SwiftUI Entry (唯一のエントリ)
 
 **SwiftUI Entry の例**:
 ```swift
@@ -85,92 +67,22 @@ import SwiftUI
 
 @main
 struct MyApp: App {
-    @StateObject private var appState = AppState()
-
     var body: some Scene {
         WindowGroup {
-            ContentView(appState: appState)
-        }
-        .commands {
-            CommandMenu("Render") {
-                Button("Toggle Fullscreen") { appState.toggleFullscreen() }
-                Button("Take Screenshot") { appState.screenshot() }
-            }
-        }
-    }
-}
-
-// ContentView.swift
-struct ContentView: View {
-    @ObservedObject var appState: AppState
-
-    var body: some View {
-        HStack(spacing: 0) {
-            // C++ レンダリングビュー
-            MetalView(appState: appState)
+            MetalView()
                 .frame(minWidth: 800, minHeight: 600)
-
-            // SwiftUI コントロールパネル
-            Sidebar(appState: appState)
-                .frame(width: 250)
         }
+        .windowStyle(.titleBar)
     }
 }
 ```
 
-### ofMain Entry (Legacy, Compatibility Only)
+### 移行ステップ (推奨)
 
-**ofMain Entry はレガシー互換性のためのみに提供されています。** 既存の openFrameworks プロジェクトを最小限の変更で移行する場合にのみ使用してください。
-
-#### ofMain Entry の制約
-
-⚠️ **単一ウィンドウのみ**: 複数ウィンドウ不可
-⚠️ **限定的なUI**: SwiftUI コンポーネント統合不可
-⚠️ **レガシー**: 新機能は SwiftUI Entry で優先実装
-⚠️ **将来性**: メンテナンスモードのみ
-
-**ofMain Entry の例**:
-```cpp
-// main.mm (レガシー)
-#include <oflike/ofMain.h>
-#include "MyApp.h"
-
-int main() {
-    ofRunApp<MyApp>(1024, 768, "My App");  // レガシーエントリー
-    return 0;
-}
-```
-
-#### 使用すべき場合
-
-- ✅ 既存の oF プロジェクトを最小限の変更で移行
-- ✅ 単純なフルスクリーン描画アプリ (VJ, インスタレーション)
-- ✅ 一時的な互換性ブリッジ (後で SwiftUI に移行予定)
-
-#### 使用すべきでない場合
-
-- ❌ 新規プロジェクト → **SwiftUI Entry を使用**
-- ❌ 複数ウィンドウが必要 → **SwiftUI Entry を使用**
-- ❌ SwiftUI コンポーネント統合 → **SwiftUI Entry を使用**
-- ❌ macOS ネイティブ UI/UX → **SwiftUI Entry を使用**
-
-### 移行パス
-
-既存の oF プロジェクトの推奨移行ステップ:
-
-1. **Phase 1**: ofMain Entry で動作確認 (最小限の変更)
-2. **Phase 2**: SwiftUI Entry に移行 (ネイティブ UI の恩恵)
-3. **Phase 3**: SwiftUI コンポーネントで UI を拡張
-
-```
-openFrameworks (GLFW)
-        ↓
-oflike-metal (ofMain Entry)  ← Phase 1: 最小限の移行
-        ↓
-oflike-metal (SwiftUI Entry)  ← Phase 2: 推奨パス
-        ↓
-SwiftUI + C++ Rendering       ← Phase 3: フル活用
-```
+1. **SwiftUI エントリを追加**: `App.swift` を用意し `MetalView()` を配置する
+2. **アプリクラスを C++ に分離**: `MyApp.h/.cpp` を作成し `ofBaseApp` を継承
+3. **ファクトリ関数を追加**: `extern "C" ofBaseApp* ofCreateApp()` を実装
+4. **旧 ofMain エントリを削除**: `main.mm` を取り除く
 
 ---
 
@@ -323,10 +235,9 @@ your-project-name/
 ├── src/
 │   ├── YourApp.h           # Application header
 │   ├── YourApp.cpp         # Application implementation
-│   ├── App.swift           # SwiftUI entry (if --entry=swiftui)
-│   └── main.mm             # ofMain entry (if --entry=ofmain)
+│   └── App.swift           # SwiftUI entry
 ├── data/                   # Data files
-├── resources/              # Resources (SwiftUI projects only)
+├── resources/              # Resources
 │   └── Info.plist
 ├── addons/                 # Addons (if specified with --addons)
 ├── project.yml             # XcodeGen configuration
@@ -483,13 +394,6 @@ Solution: Check framework search paths
 Build Settings → Framework Search Paths → Add path to oflike-metal.framework
 ```
 
-**Issue**: "Cannot find oflike/ofMain.h"
-```
-Solution: Build oflike-metal framework first
-cd /path/to/oflike-metal
-xcodebuild -scheme oflike-metal -configuration Release
-```
-
 **Issue**: "Swift Compiler Error" (SwiftUI projects)
 ```
 Solution: Check Swift version
@@ -558,8 +462,7 @@ public:
 **Migrated oflike-metal Code** (`MyApp.h`):
 ```cpp
 #pragma once
-#include <core/AppBase.h>      // Changed include
-#include <oflike/ofMain.h>      // Changed include
+#include <oflike/ofApp.h>       // Changed include
 
 class MyApp : public ofBaseApp {  // Same base class
 public:
@@ -593,9 +496,7 @@ void MyApp::draw() {
 // No changes to implementation!
 ```
 
-**Main Entry Point**:
-
-**Option A: SwiftUI Entry (推奨)**:
+**Main Entry Point (SwiftUI)**:
 ```swift
 // App.swift (推奨)
 import SwiftUI
@@ -611,32 +512,18 @@ struct MyApp: App {
 }
 ```
 
-**Option B: ofMain Entry (レガシー互換性)**:
-```cpp
-// main.mm (レガシー)
-#include <oflike/ofMain.h>
-#include "MyApp.h"
-
-int main() {
-    ofRunApp<MyApp>(1024, 768, "My App");  // レガシーエントリー
-    return 0;
-}
-```
-
-> **推奨**: 新規プロジェクトには SwiftUI Entry を使用してください。ofMain Entry はレガシー互換性のためのみに提供されています。
-
 ### Header Migration
 
 Change your include statements:
 
 | openFrameworks | oflike-metal |
 |----------------|--------------|
-| `#include "ofMain.h"` | `#include <oflike/ofMain.h>` |
+| `#include "ofMain.h"` | `#include <oflike/ofApp.h>` |
 | `#include "ofGraphics.h"` | `#include <oflike/graphics/ofGraphics.h>` |
 | `#include "ofImage.h"` | `#include <oflike/image/ofImage.h>` |
 | `#include "ofTrueTypeFont.h"` | `#include <oflike/graphics/ofTrueTypeFont.h>` |
 
-**Tip**: Most code works by just including `<oflike/ofMain.h>`.
+**Tip**: Most code works by just including `<oflike/ofApp.h>`.
 
 ### Math Library Migration
 
@@ -902,13 +789,6 @@ fbo.draw(0, 0);  // Composite
 
 ### Common Issues
 
-**Issue**: "Cannot find ofMain.h"
-```
-Solution: Update include path
-#include "ofMain.h"  ❌
-#include <oflike/ofMain.h>  ✅
-```
-
 **Issue**: "Undefined symbols for architecture arm64"
 ```
 Solution: Link against oflike-metal framework
@@ -939,17 +819,15 @@ Solution: Check build configuration
 
 **Issue**: Window doesn't appear
 ```
-Solution: Check main() signature
-int main() {
-    ofRunApp<MyApp>(1024, 768, "Title");  // Correct
-    return 0;
-}
+Solution: Check SwiftUI entry
+- Ensure App.swift uses MetalView()
+- Confirm Info.plist exists in resources/
 ```
 
 ### Getting Help
 
 - **Documentation**: `docs/api/` - Complete API reference
-- **Examples**: `examples/` - 12 working examples
+- **Examples**: `examples/validation_swiftui/` - SwiftUI validation sample
 - **Issues**: GitHub Issues for bug reports
 - **Architecture**: `docs/ARCHITECTURE.md` - Technical details
 
@@ -969,18 +847,15 @@ int main() {
 
 - [ ] Install Xcode 15.0+
 - [ ] Clone and build oflike-metal
-- [ ] **決定: エントリーポイント戦略**
-  - [ ] Option A: SwiftUI Entry (推奨) - 新規プロジェクト、複数ウィンドウ、UI統合
-  - [ ] Option B: ofMain Entry (レガシー) - 既存oFプロジェクト最小限移行
-- [ ] Update includes (`ofMain.h` → `<oflike/ofMain.h>`)
-- [ ] Implement chosen entry point (SwiftUI App.swift or ofMain main.mm)
+- [ ] SwiftUI Entry を追加 (App.swift + MetalView)
+- [ ] Update includes (`ofMain.h` → `<oflike/ofApp.h>`)
+- [ ] SwiftUI entry を有効化 (App.swift)
 - [ ] Rewrite custom shaders (GLSL → MSL) if any
 - [ ] Remove direct OpenGL calls if any
 - [ ] Test on macOS 13.0+ / Apple Silicon
 - [ ] Verify rendering output matches original
 - [ ] Profile performance
 - [ ] Update CI/CD to macOS-only builds
-- [ ] (推奨) Plan migration from ofMain to SwiftUI Entry if using ofMain
 
 ---
 

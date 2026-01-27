@@ -174,7 +174,7 @@ Comprehensive demonstration of the ofMesh API in oflike-metal, showcasing vertic
 
 ### Integration into Your Project
 ```cpp
-#include "ofMain.h"
+#include <oflike/ofApp.h>
 using namespace oflike;
 
 class MyApp : public ofBaseApp {

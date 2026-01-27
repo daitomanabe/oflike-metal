@@ -43,21 +43,26 @@ core:
   guardrails:
     # === チェックリスト駆動 (最重要) ===
     - "docs/CHECKLIST.md の [ ] を見つけて実装 → [x] に更新"
-    - "Phase 0 → Phase 1 → ... の順に進める"
+    - "Phase 0 → Phase 1 → ... の順に進める (AddonsはPhase 12で最後)"
     - "⚠️ CHECKLIST.md の [x] 更新なしに次に進んではいけない"
     - "⚠️ build.done 発行前に grep で [x] 更新を必ず検証"
     # === ARCHITECTURE.md 絶対ルール ===
+    - "SwiftUIが唯一のエントリーポイント (ofMainは撤廃)"
+    - "macOS 13.0最小; macOS 14+機能はオプション (例: VisionKit)"
+    - "座標系: 2D左上/3D右手/Texture左上; Metal NDC(Y反転/Z0..1)はrendererで吸収"
     - "❌ FreeType → Core Text"
     - "❌ OpenGL → Metal"
     - "❌ SDL/GLFW → SwiftUI + MTKView"
     - "❌ stb_image → ImageIO / MTKTextureLoader"
-    - "❌ AppKit直接使用 → SwiftUI"
-    - "❌ GLM (新規コード) → simd"
-    # === 4つの柱 ===
+    - "❌ AppKit直接使用 → SwiftUI (低レベルブリッジのみ許可)"
+    - "❌ GLM/外部SIMD → simd/simd.h, Accelerate"
+    - "❌ Poco/Cairo/Assimp → Foundation/Network, Core Graphics, Model I/O"
+    # === 5つの柱 ===
     - "✅ SwiftUI - ウィンドウ、イベント、UI"
     - "✅ Metal - GPUレンダリング"
     - "✅ C++記述 - ユーザーコードはC++"
     - "✅ oF API互換 - openFrameworksと同じAPI"
+    - "✅ Apple Native - Core ML/Vision/PHASE/MetalFX等"
     # === 実装パターン ===
     - "pImplパターン - パブリックヘッダーは純粋C++ (.h)"
     - "Objective-C++ - 実装ファイルのみ (.mm)"
@@ -66,7 +71,6 @@ core:
     - "タスク完了ごとにコミット + GitHubにpush"
     - "Conventional Commits形式: feat(phase-X): description"
     - "CHECKLIST.md の更新も必ずコミットに含める"
-    - "TODOは必ずTODOLIST.mdに追記していく"
 
 hats:
   builder:
@@ -88,6 +92,7 @@ hats:
       ```
       → 最初に見つかった `- [ ]` がターゲット
       → Phase順に進める (Phase 0 → 1 → 2 → ...)
+      → タスクに参照ファイルがある場合は該当docsも読む (MIGRATION/PROJECT_STRUCTURE/IMPLEMENTATION など)
 
       **Step 2: ARCHITECTURE.md を読んで禁止事項を確認**
       ```bash
@@ -95,16 +100,20 @@ hats:
       ```
       確認ポイント:
       - 禁止ライブラリ (FreeType, OpenGL, SDL, stb_image, AppKit)
-      - 4つの柱 (SwiftUI, Metal, C++, oF API互換)
+      - 5つの柱 (SwiftUI, Metal, C++, oF API互換, Apple Native)
       - 実装パターン (pImpl, @autoreleasepool)
-      - 座標系 (2D: 左上原点, 3D: 右手系)
+      - 座標系 (2D: 左上原点, 3D: 右手系, Texture: 左上原点)
+      - Metal NDC変換/Y反転はrenderer側で吸収
 
       **Step 3: 実装**
-      ディレクトリ構造に従う:
+      ディレクトリ構造に従う (ARCHITECTURE.md優先。CHECKLISTのパス指定がある場合はそれに従う):
       ```
       src/
-      ├── core/           # Engine, AppBase, Context
+      ├── core/           # AppBase, Context
       ├── math/           # Types.h (simd), ofVec*, ofMatrix*
+      ├── addons/
+      │   ├── core/       # Core Addons
+      │   └── native/     # Apple Native Addons (CHECKLISTがapple_native表記ならそちら)
       ├── platform/
       │   ├── swiftui/    # App.swift, MetalView.swift
       │   └── bridge/     # SwiftBridge.h/.mm
@@ -152,10 +161,9 @@ hats:
 
       ### 完了時 (この順序を厳守)
       1. docs/CHECKLIST.md の該当項目を `[x]` に更新
-      2. 進捗サマリーの完了率も更新
-      3. **grep で [x] 更新を検証** ← 必須
-      4. `ralph tools task close <id>`
-      5. `ralph emit "build.done" "completed: <タスク名>, checklist: updated"`
+      2. **grep で [x] 更新を検証** ← 必須
+      3. `ralph tools task close <id>`
+      4. `ralph emit "build.done" "completed: <タスク名>, checklist: updated"`
 
       ### ⚠️ CHECKLIST未更新で build.done を発行してはいけない
       CHECKLIST.md に [x] が入っていない場合は、先に更新すること。
@@ -193,12 +201,12 @@ hats:
       grep -r "SDL_\|GLFW\|glfwInit" src/
       # stb_image
       grep -r "stb_image\|STB_IMAGE\|stbi_" src/
-      # AppKit直接使用 (許可されるのはMTKViewのみ)
+      # AppKit直接使用 (SwiftUI/MTKViewの低レベルブリッジのみ許可)
       grep -r "NSWindow\|NSView\|NSEvent\|NSResponder" src/ --include="*.swift"
       # GLM (新規コードでは非推奨)
       grep -r "glm::" src/ --include="*.h" --include="*.cpp"
       ```
-      → ヒットしたら `confession.issues_found`
+      → ヒットしたら用途を確認 (SwiftUI/MTKViewの低レベルブリッジ以外はNG)。問題があれば `confession.issues_found`
 
       **Step 3: 実装パターン確認**
       - パブリックヘッダー (.h) に Objective-C 型がないか
@@ -207,7 +215,8 @@ hats:
 
       **Step 4: oF API互換性確認**
       - 関数シグネチャがoFと一致しているか
-      - 座標系が正しいか (2D: 左上原点, 3D: 右手系)
+      - 座標系が正しいか (2D: 左上原点, 3D: 右手系, Texture: 左上原点)
+      - Metal NDC変換/Y反転がrenderer側にあるか
 
       **Step 5: CHECKLIST.md 更新確認 (最重要)**
 
@@ -386,25 +395,19 @@ hats:
       **CHECKLIST.md から次の [ ] を見つける:**
 
       Phase順に進める:
-      - Phase 0: プロジェクト基盤
-      - Phase 1: SwiftUI + Metal 基盤
-      - Phase 2: Core システム
-      - Phase 3: 数学ライブラリ
-      - Phase 4: レンダリング基盤
-      - Phase 5: 2D 描画 API
-      - Phase 6: 色
-      - Phase 7: 画像・テクスチャ
-      - Phase 8: 3D 描画
-      - Phase 9: カメラ
-      - Phase 10: ライティング
-      - Phase 11: FBO
-      - Phase 12: フォント
-      - Phase 13: イベントシステム
-      - Phase 14: ウィンドウ管理
-      - Phase 15: ユーティリティ
-      - Phase 16: デバッグ機能
-      - Phase 17: サンプル・テスト
-      - Phase 18: 最適化・仕上げ
+      - Phase 0: Structure & Policy (Must Decide First)
+      - Phase 1: Build Stabilization (Before Deeper Refactors)
+      - Phase 2: App Entry & Lifecycle
+      - Phase 3: Renderer Ownership & Bridge
+      - Phase 4: MetalRenderer Execution (Drawing Must Work)
+      - Phase 5: SwiftUI Integration (DrawList Path)
+      - Phase 6: oflike Graphics 2D + Matrix
+      - Phase 7: Device/Resource Ownership + Texture/FBO
+      - Phase 8: 3D / Camera / Mesh / Lighting
+      - Phase 9: Utilities / Image I/O
+      - Phase 10: Project Generator (CLI First)
+      - Phase 11: Validation
+      - Phase 12: Addons (Last)
 
       ### 次のタスク作成
       ```bash

@@ -1,6 +1,6 @@
 # Implementation Guidelines
 
-**Version**: 1.0.0
+**Version**: 1.0.2
 **Last Updated**: 2026-01-25
 **Status**: Active
 
@@ -289,14 +289,16 @@ oflike-gen new <project-name> [options]
 
 | Option | Type | Description | Default |
 |--------|------|-------------|---------|
-| `--entry <MODE>` | `swiftui \| ofmain` | エントリーポイント | `swiftui` |
 | `--addons <LIST>` | comma-separated | 初期 addon リスト | なし |
 | `--addon-mode <MODE>` | `reference \| copy \| symlink` | Addon 統合方法 | `reference` |
-| `--path <DIR>` | path | プロジェクト作成先 | `./<project-name>` |
+| `--path <DIR>` | path | プロジェクト作成先 | `<oflike-root>/apps/<project-name>` |
 | `--template <NAME>` | `basic \| swiftui \| metal \| 3d` | テンプレート | `basic` |
 | `--bundle-id <ID>` | string | macOS bundle identifier | `com.example.<project>` |
 | `--author <NAME>` | string | Project author name | Git config user.name |
 | `--no-git` | flag | Skip git initialization | false |
+
+※ `--path` を省略した場合は `<oflike-root>/apps` を自動検出して使用します。`~/.oflike-gen.toml` の `paths.oflike_metal_root` も利用可能。  
+※ `project.yml` 生成後に `xcodegen generate` を自動実行して `.xcodeproj` を作成します。`project.yml` を変更した場合は手動で `xcodegen generate` を再実行してください。
 
 #### Examples
 
@@ -311,7 +313,9 @@ myProject/
 ├── src/
 │   ├── MyApp.h
 │   ├── MyApp.cpp
-│   └── App.swift         # SwiftUI Entry
+│   ├── App.swift         # SwiftUI Entry
+│   ├── MetalView.swift   # MTKView + bridge
+│   └── PerformanceMonitor.swift # FPS/stats overlay
 ├── data/
 ├── resources/
 │   ├── Info.plist
@@ -322,22 +326,6 @@ myProject/
 └── README.md
 ```
 
-**ofMain Entry で生成**:
-```bash
-oflike-gen new myProject --entry ofmain
-```
-
-生成される構造:
-```
-myProject/
-├── src/
-│   ├── MyProject.h
-│   ├── MyProject.cpp
-│   └── main.mm           # ofMain Entry
-├── data/
-├── CMakeLists.txt
-└── project.yml
-```
 
 **Core Addons を含む**:
 ```bash
@@ -472,7 +460,6 @@ author = "John Doe"
 bundle_id = "com.example.myproject"
 
 [entry]
-mode = "swiftui"  # "swiftui" | "ofmain"
 
 [addons]
 core = ["ofxOsc", "ofxGui", "ofxSharp"]
@@ -534,7 +521,6 @@ addons = "addons"
 | `project.name` | string | ✅ | - | PascalCase or kebab-case |
 | `project.version` | string | ❌ | `1.0.0` | Semantic versioning |
 | `project.bundle_id` | string | ❌ | `com.example.<name>` | Reverse DNS format |
-| `entry.mode` | enum | ❌ | `swiftui` | `swiftui` \| `ofmain` |
 | `addons.core` | array | ❌ | `[]` | Valid Core/Native addon names |
 | `addons.custom` | array | ❌ | `[]` | Objects with `name`, `mode`, `source` |
 | `build.min_macos` | string | ❌ | `13.0` | >= 13.0 |
@@ -731,6 +717,8 @@ libs:
 | 日付 | バージョン | 変更内容 |
 |------|-----------|---------|
 | 2026-01-25 | 1.0.0 | 初版作成 (Phase 0.5) |
+| 2026-01-25 | 1.0.1 | ofMain 非推奨と build flag を明記 |
+| 2026-01-25 | 1.0.2 | ofMain 撤廃、SwiftUI 単一エントリへ統一 |
 
 ---
 

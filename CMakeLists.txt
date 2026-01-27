@@ -167,8 +167,7 @@ foreach(SHADER_FILE ${SHADER_FILES})
     configure_file(${SHADER_FILE} ${CMAKE_BINARY_DIR}/shaders/${SHADER_NAME} COPYONLY)
 endforeach()
 
-# Examples subdirectory
-add_subdirectory(examples)
+# Examples are pending SwiftUI migration (not built by default)
 
 # Example Launcher (Swift GUI tool)
 add_custom_target(launcher

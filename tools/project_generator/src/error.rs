@@ -19,24 +19,24 @@ pub enum GeneratorError {
     #[error("Invalid addon mode: {0}")]
     InvalidAddonMode(String),
 
-    #[error("Invalid entry mode: {0}")]
-    InvalidEntryMode(String),
-
     #[error("Invalid template: {0}")]
     InvalidTemplate(String),
 
     #[error("Project already exists: {0}")]
     ProjectExists(String),
 
+    #[allow(dead_code)]
     #[error("Project not found: {0}")]
     ProjectNotFound(String),
 
     #[error("Config error: {0}")]
     Config(String),
 
+    #[allow(dead_code)]
     #[error("Build file error: {0}")]
     BuildFile(String),
 
+    #[allow(dead_code)]
     #[error("Validation error: {0}")]
     Validation(String),
 

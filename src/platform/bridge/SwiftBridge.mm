@@ -6,6 +6,11 @@
 #include "../../core/EventDispatcher.h"
 #include "../../render/metal/MetalRenderer.h"  // Phase 16.2: For performance stats
 
+#ifdef __cplusplus
+extern "C" ofBaseApp* ofCreateApp(void);
+#pragma weak ofCreateApp
+#endif
+
 @interface OFLBridge() {
     // Phase 2.1: User app instance (created via factory)
     std::unique_ptr<ofBaseApp> userApp_;
@@ -82,6 +87,9 @@
         if (appFactory_) {
             userApp_.reset(appFactory_());
             std::cout << "[OFLBridge] User app created via factory" << std::endl;
+        } else if (ofCreateApp) {
+            userApp_.reset(ofCreateApp());
+            std::cout << "[OFLBridge] User app created via ofCreateApp()" << std::endl;
         } else {
             // Fallback: Create TestApp if no factory is registered
             // This maintains backward compatibility for Phase 1 verification
@@ -145,6 +153,11 @@
             return;
         }
 
+        // Populate DrawList from user app before executing it
+        if (userApp_) {
+            userApp_->draw();
+        }
+
         // Execute DrawList (populated by user app's draw() calls)
         render::DrawList& drawList = Context::instance().getDrawList();
         if (!renderer->executeDrawList(drawList)) {
@@ -152,6 +165,7 @@
             renderer->endFrame();
             return;
         }
+        drawList.reset();
 
         // End frame (submits command buffer and presents)
         if (!renderer->endFrame()) {

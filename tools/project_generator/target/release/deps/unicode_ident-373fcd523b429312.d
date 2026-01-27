@@ -1,0 +1,8 @@
+/Users/rhizomacbookproretina30/Abstract Engine Dropbox/daito manabe/dm_web/sub-domain/daito-lab/oflike-metal/implementation/oflike_metal_skeleton/tools/project_generator/target/release/deps/unicode_ident-373fcd523b429312.d: /Users/rhizomacbookproretina30/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/unicode-ident-1.0.22/src/lib.rs /Users/rhizomacbookproretina30/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/unicode-ident-1.0.22/src/tables.rs
+
+/Users/rhizomacbookproretina30/Abstract Engine Dropbox/daito manabe/dm_web/sub-domain/daito-lab/oflike-metal/implementation/oflike_metal_skeleton/tools/project_generator/target/release/deps/libunicode_ident-373fcd523b429312.rlib: /Users/rhizomacbookproretina30/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/unicode-ident-1.0.22/src/lib.rs /Users/rhizomacbookproretina30/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/unicode-ident-1.0.22/src/tables.rs
+
+/Users/rhizomacbookproretina30/Abstract Engine Dropbox/daito manabe/dm_web/sub-domain/daito-lab/oflike-metal/implementation/oflike_metal_skeleton/tools/project_generator/target/release/deps/libunicode_ident-373fcd523b429312.rmeta: /Users/rhizomacbookproretina30/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/unicode-ident-1.0.22/src/lib.rs /Users/rhizomacbookproretina30/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/unicode-ident-1.0.22/src/tables.rs
+
+/Users/rhizomacbookproretina30/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/unicode-ident-1.0.22/src/lib.rs:
+/Users/rhizomacbookproretina30/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/unicode-ident-1.0.22/src/tables.rs:

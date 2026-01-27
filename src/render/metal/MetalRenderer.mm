@@ -1,3 +1,4 @@
+#import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
 #import <simd/simd.h>
@@ -6,6 +7,7 @@
 #include "../DrawCommand.h"
 #include <vector>
 #include <cstring>
+#include <cstdlib>
 
 namespace render {
 namespace metal {
@@ -18,6 +20,81 @@ constexpr uint32_t kMaxFramesInFlight = 3;  // Triple buffering
 constexpr uint32_t kMaxVertices2D = 65536;   // Max 2D vertices per frame
 constexpr uint32_t kMaxVertices3D = 32768;   // Max 3D vertices per frame
 constexpr uint32_t kMaxIndices = 98304;      // Max indices per frame
+
+namespace {
+bool isMetalDebugEnabled() {
+    const char* value = std::getenv("OFL_METAL_DEBUG");
+    if (!value || value[0] == '\0') {
+        return false;
+    }
+    return std::strcmp(value, "0") != 0;
+}
+
+void logMetalLibraryProbe() {
+    if (!isMetalDebugEnabled()) {
+        return;
+    }
+
+    NSBundle* bundle = [NSBundle mainBundle];
+    NSString* resourcePath = [bundle resourcePath];
+    if (resourcePath) {
+        NSLog(@"MetalRenderer: Bundle resources path: %@", resourcePath);
+    } else {
+        NSLog(@"MetalRenderer: Bundle resources path not available");
+    }
+
+    NSString* defaultLibPath = [bundle pathForResource:@"default" ofType:@"metallib"];
+    if (defaultLibPath) {
+        NSError* attrsError = nil;
+        NSDictionary* attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:defaultLibPath
+                                                                               error:&attrsError];
+        if (attrs) {
+            NSNumber* size = attrs[NSFileSize];
+            NSLog(@"MetalRenderer: default.metallib found (%@ bytes)", size);
+        } else {
+            NSString* errorText = attrsError ? attrsError.localizedDescription : @"unknown error";
+            NSLog(@"MetalRenderer: default.metallib found but attributes failed: %@", errorText);
+        }
+    } else {
+        NSLog(@"MetalRenderer: default.metallib not found in bundle resources");
+    }
+
+    if (resourcePath) {
+        NSError* contentsError = nil;
+        NSArray<NSString*>* contents = [[NSFileManager defaultManager]
+            contentsOfDirectoryAtPath:resourcePath
+                                error:&contentsError];
+        if (contents) {
+            bool hasDebugData = false;
+            for (NSString* name in contents) {
+                if ([name hasSuffix:@".dat"] || [name hasSuffix:@".dia"]) {
+                    hasDebugData = true;
+                    break;
+                }
+            }
+            NSLog(@"MetalRenderer: Bundle debug data files (.dat/.dia): %@", hasDebugData ? @"present" : @"none");
+        } else if (contentsError) {
+            NSLog(@"MetalRenderer: Failed to read bundle resources: %@", contentsError.localizedDescription);
+        }
+    }
+}
+
+id<MTLLibrary> loadBundledLibrary(id<MTLDevice> device) {
+    NSBundle* bundle = [NSBundle mainBundle];
+    NSString* defaultLibPath = [bundle pathForResource:@"default" ofType:@"metallib"];
+    if (!defaultLibPath) {
+        return nil;
+    }
+
+    NSError* fileError = nil;
+    id<MTLLibrary> library = [device newLibraryWithFile:defaultLibPath error:&fileError];
+    if (!library && isMetalDebugEnabled()) {
+        NSString* errorText = fileError ? fileError.localizedDescription : @"unknown error";
+        NSLog(@"MetalRenderer: Failed to load default.metallib: %@", errorText);
+    }
+    return library;
+}
+}  // namespace
 
 // ============================================================================
 // MetalRenderer::Impl
@@ -174,6 +251,10 @@ void MetalRenderer::Impl::shutdown() {
         for (uint32_t i = 0; i < kMaxFramesInFlight; i++) {
             dispatch_semaphore_wait(frameSemaphore, DISPATCH_TIME_FOREVER);
         }
+        // Restore semaphore count before teardown to avoid libdispatch dealloc trap.
+        for (uint32_t i = 0; i < kMaxFramesInFlight; i++) {
+            dispatch_semaphore_signal(frameSemaphore);
+        }
 
         // Release buffers
         for (uint32_t i = 0; i < kMaxFramesInFlight; i++) {
@@ -249,8 +330,16 @@ bool MetalRenderer::Impl::createPipelines() {
     @autoreleasepool {
         NSError* error = nil;
 
+        logMetalLibraryProbe();
+
         // Try to load default shader library first
-        id<MTLLibrary> library = [device newDefaultLibrary];
+        id<MTLLibrary> library = loadBundledLibrary(device);
+        if (!library) {
+            library = [device newDefaultLibrary];
+            if (isMetalDebugEnabled()) {
+                NSLog(@"MetalRenderer: newDefaultLibrary %s", library ? "succeeded" : "returned nil");
+            }
+        }
 
         // If default library not found, compile shaders from source
         if (!library) {
@@ -511,7 +600,7 @@ bool MetalRenderer::Impl::beginFrame() {
 }
 
 bool MetalRenderer::Impl::endFrame() {
-    if (!initialized || !currentCommandBuffer || !view) {
+    if (!initialized || !currentCommandBuffer) {
         return false;
     }
 
@@ -520,7 +609,7 @@ bool MetalRenderer::Impl::endFrame() {
         endCurrentEncoder();
 
         // Present drawable
-        id<CAMetalDrawable> drawable = view.currentDrawable;
+        id<CAMetalDrawable> drawable = view ? view.currentDrawable : nil;
         if (drawable && currentCommandBuffer) {
             [currentCommandBuffer presentDrawable:drawable];
         }
@@ -1312,6 +1401,28 @@ void MetalRenderer::destroyTexture(void* texture) {
     if (texture) {
         id<MTLTexture> tex = (__bridge_transfer id<MTLTexture>)texture;
         tex = nil;
+    }
+}
+
+bool MetalRenderer::readTexturePixels(void* texture, void* data, uint32_t width, uint32_t height, size_t bytesPerRow) const {
+    if (!texture || !data) {
+        return false;
+    }
+
+    @autoreleasepool {
+        id<MTLTexture> mtlTexture = (__bridge id<MTLTexture>)texture;
+        if (!mtlTexture) {
+            return false;
+        }
+
+        // Read pixels from GPU texture to CPU memory
+        MTLRegion region = MTLRegionMake2D(0, 0, width, height);
+        [mtlTexture getBytes:data
+                 bytesPerRow:bytesPerRow
+                  fromRegion:region
+                 mipmapLevel:0];
+
+        return true;
     }
 }
 

@@ -1,18 +1,11 @@
 # oflike-metal Examples
 
-Comprehensive collection of examples demonstrating all major features of the oflike-metal framework. Each example is self-contained and documented with detailed README files.
+Comprehensive collection of examples demonstrating all major features of the oflike-metal framework.
+Note: Legacy ofMain-based examples are being migrated to the SwiftUI-only entry path and may not build yet.
 
 ## Quick Start
 
-```bash
-# Build all examples
-mkdir build && cd build
-cmake .. -G Xcode
-cmake --build . --config Release
-
-# Or open individual Xcode projects
-open examples/01_basics/01_basics.xcodeproj
-```
+- Use `examples/validation_swiftui` for the current SwiftUI validation sample.
 
 ---
 
@@ -339,10 +332,10 @@ Typical performance (M1 Max, 4K display):
 
 ## Common Patterns
 
-### Basic Application
+### Basic Application (SwiftUI)
 ```cpp
-#include <core/AppBase.h>
-#include <oflike/ofMain.h>
+// MyApp.cpp
+#include <oflike/ofApp.h>
 
 class MyApp : public ofBaseApp {
     void setup() override {
@@ -359,8 +352,22 @@ class MyApp : public ofBaseApp {
     }
 };
 
-int main() {
-    ofRunApp<MyApp>(1024, 768, "My App");
+extern "C" ofBaseApp* ofCreateApp() {
+    return new MyApp();
+}
+```
+
+```swift
+// App.swift
+import SwiftUI
+
+@main
+struct MyApp: App {
+    var body: some Scene {
+        WindowGroup {
+            MetalView()
+        }
+    }
 }
 ```
 
@@ -390,10 +397,10 @@ void draw() override {
 
 ## Troubleshooting
 
-### "Cannot find ofMain.h"
+### "Cannot find oflike/ofApp.h"
 Update include paths:
 ```cpp
-#include <oflike/ofMain.h>  // Not "ofMain.h"
+#include <oflike/ofApp.h>  // Not "ofMain.h"
 ```
 
 ### Black screen / Nothing renders

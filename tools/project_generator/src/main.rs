@@ -11,7 +11,7 @@ use error::Result;
 /// oflike-metal project generator
 #[derive(Parser)]
 #[command(name = "oflike-gen")]
-#[command(version = "1.0.0")]
+#[command(version = "1.1.0")]
 #[command(about = "Project generator for oflike-metal", long_about = None)]
 struct Cli {
     /// Enable verbose output
@@ -33,10 +33,6 @@ enum Commands {
         /// Project name (PascalCase or kebab-case)
         project_name: String,
 
-        /// Entry point mode
-        #[arg(long, value_name = "MODE", default_value = "swiftui")]
-        entry: String,
-
         /// Initial addons (comma-separated)
         #[arg(long, value_name = "LIST")]
         addons: Option<String>,
@@ -45,7 +41,7 @@ enum Commands {
         #[arg(long, value_name = "MODE", default_value = "reference")]
         addon_mode: String,
 
-        /// Project creation directory
+        /// Project creation directory (default: <oflike-root>/apps)
         #[arg(long, value_name = "DIR")]
         path: Option<String>,
 
@@ -153,7 +149,6 @@ fn run(cli: Cli) -> Result<()> {
     match cli.command {
         Commands::New {
             project_name,
-            entry,
             addons,
             addon_mode,
             path,
@@ -165,7 +160,6 @@ fn run(cli: Cli) -> Result<()> {
         } => {
             commands::new::execute(
                 &project_name,
-                &entry,
                 addons.as_deref(),
                 &addon_mode,
                 path.as_deref(),

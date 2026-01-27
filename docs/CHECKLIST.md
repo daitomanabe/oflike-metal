@@ -12,9 +12,9 @@ Addons are explicitly last.
   Files: `docs/ARCHITECTURE.md`
   DoD: oflike layer cannot include `render/metal/*`; Metal code is restricted to `src/render/metal/`.
 
-- [x] **Declare SwiftUI as default, ofMain as legacy/compat.**
+- [x] **Declare SwiftUI as the only entry point (ofMain removed).**
   Files: `docs/ARCHITECTURE.md`, `docs/MIGRATION.md`
-  DoD: docs explicitly state SwiftUI is the default entry; ofMain is legacy.
+  DoD: docs explicitly state SwiftUI is the single entry point.
 
 - [x] **Clarify coordinate responsibilities (2D top-left; renderer handles NDC/Y).**
   Files: `docs/ARCHITECTURE.md`
@@ -56,12 +56,12 @@ Addons are explicitly last.
   Files: `src/platform/bridge/SwiftBridge.h`, `src/platform/bridge/SwiftBridge.mm`, `src/core/TestApp.h`
   DoD: SwiftUI path constructs user app via factory (e.g., `ofCreateApp()`); TestApp no longer required.
 
-- [x] **Decide and implement Engine usage.**
-  Files: `src/core/Engine.h`, `src/core/Engine.mm`, `src/platform/bridge/SwiftBridge.mm`, `docs/ARCHITECTURE.md`
-  DoD: either Engine drives setup/update/draw, or Engine is declared non-participating.
+- [x] **Remove legacy Engine path.**
+  Files: `src/core`, `docs/ARCHITECTURE.md`
+  DoD: Engine path is removed; SwiftBridge drives lifecycle.
 
-- [x] **Unify Y-axis handling between SwiftUI and ofMain.**
-  Files: `src/platform/swiftui/MetalView.swift`, `src/oflike/app/ofMain.h`
+- [x] **Verify Y-axis handling in SwiftUI.**
+  Files: `src/platform/swiftui/MetalView.swift`
   DoD: mouse coordinates are consistent with oF expectations.
 
 - [x] **Clarify window control scope (SwiftUI vs AppKit).**
@@ -275,4 +275,3 @@ Addons are explicitly last.
 - All TODO/placeholder items found in `src/` are assigned above.
 - Addons are last as requested.
 - This file should be treated as the canonical implementation roadmap.
-

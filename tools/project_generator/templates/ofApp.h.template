@@ -1,6 +1,6 @@
 #pragma once
 
-#include <oflike/ofMain.h>
+#include <oflike/ofApp.h>
 
 class {{CLASS_NAME}}: public ofBaseApp {
 public:

@@ -1,12 +1,12 @@
-use crate::config::{get_author_from_git, load_global_config};
+use crate::config::{get_author_from_git, load_global_config, Config};
 use crate::error::{GeneratorError, Result};
 use crate::utils::*;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::process::Command;
 
 pub fn execute(
     project_name: &str,
-    entry: &str,
     addons: Option<&str>,
     addon_mode: &str,
     path: Option<&str>,
@@ -19,19 +19,15 @@ pub fn execute(
 ) -> Result<()> {
     // Validate inputs
     validate_project_name(project_name)?;
-    validate_entry_mode(entry)?;
     validate_addon_mode(addon_mode)?;
     validate_template(template)?;
 
     // Load global config
     let config = load_global_config();
 
-    // Determine project path
-    let project_path = if let Some(p) = path {
-        PathBuf::from(p).join(project_name)
-    } else {
-        PathBuf::from(project_name)
-    };
+    // Determine project path (default to <oflike-root>/apps/<project-name>)
+    let project_base = resolve_project_base_path(path, config.as_ref())?;
+    let project_path = project_base.join(project_name);
 
     // Check if project already exists
     if project_path.exists() {
@@ -62,20 +58,18 @@ pub fn execute(
     if verbose {
         println!("Creating project: {}", project_name);
         println!("  Path: {}", project_path.display());
-        println!("  Entry: {}", entry);
         println!("  Template: {}", template);
         println!("  Bundle ID: {}", bundle_id);
         println!("  Author: {}", author_name);
     }
 
     // Create project structure
-    create_project_structure(&project_path, entry)?;
+    create_project_structure(&project_path)?;
 
     // Generate files based on template
     generate_template_files(
         &project_path,
         project_name,
-        entry,
         template,
         &bundle_id,
         &author_name,
@@ -88,15 +82,15 @@ pub fn execute(
     }
 
     // Generate build files
-    generate_cmake_file(&project_path, project_name, entry, &addon_list)?;
-    generate_xcodegen_file(&project_path, project_name, entry, &bundle_id, &addon_list)?;
+    generate_cmake_file(&project_path, project_name, &addon_list)?;
+    generate_xcodegen_file(&project_path, project_name, &bundle_id, &addon_list)?;
 
     // Generate .gitignore
     generate_gitignore(&project_path)?;
 
     // Generate README
     if !no_readme {
-        generate_readme(&project_path, project_name, entry)?;
+        generate_readme(&project_path, project_name)?;
     }
 
     // Initialize git
@@ -104,26 +98,38 @@ pub fn execute(
         init_git(&project_path, verbose)?;
     }
 
+    // Generate Xcode project via XcodeGen
+    run_xcodegen(&project_path, verbose)?;
+
     println!("✅ Project '{}' created successfully!", project_name);
     println!("   Path: {}", project_path.display());
+    println!("   Xcode: {}.xcodeproj", project_name);
     println!();
     println!("Next steps:");
-    println!("  cd {}", project_name);
-    println!("  xcodegen generate");
+    println!("  cd \"{}\"", project_path.display());
     println!("  open {}.xcodeproj", project_name);
+    println!("  # Re-run `xcodegen generate` after editing project.yml");
 
     Ok(())
 }
 
-fn create_project_structure(project_path: &Path, entry: &str) -> Result<()> {
+fn create_project_structure(project_path: &Path) -> Result<()> {
     fs::create_dir_all(project_path)?;
     fs::create_dir_all(project_path.join("src"))?;
     fs::create_dir_all(project_path.join("data"))?;
-
-    if entry == "swiftui" {
-        fs::create_dir_all(project_path.join("resources"))?;
-        fs::create_dir_all(project_path.join("resources/Assets.xcassets"))?;
-    }
+    fs::create_dir_all(project_path.join("resources"))?;
+    fs::create_dir_all(project_path.join("resources/Assets.xcassets"))?;
+    fs::write(project_path.join("data/.gitkeep"), "")?;
+    fs::write(
+        project_path.join("resources/Assets.xcassets/Contents.json"),
+        r#"{
+  "info": {
+    "author": "xcode",
+    "version": 1
+  }
+}
+"#,
+    )?;
 
     Ok(())
 }
@@ -131,10 +137,9 @@ fn create_project_structure(project_path: &Path, entry: &str) -> Result<()> {
 fn generate_template_files(
     project_path: &Path,
     project_name: &str,
-    entry: &str,
-    template: &str,
+    _template: &str,
     bundle_id: &str,
-    author: &str,
+    _author: &str,
 ) -> Result<()> {
     let class_name = to_pascal_case(project_name);
 
@@ -142,7 +147,7 @@ fn generate_template_files(
     let header_content = format!(
         r#"#pragma once
 
-#include <oflike/ofMain.h>
+#include <oflike/ofApp.h>
 
 class {}: public ofBaseApp {{
 public:
@@ -168,7 +173,7 @@ public:
     )?;
 
     // Generate implementation file
-    let impl_content = format!(
+    let mut impl_content = format!(
         r#"#include "{}.h"
 
 void {}::setup() {{
@@ -181,7 +186,7 @@ void {}::update() {{
 }}
 
 void {}::draw() {{
-    ofClear(50);
+    ofClear(50, 50, 50);
 
     // Draw example
     ofSetColor(255);
@@ -217,25 +222,25 @@ void {}::windowResized(int w, int h) {{
 }}
 "#,
         class_name, class_name, project_name, class_name, class_name, class_name, class_name,
-        class_name, class_name, class_name, class_name, class_name, class_name
+        class_name, class_name, class_name, class_name, class_name
     );
+    impl_content.push_str(&format!(
+        r#"
+extern "C" ofBaseApp* ofCreateApp() {{
+    return new {}();
+}}
+"#,
+        class_name
+    ));
 
     fs::write(
         project_path.join("src").join(format!("{}.cpp", class_name)),
         impl_content,
     )?;
 
-    // Generate entry point based on mode
-    if entry == "swiftui" {
-        generate_swiftui_entry(project_path, &class_name)?;
-    } else {
-        generate_ofmain_entry(project_path, &class_name)?;
-    }
-
-    // Generate Info.plist for SwiftUI
-    if entry == "swiftui" {
-        generate_info_plist(project_path, project_name, bundle_id)?;
-    }
+    // Generate SwiftUI entry and Info.plist
+    generate_swiftui_entry(project_path, &class_name)?;
+    generate_info_plist(project_path, project_name, bundle_id)?;
 
     Ok(())
 }
@@ -243,23 +248,16 @@ void {}::windowResized(int w, int h) {{
 fn generate_swiftui_entry(project_path: &Path, class_name: &str) -> Result<()> {
     let swift_content = format!(
         r#"import SwiftUI
-import MetalKit
 
 @main
 struct {}App: App {{
-    @StateObject private var appState = AppState()
-
     var body: some Scene {{
         WindowGroup {{
-            MetalView(appState: appState)
+            MetalView()
                 .frame(minWidth: 800, minHeight: 600)
         }}
         .windowStyle(.titleBar)
     }}
-}}
-
-class AppState: ObservableObject {{
-    @Published var isRunning = true
 }}
 "#,
         class_name
@@ -267,23 +265,31 @@ class AppState: ObservableObject {{
 
     fs::write(project_path.join("src").join("App.swift"), swift_content)?;
 
-    Ok(())
-}
+    let oflike_root = find_oflike_root()?;
+    let swiftui_dir = oflike_root.join("src").join("platform").join("swiftui");
 
-fn generate_ofmain_entry(project_path: &Path, class_name: &str) -> Result<()> {
-    let main_content = format!(
-        r#"#include <oflike/ofMain.h>
-#include "{}.h"
+    let metal_view_src = swiftui_dir.join("MetalView.swift");
+    let performance_src = swiftui_dir.join("PerformanceMonitor.swift");
 
-int main() {{
-    ofRunApp<{}>(1024, 768, "{}");
-    return 0;
-}}
-"#,
-        class_name, class_name, class_name
-    );
+    if !metal_view_src.exists() {
+        return Err(GeneratorError::Other(format!(
+            "Missing SwiftUI template: {}",
+            metal_view_src.display()
+        )));
+    }
 
-    fs::write(project_path.join("src").join("main.mm"), main_content)?;
+    if !performance_src.exists() {
+        return Err(GeneratorError::Other(format!(
+            "Missing SwiftUI template: {}",
+            performance_src.display()
+        )));
+    }
+
+    fs::copy(&metal_view_src, project_path.join("src").join("MetalView.swift"))?;
+    fs::copy(
+        &performance_src,
+        project_path.join("src").join("PerformanceMonitor.swift"),
+    )?;
 
     Ok(())
 }
@@ -436,6 +442,34 @@ fn find_oflike_root() -> Result<PathBuf> {
     ))
 }
 
+fn resolve_project_base_path(path: Option<&str>, config: Option<&Config>) -> Result<PathBuf> {
+    if let Some(p) = path {
+        return Ok(expand_tilde(p));
+    }
+
+    if let Some(root) = config.and_then(|c| c.paths.oflike_metal_root.as_deref()) {
+        return Ok(expand_tilde(root).join("apps"));
+    }
+
+    Ok(find_oflike_root()?.join("apps"))
+}
+
+fn expand_tilde(path: &str) -> PathBuf {
+    if path == "~" {
+        if let Ok(home) = std::env::var("HOME") {
+            return PathBuf::from(home);
+        }
+    }
+
+    if let Some(stripped) = path.strip_prefix("~/") {
+        if let Ok(home) = std::env::var("HOME") {
+            return PathBuf::from(home).join(stripped);
+        }
+    }
+
+    PathBuf::from(path)
+}
+
 fn copy_dir_recursive(src: &Path, dst: &Path) -> Result<()> {
     fs::create_dir_all(dst)?;
 
@@ -455,14 +489,7 @@ fn copy_dir_recursive(src: &Path, dst: &Path) -> Result<()> {
     Ok(())
 }
 
-fn generate_cmake_file(
-    project_path: &Path,
-    project_name: &str,
-    entry: &str,
-    addon_list: &[String],
-) -> Result<()> {
-    let class_name = to_pascal_case(project_name);
-
+fn generate_cmake_file(project_path: &Path, project_name: &str, addon_list: &[String]) -> Result<()> {
     let mut cmake_content = format!(
         r#"cmake_minimum_required(VERSION 3.20)
 project({})
@@ -481,14 +508,12 @@ file(GLOB_RECURSE HEADERS "src/*.h")
         project_name
     );
 
-    if entry == "swiftui" {
-        cmake_content.push_str(
-            r#"# Swift sources
+    cmake_content.push_str(
+        r#"# Swift sources
 file(GLOB SWIFT_SOURCES "src/*.swift")
 
 "#,
-        );
-    }
+    );
 
     cmake_content.push_str(&format!(
         r#"# Executable
@@ -496,9 +521,7 @@ add_executable({} MACOSX_BUNDLE ${{SOURCES}} ${{HEADERS}}"#,
         project_name
     ));
 
-    if entry == "swiftui" {
-        cmake_content.push_str(" ${SWIFT_SOURCES}");
-    }
+    cmake_content.push_str(" ${SWIFT_SOURCES}");
 
     cmake_content.push_str(")\n\n");
 
@@ -538,17 +561,15 @@ target_include_directories({} PRIVATE addons/{})
     }
 
     // Bundle settings
-    if entry == "swiftui" {
-        cmake_content.push_str(&format!(
-            r#"# Bundle settings
+    cmake_content.push_str(&format!(
+        r#"# Bundle settings
 set_target_properties({} PROPERTIES
     MACOSX_BUNDLE_INFO_PLIST "${{CMAKE_CURRENT_SOURCE_DIR}}/resources/Info.plist"
-    RESOURCE "${{CMAKE_CURRENT_SOURCE_DIR}}/resources"
+    RESOURCE "${{CMAKE_CURRENT_SOURCE_DIR}}/resources;${{CMAKE_CURRENT_SOURCE_DIR}}/data"
 )
 "#,
-            project_name
-        ));
-    }
+        project_name
+    ));
 
     fs::write(project_path.join("CMakeLists.txt"), cmake_content)?;
 
@@ -558,26 +579,53 @@ set_target_properties({} PROPERTIES
 fn generate_xcodegen_file(
     project_path: &Path,
     project_name: &str,
-    entry: &str,
     bundle_id: &str,
     addon_list: &[String],
 ) -> Result<()> {
-    let mut sources_list = vec!["src".to_string()];
+    let oflike_root = find_oflike_root().ok();
+    let static_lib_dir = oflike_root
+        .as_ref()
+        .map(|root| root.join("build"))
+        .filter(|path| path.join("liboflike-metal.a").exists());
+
+    let library_settings_yaml = if static_lib_dir.is_some() {
+        "      LIBRARY_SEARCH_PATHS:\n        - \"$(PROJECT_DIR)/../../build\"\n        - \"$(PROJECT_DIR)/../../build/third_party\"\n      OTHER_LDFLAGS:\n        - \"-loflike-metal\"\n        - \"-ltess2\"\n        - \"-loscpack\"\n        - \"-lpugixml\"\n"
+            .to_string()
+    } else {
+        String::new()
+    };
+
+    let dependencies_yaml = if static_lib_dir.is_some() {
+        "    dependencies:\n      - sdk: Cocoa.framework\n      - sdk: Metal.framework\n      - sdk: MetalKit.framework\n      - sdk: QuartzCore.framework\n      - sdk: CoreGraphics.framework\n      - sdk: CoreText.framework\n      - sdk: ImageIO.framework\n      - sdk: Accelerate.framework\n"
+    } else {
+        "    dependencies:\n      - framework: oflike-metal.framework\n        embed: true\n"
+    };
+
+    let mut sources_list = vec![
+        "src".to_string(),
+        "../../shaders/Basic2D.metal".to_string(),
+        "../../shaders/Basic3D.metal".to_string(),
+    ];
     if !addon_list.is_empty() {
         for addon in addon_list {
             sources_list.push(format!("addons/{}", addon));
         }
     }
 
-    let sources_yaml = sources_list
+    let mut sources_yaml_lines = sources_list
         .iter()
         .map(|s| format!("      - {}", s))
-        .collect::<Vec<_>>()
-        .join("\n");
+        .collect::<Vec<_>>();
+    sources_yaml_lines.push("      - path: data".to_string());
+    sources_yaml_lines.push("        type: folder".to_string());
+    sources_yaml_lines.push("        buildPhase: resources".to_string());
+    sources_yaml_lines.push("      - path: resources".to_string());
+    sources_yaml_lines.push("        type: folder".to_string());
+    sources_yaml_lines.push("        buildPhase: resources".to_string());
+    let sources_yaml = sources_yaml_lines.join("\n");
 
-    let xcodegen_content = if entry == "swiftui" {
-        format!(
-            r#"name: {}
+    let xcodegen_content = format!(
+        r#"name: {}
 options:
   bundleIdPrefix: {}
   deploymentTarget:
@@ -593,41 +641,30 @@ targets:
       PRODUCT_BUNDLE_IDENTIFIER: {}
       INFOPLIST_FILE: resources/Info.plist
       SWIFT_VERSION: "5.9"
-      ENABLE_HARDENED_RUNTIME: YES
-    dependencies:
-      - framework: oflike-metal.framework
-        embed: true
-    scheme:
-      testTargets: []
-"#,
-            project_name, bundle_id, project_name, sources_yaml, bundle_id
-        )
-    } else {
-        format!(
-            r#"name: {}
-options:
-  bundleIdPrefix: {}
-  deploymentTarget:
-    macOS: "13.0"
-
-targets:
-  {}:
-    type: application
-    platform: macOS
-    sources:
+      MTL_ENABLE_DEBUG_INFO: "NO"
+      MTL_COMPILER_FLAGS: "-fmodules-cache-path=/tmp/oflike_metal_module_cache"
+      SWIFT_OBJC_BRIDGING_HEADER: "$(PROJECT_DIR)/../../src/platform/bridge/oflike-metal-Bridging-Header.h"
+      CLANG_CXX_LANGUAGE_STANDARD: "c++20"
+      CLANG_CXX_LIBRARY: "libc++"
+      ENABLE_HARDENED_RUNTIME: NO
+      CODE_SIGNING_ALLOWED: NO
+      CODE_SIGNING_REQUIRED: NO
+      CODE_SIGN_IDENTITY: ""
+      HEADER_SEARCH_PATHS:
+        - "$(PROJECT_DIR)/../../src"
 {}
-    settings:
-      PRODUCT_BUNDLE_IDENTIFIER: {}
-      ENABLE_HARDENED_RUNTIME: YES
-    dependencies:
-      - framework: oflike-metal.framework
-        embed: true
+{}
     scheme:
       testTargets: []
 "#,
-            project_name, bundle_id, project_name, sources_yaml, bundle_id
-        )
-    };
+        project_name,
+        bundle_id,
+        project_name,
+        sources_yaml,
+        bundle_id,
+        library_settings_yaml,
+        dependencies_yaml
+    );
 
     fs::write(project_path.join("project.yml"), xcodegen_content)?;
 
@@ -679,7 +716,7 @@ data/*
     Ok(())
 }
 
-fn generate_readme(project_path: &Path, project_name: &str, entry: &str) -> Result<()> {
+fn generate_readme(project_path: &Path, project_name: &str) -> Result<()> {
     let readme_content = format!(
         r#"# {}
 
@@ -690,9 +727,43 @@ Generated with oflike-gen (oflike-metal Project Generator).
 ### With XcodeGen (Recommended)
 
 ```bash
-xcodegen generate
 open {}.xcodeproj
 ```
+
+Re-generate the Xcode project after editing `project.yml`:
+
+```bash
+xcodegen generate
+```
+
+### With xcodebuild (CLI)
+
+```bash
+mkdir -p /tmp/oflike_metal_module_cache
+xcodebuild -project {}.xcodeproj \
+  -scheme {} \
+  -configuration Debug \
+  -destination "platform=macOS" \
+  -derivedDataPath build/DerivedData/{} \
+  MTL_COMPILER_FLAGS="-fmodules-cache-path=/tmp/oflike_metal_module_cache" \
+  build
+```
+
+### Using repo scripts (from oflike-metal root)
+
+```bash
+./scripts/build_app.sh {}
+./scripts/run_app.sh {}
+# Metal debug
+./scripts/run_app.sh {} --metal-debug
+```
+
+### Notes
+
+- Xcode 26 requires the Metal Toolchain component (Xcode Settings > Components).
+- Verify `xcrun metal -v` works before building.
+- Shader debug info is disabled to avoid Metal cache warnings; set `MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE` in `project.yml` if needed.
+- Set `OFL_METAL_DEBUG=1` to log Metal library probing at app startup.
 
 ### With CMake
 
@@ -701,12 +772,6 @@ mkdir build && cd build
 cmake .. -G Xcode
 open {}.xcodeproj
 ```
-
-## Entry Point
-
-Entry mode: **{}**
-
-{}
 
 ## Dependencies
 
@@ -719,12 +784,12 @@ MIT
         project_name,
         project_name,
         project_name,
-        entry,
-        if entry == "swiftui" {
-            "SwiftUI-based macOS app with Metal rendering."
-        } else {
-            "Legacy ofMain entry point (openFrameworks compatible)."
-        }
+        project_name,
+        project_name,
+        project_name,
+        project_name,
+        project_name,
+        project_name,
     );
 
     fs::write(project_path.join("README.md"), readme_content)?;
@@ -746,6 +811,57 @@ fn init_git(project_path: &Path, verbose: bool) -> Result<()> {
         return Err(GeneratorError::Other(
             "Failed to initialize git repository".to_string(),
         ));
+    }
+
+    Ok(())
+}
+
+fn run_xcodegen(project_path: &Path, verbose: bool) -> Result<()> {
+    if verbose {
+        println!("Running XcodeGen...");
+    }
+
+    let output = Command::new("xcodegen")
+        .arg("generate")
+        .current_dir(project_path)
+        .output()
+        .map_err(|err| {
+            if err.kind() == std::io::ErrorKind::NotFound {
+                GeneratorError::Other(
+                    "XcodeGen not found. Install with: brew install xcodegen".to_string(),
+                )
+            } else {
+                GeneratorError::Other(format!("Failed to run xcodegen: {}", err))
+            }
+        })?;
+
+    if !output.status.success() {
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        let detail = if verbose {
+            format!("stdout:\n{}\nstderr:\n{}", stdout.trim(), stderr.trim())
+        } else if !stderr.trim().is_empty() {
+            stderr.trim().to_string()
+        } else {
+            stdout.trim().to_string()
+        };
+        let message = if detail.is_empty() {
+            "XcodeGen failed with no output".to_string()
+        } else {
+            format!("XcodeGen failed: {}", detail)
+        };
+        return Err(GeneratorError::Other(message));
+    }
+
+    if verbose {
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        if !stdout.trim().is_empty() {
+            println!("{}", stdout.trim());
+        }
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        if !stderr.trim().is_empty() {
+            eprintln!("{}", stderr.trim());
+        }
     }
 
     Ok(())

@@ -49,17 +49,6 @@ pub fn validate_bundle_id(bundle_id: &str) -> Result<()> {
     Ok(())
 }
 
-/// Validate entry mode
-pub fn validate_entry_mode(mode: &str) -> Result<()> {
-    match mode {
-        "swiftui" | "ofmain" => Ok(()),
-        _ => Err(GeneratorError::InvalidEntryMode(format!(
-            "Invalid entry mode: {}. Must be 'swiftui' or 'ofmain'",
-            mode
-        ))),
-    }
-}
-
 /// Validate addon mode
 pub fn validate_addon_mode(mode: &str) -> Result<()> {
     match mode {

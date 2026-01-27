@@ -5,6 +5,7 @@
 #include "../image/ofPixels.h"
 #include "../image/ofTexture.h"
 #include "../../core/Context.h"
+#include "../../render/IRenderer.h"
 #include "ofLog.h"
 
 using oflike::ofLogError;

@@ -1,0 +1,174 @@
+[2026-01-25 19:03:59 +0900] SampleApp build error: 'oflike/ofMain.h' file not found.
+- Found ofMain.h at src/oflike/app/ofMain.h (no src/oflike/ofMain.h wrapper).
+- Added wrapper header: src/oflike/ofMain.h -> includes app/ofMain.h.
+- Added HEADER_SEARCH_PATHS to generator XcodeGen output: $(PROJECT_DIR)/../../src.
+- Updated template: tools/project_generator/templates/project.yml.template.
+- Patched apps/SampleApp/project.yml to include HEADER_SEARCH_PATHS.
+- Regenerated Xcode project via xcodegen in apps/SampleApp.
+- Rebuilt generator and refreshed binary at bin/oflike-gen.
+
+[2026-01-25 19:30:02 +0900] SampleApp build debugging continuation.
+- Adjusted generator sample includes to use AppBase/graphics/types/utils headers (avoid direct ofMain include).
+- Updated generator to define OF_APP and include oflike/ofMain.h in ofMain entry.
+- Added MetalView.swift generator output (minimal MTKView wrapper) and wrote SampleApp/src/MetalView.swift.
+- Fixed SampleApp ofClear call to use RGB overload.
+- Set C++20 and header search paths in project template.
+- Switched XcodeGen output to link static liboflike-metal.a via LIBRARY_SEARCH_PATHS and OTHER_LDFLAGS for third_party libs.
+- Moved framework dependencies to sdk entries; kept code signing disabled.
+- Regenerated SampleApp Xcode project and rebuilt successfully with xcodebuild (macOS deployment warnings only).
+
+[2026-01-25 19:37:49 +0900] Project Generator automation: XcodeGen run.
+- Added automatic `xcodegen generate` execution after project creation.
+- Updated generator output to point directly to the generated .xcodeproj.
+- Updated README/template/docs to note auto-generation and re-run guidance.
+
+[2026-01-25 19:59:48 +0900] Auto XcodeGen verification.
+- Rebuilt generator with cargo (sourced ~/.cargo/env) and copied to bin/oflike-gen.
+- Ran `bin/oflike-gen new AutoXcodeGenTest` (created under apps/AutoXcodeGenTest).
+- Confirmed apps/AutoXcodeGenTest/AutoXcodeGenTest.xcodeproj exists.
+
+[2026-01-25 20:20:12 +0900] SwiftUI render path fix for generated apps.
+- SwiftBridge now falls back to ofCreateApp() when no factory is registered.
+- Generator adds ofCreateApp() to SwiftUI C++ app source.
+- SwiftUI entry now copies MetalView.swift and PerformanceMonitor.swift from src/platform/swiftui.
+- XcodeGen output sets SWIFT_OBJC_BRIDGING_HEADER for OFLBridge access.
+
+[2026-01-25 20:22:53 +0900] Regenerated SwiftUI test app.
+- Ran `bin/oflike-gen new AutoXcodeGenTest2`.
+- Confirmed apps/AutoXcodeGenTest2/AutoXcodeGenTest2.xcodeproj exists.
+
+[2026-01-25 20:28:10 +0900] SwiftUI runtime crash fix.
+- Added getLastGPUTime() to IRenderer and included IRenderer in ofUtilsImage.mm to restore CMake build.
+- Rebuilt oflike-metal static library (build/liboflike-metal.a) so OFLBridge includes renderFrame.
+- Rebuilt AutoXcodeGenTest2 with xcodebuild (succeeded; only macOS version warnings).
+
+[2026-01-25 20:31:28 +0900] SwiftUI renderer init fix.
+- MetalView now calls bridge.initializeRenderer(device, view) during setup.
+- Updated AutoXcodeGenTest2/src/MetalView.swift to match.
+- Rebuilt AutoXcodeGenTest2 with xcodebuild (succeeded).
+
+[2026-01-25 20:43:20 +0900] SwiftUI draw execution fix.
+- SwiftBridge renderFrame now calls userApp_->draw() before executing DrawList and resets the DrawList after.
+- Removed Swift-side bridge.draw() call to avoid double-draw.
+- Rebuilt oflike-metal static library and AutoXcodeGenTest2 (xcodebuild succeeded).
+
+[2026-01-25 23:56:20 +0900] Project generator rebuild attempt.
+- Ran `cargo build --release` in tools/project_generator.
+- Failed: cargo not found in PATH.
+
+[2026-01-26 00:03:50 +0900] Rebuilt project generator and verified auto Xcode project generation.
+- Ran `cargo build --release` (warnings about unused variables/dead code; build succeeded).
+- Copied binary to bin/oflike-gen.
+- Ran `bin/oflike-gen new AutoXcodeGenTest3`.
+- Confirmed apps/AutoXcodeGenTest3/AutoXcodeGenTest3.xcodeproj exists.
+
+[2026-01-26 00:06:15 +0900] AutoXcodeGenTest3 run confirmation.
+- App launched and rendered (FPS overlay + circle).
+- Runtime log shows "fopen failed for data file" during Metal pipeline creation; shaders still compiled and renderer initialized.
+
+[2026-01-26 00:12:58 +0900] Metal shader library fix for generated Xcode projects.
+- Added Basic2D/Basic3D Metal shader sources to generated project.yml to ensure default.metallib is built.
+- Rebuilt oflike-gen and generated AutoXcodeGenTest4 (project.yml now includes ../../shaders/Basic2D.metal and Basic3D.metal).
+
+[2026-01-26 00:13:36 +0900] AutoXcodeGenTest4 build attempt.
+- Ran xcodebuild for apps/AutoXcodeGenTest4.
+- Failed: no permission to create DerivedData at ~/Library/Developer/Xcode/DerivedData.
+- Suggestion: re-run with -derivedDataPath inside repo (e.g., build/DerivedData).
+
+[2026-01-26 00:16:26 +0900] AutoXcodeGenTest4 build attempt with derivedDataPath.
+- Ran xcodebuild with -derivedDataPath build/DerivedData/AutoXcodeGenTest4.
+- Failed: MetalToolchain missing; CompileMetalFile for Basic2D/Basic3D failed.
+- Suggested fix: `xcodebuild -downloadComponent MetalToolchain`.
+
+[2026-01-26 00:17:46 +0900] Attempted MetalToolchain download.
+- Ran `xcodebuild -downloadComponent MetalToolchain`.
+- Failed: "Failed fetching catalog for assetType (com.apple.MobileAsset.MetalToolchain)" (RequestedBuild 17A324).
+- Suggest using Xcode UI > Settings > Components to install Metal Toolchain.
+
+[2026-01-26 00:22:59 +0900] AutoXcodeGenTest4 build retry after metalToolchain check.
+- xcodebuild still fails: cannot execute tool metal due to missing Metal Toolchain on Basic2D/Basic3D.
+- Suggest manual install via Xcode Settings > Components or resolving MetalToolchain download.
+
+[2026-01-26 00:23:26 +0900] Metal tool check.
+- xcrun metal -v fails: cannot execute tool metal due to missing Metal Toolchain.
+- Indicates MetalToolchain component is still not installed/usable.
+
+[2026-01-26 00:27:37 +0900] MetalToolchain status check.
+- Ran Build Version: 17A324
+Status: uninstalled.
+- Output reports Status: uninstalled (Build Version 17A324).
+- Note: exit code is 0 even when uninstalled; scripts must parse Status line.
+
+[2026-01-26 00:33:50 +0900] AutoXcodeGenTest4 build attempt (requested).
+- xcodebuild failed at CompileMetalFile for Basic2D/Basic3D.
+- Error: cannot execute tool 'metal' due to missing Metal Toolchain.
+- xcodebuild -showComponent metalToolchain reports Status: uninstalled.
+
+[2026-01-26 00:35:06 +0900] MetalToolchain download retry (option 2).
+- Ran Beginning asset download....
+- Failed: Failed fetching catalog for assetType (com.apple.MobileAsset.MetalToolchain).
+- Permissions warnings while writing Xcode mapping plists.
+- Build Version: 17A324
+Status: uninstalled still reports Status: uninstalled.
+
+[2026-01-26 00:40:01 +0900] AutoXcodeGenTest4 build after user-installed Metal Toolchain (reported).
+- Build Version: 17A324
+Status: uninstalled still reports Status: uninstalled.
+-  fails with missing Metal Toolchain.
+- xcodebuild failed at CompileMetalFile for Basic2D/Basic3D with missing Metal Toolchain.
+
+[2026-01-26 00:47:50 +0900] Metal toolchain visibility check.
+- User reports metal toolchain installed, but Build Version: 17A324
+Status: uninstalled still reports uninstalled in Codex shell.
+-  fails with missing Metal Toolchain.
+- Direct metal binary works at /private/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v17.1.324.0.uBC9Rf/Metal.xctoolchain/usr/bin/metal.
+- xcodebuild still invokes XcodeDefault toolchain metal stub and fails.
+
+[2026-01-26 08:22:22 +0900] Metal toolchain symlink check.
+- xcode-select points to /Applications/Xcode.app/Contents/Developer.
+- /Applications/Xcode.app/Contents/Developer/Toolchains contains only XcodeDefault.xctoolchain; no Metal.xctoolchain symlink found.
+- xcrun metal -v still fails with missing Metal Toolchain.
+
+[2026-01-26 09:00:12 +0900] Metal toolchain symlink installed.
+- Verified Metal.xctoolchain symlink exists under /Applications/Xcode.app/Contents/Developer/Toolchains.
+- xcrun metal -v now succeeds.
+- xcodebuild still invokes XcodeDefault metal stub and fails (missing Metal Toolchain).
+- Added scripts/replace_xcode_metal_stub.sh to replace stub with real metal/metallib.
+
+[2026-01-26 09:25:03 +0900] AutoXcodeGenTest4 build success after Metal toolchain wiring.
+- Symlinked Metal.xctoolchain into Xcode Toolchains and replaced metal/metallib stubs.
+- xcrun metal -v and metallib -v succeed.
+- xcodebuild succeeded when using MTL_COMPILER_FLAGS=-fmodules-cache-path=/tmp/oflike_metal_module_cache.
+
+[2026-01-26 09:33:29 +0900] Metal toolchain verification and xcodebuild rebuild.
+- Verified Metal.xctoolchain symlink under /Applications/Xcode.app/Contents/Developer/Toolchains.
+- `xcrun metal -v` succeeds (Apple metal version 32023.830).
+- Ran xcodebuild for AutoXcodeGenTest4 with -derivedDataPath and `MTL_COMPILER_FLAGS=-fmodules-cache-path=/tmp/oflike_metal_module_cache`.
+- Build succeeded; warnings about CoreSimulator services and DVT file type detection are non-blocking.
+
+[2026-01-26 10:42:35 +0900] Project generator warning cleanup.
+- Removed unused local `class_name` from generate_cmake_file.
+- Renamed unused parameter to `_update_build` in add_addon.
+- Added allow(dead_code) to future config structs/defaults and unused error variants to keep release builds warning-free.
+
+[2026-01-26 11:03:03 +0900] Metal cache warning mitigation.
+- Observed "fopen failed for data file" during pipeline creation; traced to Metal debug info (MTL_ENABLE_DEBUG_INFO=INCLUDE_SOURCE).
+- Generator now sets MTL_ENABLE_DEBUG_INFO="NO" in project.yml to avoid Metal cache warnings by default.
+- README notes how to re-enable shader debug info if needed.
+
+[2026-01-26 11:18:24 +0900] Metal debug logging hooks.
+- Added OFL_METAL_DEBUG=1 to log default.metallib probing and bundle debug data presence at startup.
+- Generator README now documents the env var for troubleshooting.
+
+[2026-01-26 14:21:55 +0900] CLI workflow scripts added.
+- Added scripts/build_app.sh and scripts/run_app.sh for CLI-first build/run.
+- README templates now document repo scripts for generated apps.
+
+[2026-01-27 01:03:25 +0900] One-command CLI flow added.
+- Added scripts/new_and_run.sh to generate, build, and run apps from CLI.
+- VS Code tasks updated to include one-command flow.
+
+[2026-01-27 01:09:50 +0900] ProjectWizard GUI added.
+- Added tools/ProjectWizard SwiftUI app for GUI-based project creation and run.
+- Added scripts/run_project_wizard.sh to build and launch the GUI from CLI.
+- VS Code tasks include a ProjectWizard launch task.

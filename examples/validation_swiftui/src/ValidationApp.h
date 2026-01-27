@@ -1,6 +1,7 @@
 #pragma once
-#include <core/AppBase.h>
-#include <oflike/ofMain.h>
+#include <oflike/ofApp.h>
+#include <oflike/graphics/ofTrueTypeFont.h>
+#include <oflike/image/ofImage.h>
 
 class ValidationApp : public ofBaseApp {
 public:

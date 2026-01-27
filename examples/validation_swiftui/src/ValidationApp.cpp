@@ -46,3 +46,7 @@ void ValidationApp::draw() {
                            ofGetWidth() - 150, 50);
     }
 }
+
+extern "C" ofBaseApp* ofCreateApp() {
+    return new ValidationApp();
+}

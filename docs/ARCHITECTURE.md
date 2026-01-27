@@ -1,6 +1,6 @@
 # oflike-metal Architecture - Absolute Policies
 
-**Version**: 3.3.0
+**Version**: 3.4.0
 **Last Updated**: 2026-01-25
 **Status**: Active
 
@@ -33,29 +33,22 @@
 
 ### 1.3 エントリーポイント方針
 
-**SwiftUI がデフォルト、ofMain は互換性のためのレガシーパス**
+**SwiftUI エントリのみをサポート** (ofMain は撤廃済み)。
 
-oflike-metal は2つのアプリケーションエントリーポイントを提供します:
-
-#### 1.3.1 SwiftUI Entry (デフォルト・推奨)
-
-**これがデフォルトです。** 新規プロジェクトは SwiftUI エントリーを使用してください。
+#### 1.3.1 SwiftUI Entry (唯一のエントリ)
 
 ```swift
-// App.swift - SwiftUI Entry Point (推奨)
+// App.swift - SwiftUI Entry Point
 import SwiftUI
 
 @main
 struct MyApp: App {
-    @StateObject private var appState = AppState()
-
     var body: some Scene {
         WindowGroup {
-            MetalView(appState: appState)
+            MetalView()
                 .frame(minWidth: 800, minHeight: 600)
         }
         .windowStyle(.titleBar)
-        .windowToolbarStyle(.unified)
     }
 }
 ```
@@ -66,61 +59,11 @@ struct MyApp: App {
 - ✅ **統合**: SwiftUI コンポーネントと C++ レンダリングの組み合わせ
 - ✅ **将来性**: Apple の推奨する UI フレームワーク
 
-#### 1.3.2 ofMain Entry (レガシー・互換性)
+#### 1.3.2 ライフサイクル管理の設計 (Phase 2.2)
 
-**openFrameworks 互換性のみのために提供。** 既存の oF プロジェクトの移行用です。
-
-```cpp
-// main.mm - ofMain Entry Point (レガシー)
-#include <oflike/ofMain.h>
-#include "MyApp.h"
-
-int main() {
-    ofRunApp<MyApp>(1024, 768, "My App");
-    return 0;
-}
-```
-
-**制約**:
-- ⚠️ **単一ウィンドウのみ**: 複数ウィンドウ不可
-- ⚠️ **限定的なUI**: SwiftUI コンポーネント統合不可
-- ⚠️ **レガシー**: 新機能は SwiftUI エントリーで優先実装
-- ⚠️ **将来性**: メンテナンスモードのみ
-
-**使用すべき場合**:
-- 既存の openFrameworks プロジェクトを最小限の変更で移行する場合
-- 単純なフルスクリーン描画アプリ (VJ, インスタレーション)
-- 一時的な互換性ブリッジとして使用し、後で SwiftUI に移行予定
-
-**使用すべきでない場合**:
-- 新規プロジェクト → SwiftUI Entry を使用
-- 複数ウィンドウが必要 → SwiftUI Entry を使用
-- SwiftUI コンポーネント統合 → SwiftUI Entry を使用
-- macOS ネイティブ UI/UX → SwiftUI Entry を使用
-
-#### 1.3.3 ライフサイクル管理の設計 (Phase 2.2)
-
-**Engine クラスの役割:**
-
-oflike-metal は2つの異なるライフサイクル管理パスを持ちます:
-
-**SwiftUI Entry (デフォルト):**
 - `SwiftBridge` (Objective-C++) が直接 setup/update/draw を駆動
-- `Engine` クラスは使用されません
 - MetalView.swift → SwiftBridge.mm → userApp_ の順で呼び出し
 - ライフサイクル: `MetalViewCoordinator` が MTKViewDelegate 経由で管理
-
-**ofMain Entry (レガシー):**
-- `Engine` (C++) が setup/update/draw を駆動
-- ofRunApp() が Engine::tick() を呼び出す
-- Engine が ofBaseApp* を保持して lifecycle を管理
-- ライフサイクル: プラットフォーム層から Engine::tick() を定期的に呼び出し
-
-**設計上の決定 (Phase 2.2):**
-- ✅ SwiftUI Entry: Engine 不使用 (SwiftBridge が直接管理)
-- ✅ ofMain Entry: Engine 使用 (互換性のため)
-- ✅ 重複を避けるため、両方のパスで Engine を使用しない
-- ✅ Engine は将来の ofMain 実装時にのみ有効化
 
 ### 1.4 技術スタック
 
@@ -384,6 +327,173 @@ ofDrawAxis(100);  // X赤(右), Y緑(上), Z青(手前)
 
 ---
 
+### 1.7 ウィンドウ制御スコープ (Window Control Scope)
+
+oflike-metal のウィンドウ制御は、SwiftUI を基本とし、AppKit の使用を最小限に制限します。
+
+#### 1.7.1 基本方針
+
+**SwiftUI がウィンドウ制御の主体**
+
+- SwiftUI の宣言的 UI でウィンドウ構造を定義
+- AppKit は SwiftUI で実現できない低レベル操作のみ使用
+- C++ から SwiftUI への callback を通じてウィンドウ操作を要求
+
+#### 1.7.2 許可されるウィンドウ操作
+
+**✅ SwiftUI で実装される操作 (推奨)**:
+
+| 操作 | 実装方法 | 実装箇所 |
+|------|---------|---------|
+| **ウィンドウサイズの初期設定** | `.frame(minWidth:minHeight:)` | App.swift |
+| **ウィンドウタイトルの初期設定** | `WindowGroup("Title") { }` | App.swift |
+| **ウィンドウスタイル設定** | `.windowStyle(.titleBar)` | App.swift |
+| **ツールバースタイル** | `.windowToolbarStyle(.unified)` | App.swift |
+| **ウィンドウレベル** | `.windowLevel(.floating)` | App.swift |
+| **リサイズ可否** | `.windowResizability(.contentSize)` | App.swift |
+
+**⚠️ AppKit 経由の操作 (最小限の使用)**:
+
+| 操作 | API | 実装箇所 | 使用理由 |
+|------|-----|---------|---------|
+| **フルスクリーン切り替え** | `NSWindow.toggleFullScreen(_:)` | MetalView.swift:631 | SwiftUI にフルスクリーン API がないため |
+
+**❌ 禁止される操作**:
+
+| 操作 | 禁止理由 |
+|------|---------|
+| **NSWindow 直接生成** | SwiftUI の WindowGroup を使用 |
+| **ウィンドウ位置の強制設定** | macOS のウィンドウ管理に反する |
+| **ウィンドウサイズの強制変更** | SwiftUI の宣言的 UI に反する |
+| **NSApp.windows 配列の操作** | SwiftUI がウィンドウライフサイクルを管理 |
+| **カスタム NSWindowController** | SwiftUI WindowGroup を使用 |
+
+#### 1.7.3 実装パターン
+
+**パターン 1: C++ から SwiftUI への要求 (Callback パターン)**
+
+```cpp
+// C++ (oflike layer) - ウィンドウ操作を要求
+void ofSetFullscreen(bool fullscreen) {
+    ctx().requestFullscreen(fullscreen);
+}
+```
+
+```objc
+// Context.mm - Callback を呼び出し
+void Context::requestFullscreen(bool fullscreen) {
+    if (impl_->fullscreenCallback) {
+        impl_->fullscreenCallback(fullscreen);
+    }
+}
+```
+
+```swift
+// MetalView.swift - SwiftUI/AppKit で実行
+func fullscreenCallback(fullscreen: Bool) {
+    DispatchQueue.main.async {
+        if let window = NSApp.mainWindow {
+            if fullscreen && !window.styleMask.contains(.fullScreen) {
+                window.toggleFullScreen(nil)  // ✅ 許可された AppKit 使用
+            } else if !fullscreen && window.styleMask.contains(.fullScreen) {
+                window.toggleFullScreen(nil)
+            }
+        }
+    }
+}
+```
+
+**パターン 2: SwiftUI での宣言的設定**
+
+```swift
+// App.swift - SwiftUI で宣言的に設定
+@main
+struct MyApp: App {
+    var body: some Scene {
+        WindowGroup {
+            MetalView(appState: appState)
+                .frame(minWidth: 800, minHeight: 600)  // ✅ SwiftUI で設定
+        }
+        .windowStyle(.titleBar)                       // ✅ SwiftUI で設定
+        .windowToolbarStyle(.unified)                 // ✅ SwiftUI で設定
+    }
+}
+```
+
+#### 1.7.4 実装状況と制約
+
+**現在実装されている操作**:
+
+| 操作 | API | 実装状況 | 備考 |
+|------|-----|---------|------|
+| **ウィンドウサイズ取得** | `ofGetWindowWidth/Height()` | ✅ 実装済み | Context から取得 |
+| **フルスクリーン切り替え** | `ofSetFullscreen(bool)` | ✅ 実装済み | AppKit の toggleFullScreen 使用 |
+| **ウィンドウタイトル設定** | `ofSetWindowTitle(string)` | ⚠️ Callback のみ | SwiftUI 側で未実装 |
+| **ウィンドウサイズ設定** | `ofSetWindowShape(w, h)` | ⚠️ Callback のみ | SwiftUI では制限的 |
+| **ウィンドウ位置設定** | `ofSetWindowPosition(x, y)` | ⚠️ Callback のみ | SwiftUI では非推奨 |
+
+**制約と注意事項**:
+
+1. **ウィンドウサイズ変更の制限**:
+   - SwiftUI では宣言的 UI のため、プログラムからのサイズ変更は制限的
+   - `ofSetWindowShape()` は要求のみ可能、実際の変更は SwiftUI に依存
+   - Context.mm:256 に TODO あり (Phase 14.1)
+
+2. **ウィンドウ位置設定の非推奨**:
+   - macOS はウィンドウ位置を記憶し、OS が管理する
+   - プログラムからの強制的な位置変更は macOS HIG に反する
+   - `ofSetWindowPosition()` は互換性のためのみ提供
+
+3. **フルスクリーン切り替えの非同期性**:
+   - `NSWindow.toggleFullScreen()` は非同期で実行される
+   - 状態変化は即座に反映されない
+   - MetalView.swift:640 で状態を手動更新
+
+#### 1.7.5 AppKit 使用の許可範囲
+
+AppKit の使用は以下の条件を満たす場合のみ許可:
+
+**許可条件**:
+1. ✅ SwiftUI に相当する API が存在しない
+2. ✅ 低レベルのウィンドウ操作が必要
+3. ✅ `NSApp.mainWindow` 経由での最小限のアクセス
+4. ✅ 実装箇所が明確 (platform/swiftui/ 内のみ)
+
+**現在許可されている AppKit 使用**:
+- `NSApp.mainWindow?.toggleFullScreen(_:)` (MetalView.swift:631)
+
+**将来追加される可能性がある AppKit 使用**:
+- カスタムウィンドウデコレーション (タイトルバーの非表示など)
+- 高度な入力イベント処理 (SwiftUI で不可能な場合)
+- マルチディスプレイ固有の制御
+
+**禁止される AppKit 使用**:
+- ❌ NSWindow の直接生成・管理
+- ❌ oflike/ レイヤーでの直接使用
+- ❌ 広範囲での AppKit API の使用
+
+#### 1.7.6 検証方法
+
+AppKit 使用の妥当性を検証するコマンド:
+
+```bash
+# AppKit import の確認 (platform/swiftui/ 以外で使用されていないか)
+rg "AppKit" src/ --glob '!platform/**'
+
+# NSWindow 直接使用の確認 (最小限か)
+grep -r "NSWindow\|NSApp" src/platform/swiftui/ | wc -l
+
+# oflike レイヤーでの AppKit 使用確認 (あってはいけない)
+rg "NSWindow|NSApp|AppKit" src/oflike/
+```
+
+**期待される結果**:
+- `AppKit`: platform/swiftui/ のみ
+- `NSWindow/NSApp`: 最小限の使用箇所のみ
+- oflike レイヤー: 0 件
+
+---
+
 ## 2. レイヤー境界 (Layer Boundaries)
 
 ### 2.1 レイヤー分離の原則
@@ -561,7 +671,7 @@ grep -r "#import <Metal" src/render/*.h src/render/*.cpp
 | Poco | Foundation / Network.framework | なし |
 | Cairo | Core Graphics | なし |
 | Assimp | Model I/O | なし |
-| **AppKit (直接使用)** | SwiftUI | 低レベルブリッジのみ許可 |
+| **AppKit (直接使用)** | SwiftUI | platform/swiftui/ の低レベルブリッジのみ許可 |
 
 ### 3.3 許可サードパーティ
 
@@ -1003,6 +1113,8 @@ os_log_error(OS_LOG_DEFAULT, "ofxSharp: Failed to load model");
 | 2026-01-25 | 3.1.0 | レイヤー境界の明確化 (Phase 0.1) |
 | 2026-01-25 | 3.2.0 | SwiftUIデフォルト、ofMainレガシー明記 (Phase 0.2) |
 | 2026-01-25 | 3.3.0 | 座標系責任の明確化、Metal変換はrenderer層 (Phase 0.3) |
+| 2026-01-25 | 3.3.1 | ofMain 非推奨化、AppKit 使用範囲の明確化 |
+| 2026-01-25 | 3.4.0 | ofMain 撤廃、SwiftUI 単一エントリへ統一 |
 
 ---
 

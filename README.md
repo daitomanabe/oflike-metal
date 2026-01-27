@@ -43,6 +43,34 @@ open oflike_metal.xcodeproj
 # Cmd + R で実行
 ```
 
+## ビルド (CLI)
+
+```bash
+./scripts/build_app.sh <AppName>
+./scripts/run_app.sh <AppName>
+# Metal のデバッグログを有効化する場合
+./scripts/run_app.sh <AppName> --metal-debug
+```
+
+## ワンコマンド生成 & 実行 (CLI)
+
+```bash
+./scripts/new_and_run.sh <AppName>
+# Metal のデバッグログを有効化する場合
+./scripts/new_and_run.sh <AppName> --metal-debug
+```
+
+## GUI (Project Wizard)
+
+```bash
+./scripts/run_project_wizard.sh
+```
+
+## VS Code Tasks
+
+- `Tasks: Run Task` から `oflike: build app` / `oflike: run app` / `oflike: run app (metal debug)` / `oflike: build & run`
+- 実行時に `AppName` と `Debug/Release` を指定
+
 ---
 
 ## 座標系
@@ -63,5 +91,3 @@ open oflike_metal.xcodeproj
 
 MIT License
 ```
-
-

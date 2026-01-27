@@ -239,6 +239,12 @@ public:
      * @param outVertices Number of vertices rendered
      */
     virtual void getStatistics(uint32_t& outDrawCalls, uint32_t& outVertices) const = 0;
+
+    /**
+     * Get the last GPU frame time in milliseconds.
+     * @return GPU time in ms, or 0.0 if unsupported
+     */
+    virtual double getLastGPUTime() const { return 0.0; }
 };
 
 } // namespace render

@@ -209,8 +209,8 @@ cmake --build . --config Release
 ### Quick Start
 
 ```cpp
-#include <core/AppBase.h>
-#include <oflike/ofMain.h>
+// MyApp.cpp
+#include <oflike/ofApp.h>
 
 class MyApp : public ofBaseApp {
     void setup() override {
@@ -224,16 +224,29 @@ class MyApp : public ofBaseApp {
     }
 };
 
-int main() {
-    ofRunApp<MyApp>(1024, 768, "My App");
+extern "C" ofBaseApp* ofCreateApp() {
+    return new MyApp();
+}
+```
+
+```swift
+// App.swift
+import SwiftUI
+
+@main
+struct MyApp: App {
+    var body: some Scene {
+        WindowGroup {
+            MetalView()
+        }
+    }
 }
 ```
 
 ### Run Examples
 
 ```bash
-cd build
-./examples/01_basics/01_basics
+open examples/validation_swiftui
 ```
 
 ---
@@ -400,7 +413,7 @@ See `docs/MIGRATION.md` for comprehensive migration guide.
 #include "ofMain.h"
 
 // After (oflike-metal)
-#include <oflike/ofMain.h>
+#include <oflike/ofApp.h>
 ```
 
 ---
@@ -415,7 +428,7 @@ See `docs/MIGRATION.md` for comprehensive migration guide.
 
 - **Development Time**: 18 phases
 - **Code Lines**: ~50,000+ lines (src + examples)
-- **Examples**: 12 comprehensive examples
+- **Examples**: SwiftUI validation sample (additional examples pending migration)
 - **Documentation**: 4,000+ lines
 - **Tests**: Math, rendering, performance
 - **API Functions**: 400+

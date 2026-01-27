@@ -85,6 +85,7 @@ public:
     void* createTexture(uint32_t width, uint32_t height, const void* data) override;
     void* loadTexture(const char* path) override;
     void destroyTexture(void* texture) override;
+    bool readTexturePixels(void* texture, void* data, uint32_t width, uint32_t height, size_t bytesPerRow) const override;
 
     // Information
     const char* getRendererName() const override;

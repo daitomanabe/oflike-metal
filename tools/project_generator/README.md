@@ -1,6 +1,6 @@
 # oflike-metal Project Generator
 
-**Version**: 1.0.0
+**Version**: 1.1.0
 **Last Updated**: 2026-01-25
 **Status**: Active (Phase 10.1)
 
@@ -26,7 +26,6 @@ The **oflike-gen** CLI tool generates fully-configured oflike-metal projects wit
 
 ✅ **Standardized Structure** - Consistent folder layout (see [PROJECT_STRUCTURE.md](../../docs/PROJECT_STRUCTURE.md))
 ✅ **SwiftUI Entry** - Modern macOS app by default
-✅ **ofMain Legacy** - Optional for openFrameworks compatibility
 ✅ **Addon Integration** - Reference, Copy, or Symlink strategies
 ✅ **Build Systems** - CMake and XcodeGen support
 ✅ **Immediate Build** - Generated projects build without manual setup
@@ -52,6 +51,13 @@ sudo cp target/release/oflike-gen /usr/local/bin/
 ```bash
 oflike-gen --version
 # Output: oflike-gen 1.0.0
+```
+
+### Run From Source (Rust)
+
+```bash
+# From tools/project_generator
+cargo run --release -- new myProject
 ```
 
 ---
@@ -93,15 +99,17 @@ oflike-gen new <PROJECT_NAME> [OPTIONS]
 
 | Option | Type | Description | Default |
 |--------|------|-------------|---------|
-| `--entry <MODE>` | `swiftui \| ofmain` | Entry point mode | `swiftui` |
 | `--addons <LIST>` | comma-separated | Initial addons (e.g., `ofxOsc,ofxGui`) | none |
 | `--addon-mode <MODE>` | `reference \| copy \| symlink` | Addon integration strategy | `reference` |
-| `--path <DIR>` | path | Project creation directory | `./<PROJECT_NAME>` |
+| `--path <DIR>` | path | Project creation directory | `<oflike-root>/apps/<PROJECT_NAME>` |
 | `--template <NAME>` | `basic \| swiftui \| metal \| 3d` | Project template | `basic` |
 | `--bundle-id <ID>` | string | macOS bundle identifier | `com.example.<project>` |
 | `--author <NAME>` | string | Project author name | Git config user.name |
 | `--no-git` | flag | Skip git initialization | false |
 | `--no-readme` | flag | Skip README.md generation | false |
+
+Note: If `--path` is omitted, the generator uses `<oflike-root>/apps` (auto-detected) or `paths.oflike_metal_root` from `~/.oflike-gen.toml`.
+Note: `oflike-gen new` runs `xcodegen generate` after creating `project.yml` to produce `<project>.xcodeproj`.
 
 #### Examples
 
@@ -116,7 +124,9 @@ myProject/
 ├── src/
 │   ├── MyApp.h
 │   ├── MyApp.cpp
-│   └── App.swift         # SwiftUI entry
+│   ├── App.swift         # SwiftUI entry
+│   ├── MetalView.swift   # MTKView + bridge
+│   └── PerformanceMonitor.swift # FPS/stats overlay
 ├── data/
 ├── resources/
 │   ├── Info.plist
@@ -125,23 +135,6 @@ myProject/
 ├── project.yml
 ├── .gitignore
 └── README.md
-```
-
-**ofMain Entry (Legacy)**:
-```bash
-oflike-gen new legacyProject --entry ofmain
-```
-
-Generated structure:
-```
-legacyProject/
-├── src/
-│   ├── LegacyProject.h
-│   ├── LegacyProject.cpp
-│   └── main.mm           # ofMain entry
-├── data/
-├── CMakeLists.txt
-└── project.yml
 ```
 
 **With Core Addons**:
@@ -173,7 +166,6 @@ Includes:
 **Full Options**:
 ```bash
 oflike-gen new myStudio \
-  --entry swiftui \
   --addons ofxOsc,ofxGui,ofxSharp \
   --template swiftui \
   --bundle-id com.mystudio.app \
@@ -391,7 +383,6 @@ Generated `~/.oflike-gen.toml`:
 ```toml
 # oflike-gen configuration
 [defaults]
-entry_mode = "swiftui"
 addon_mode = "reference"
 author = "John Doe"
 bundle_id_prefix = "com.example"
@@ -461,9 +452,6 @@ version = "1.0.0"
 author = "John Doe"
 bundle_id = "com.example.myproject"
 
-[entry]
-mode = "swiftui"  # "swiftui" | "ofmain"
-
 [addons]
 core = ["ofxOsc", "ofxGui", "ofxSharp"]
 custom = [
@@ -494,9 +482,6 @@ addons = "addons"
     "author": "John Doe",
     "bundle_id": "com.example.myproject"
   },
-  "entry": {
-    "mode": "swiftui"
-  },
   "addons": {
     "core": ["ofxOsc", "ofxGui"],
     "custom": [
@@ -526,7 +511,6 @@ The generator validates:
 | `project.name` | string | ✅ | - | PascalCase or kebab-case |
 | `project.version` | string | ❌ | `1.0.0` | Semantic versioning |
 | `project.bundle_id` | string | ❌ | `com.example.<name>` | Reverse DNS format |
-| `entry.mode` | enum | ❌ | `swiftui` | `swiftui` \| `ofmain` |
 | `addons.core` | array | ❌ | `[]` | Valid Core/Native addon names |
 | `addons.custom` | array | ❌ | `[]` | Objects with `name`, `mode`, `source` |
 | `build.min_macos` | string | ❌ | `13.0` | >= 13.0 |
@@ -544,7 +528,7 @@ Minimal project with empty app class.
 
 **Files Generated**:
 - `src/MyApp.h`, `src/MyApp.cpp`
-- `src/App.swift` (SwiftUI) or `src/main.mm` (ofMain)
+- `src/App.swift` (SwiftUI)
 - Build configuration
 - Empty data/resources folders
 
@@ -613,10 +597,14 @@ cmake .. -G Xcode
 open particleSystem.xcodeproj
 ```
 
-**5. Build with XcodeGen**:
+**5. Open Xcode Project**:
+```bash
+open particleSystem.xcodeproj
+```
+
+**Re-generate with XcodeGen (if project.yml changes)**:
 ```bash
 xcodegen generate
-open particleSystem.xcodeproj
 ```
 
 ### Custom Addon Workflow
@@ -709,7 +697,7 @@ Error: Permission denied creating symlink
 
 The generator ensures all projects comply with [ARCHITECTURE.md](../../docs/ARCHITECTURE.md):
 
-✅ **SwiftUI Default**: `--entry swiftui` by default
+✅ **SwiftUI Only**: single supported entry mode
 ✅ **Layer Boundaries**: No Metal imports in oflike layer
 ✅ **Coordinate System**: 2D top-left, 3D right-hand
 ✅ **Prohibited Libraries**: FreeType, OpenGL, SDL, stb_image excluded
@@ -722,6 +710,7 @@ The generator ensures all projects comply with [ARCHITECTURE.md](../../docs/ARCH
 | Date | Version | Changes |
 |------|---------|---------|
 | 2026-01-25 | 1.0.0 | Initial CLI spec and schema (Phase 10.1) |
+| 2026-01-25 | 1.1.0 | Remove ofMain entry; SwiftUI-only generator |
 
 ---
 

@@ -1,0 +1,45 @@
+name: AutoXcodeGenTest
+options:
+  bundleIdPrefix: com.example.autoxcodegentest
+  deploymentTarget:
+    macOS: "13.0"
+
+targets:
+  AutoXcodeGenTest:
+    type: application
+    platform: macOS
+    sources:
+      - src
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: com.example.autoxcodegentest
+      INFOPLIST_FILE: resources/Info.plist
+      SWIFT_VERSION: "5.9"
+      CLANG_CXX_LANGUAGE_STANDARD: "c++20"
+      CLANG_CXX_LIBRARY: "libc++"
+      ENABLE_HARDENED_RUNTIME: NO
+      CODE_SIGNING_ALLOWED: NO
+      CODE_SIGNING_REQUIRED: NO
+      CODE_SIGN_IDENTITY: ""
+      HEADER_SEARCH_PATHS:
+        - "$(PROJECT_DIR)/../../src"
+      LIBRARY_SEARCH_PATHS:
+        - "$(PROJECT_DIR)/../../build"
+        - "$(PROJECT_DIR)/../../build/third_party"
+      OTHER_LDFLAGS:
+        - "-loflike-metal"
+        - "-ltess2"
+        - "-loscpack"
+        - "-lpugixml"
+
+    dependencies:
+      - sdk: Cocoa.framework
+      - sdk: Metal.framework
+      - sdk: MetalKit.framework
+      - sdk: QuartzCore.framework
+      - sdk: CoreGraphics.framework
+      - sdk: CoreText.framework
+      - sdk: ImageIO.framework
+      - sdk: Accelerate.framework
+
+    scheme:
+      testTargets: []

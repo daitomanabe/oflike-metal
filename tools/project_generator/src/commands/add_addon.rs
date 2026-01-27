@@ -6,7 +6,7 @@ pub fn execute(
     mode: &str,
     source: Option<&str>,
     project: &str,
-    update_build: bool,
+    _update_build: bool,
     verbose: bool,
 ) -> Result<()> {
     validate_addon_mode(mode)?;

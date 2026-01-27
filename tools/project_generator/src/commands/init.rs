@@ -7,7 +7,6 @@ pub fn execute(global: bool, local: bool, verbose: bool) -> Result<()> {
     let config_content = format!(
         r#"# oflike-gen configuration
 [defaults]
-entry_mode = "swiftui"
 addon_mode = "reference"
 author = "{}"
 bundle_id_prefix = "com.example"

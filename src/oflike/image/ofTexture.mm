@@ -2,6 +2,7 @@
 #import "../../render/DrawList.h"
 #import "../../render/DrawCommand.h"
 #import "../../render/RenderTypes.h"
+#import "../../render/IRenderer.h"
 #import "../../core/Context.h"
 #import "../graphics/ofGraphics.h"
 #import "../math/ofMatrix4x4.h"
@@ -568,6 +569,36 @@ int ofTexture::getWidth() const {
 
 int ofTexture::getHeight() const {
     return impl_ ? impl_->height : 0;
+}
+
+// ============================================================================
+// Data Readback
+// ============================================================================
+
+bool ofTexture::readToPixels(ofPixels& pix) const {
+    if (!impl_ || !impl_->textureHandle || !impl_->bAllocated) {
+        return false;
+    }
+
+    const int w = impl_->width;
+    const int h = impl_->height;
+    const size_t channels = GetChannelsFromImageType(impl_->internalFormat);
+
+    // Allocate pixel buffer
+    pix.allocate(w, h, channels);
+
+    // Calculate bytes per row
+    const size_t bytesPerRow = w * channels;
+
+    // Read pixels from GPU texture through Context (respecting layer boundaries)
+    auto& ctx = Context::instance();
+    return ctx.readTexturePixels(
+        impl_->textureHandle,
+        pix.getData(),
+        w,
+        h,
+        bytesPerRow
+    );
 }
 
 // ============================================================================
