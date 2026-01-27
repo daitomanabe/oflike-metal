@@ -3,12 +3,13 @@
 set -euo pipefail
 
 usage() {
-    echo "Usage: $0 <AppName> [--project-dir <path>] [--configuration <Debug|Release>] [--metal-debug] [--build]"
+    echo "Usage: $0 <AppName> [--project-dir <path>] [--configuration <Debug|Release>] [--metal-debug] [--build] [--auto-quit <seconds>]"
     echo ""
     echo "Examples:"
     echo "  $0 Test5"
     echo "  $0 Test5 --metal-debug"
     echo "  $0 Test5 --build"
+    echo "  $0 Test5 --build --auto-quit 5"
 }
 
 APP_NAME=""
@@ -16,6 +17,7 @@ PROJECT_DIR=""
 CONFIGURATION="Debug"
 METAL_DEBUG=0
 DO_BUILD=0
+AUTO_QUIT_SECS=0
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -34,6 +36,10 @@ while [ $# -gt 0 ]; do
         --build)
             DO_BUILD=1
             shift 1
+            ;;
+        --auto-quit)
+            AUTO_QUIT_SECS="$2"
+            shift 2
             ;;
         -h|--help)
             usage
@@ -83,7 +89,7 @@ log_append() {
 
 if [ "$LOG_ENABLED" -eq 1 ]; then
     log_append "----"
-    log_append "$(date '+%Y-%m-%d %H:%M:%S') run_app app=$APP_NAME config=$CONFIGURATION metal_debug=$METAL_DEBUG build=$DO_BUILD"
+    log_append "$(date '+%Y-%m-%d %H:%M:%S') run_app app=$APP_NAME config=$CONFIGURATION metal_debug=$METAL_DEBUG build=$DO_BUILD auto_quit=$AUTO_QUIT_SECS"
 else
     echo "Warning: cannot write log to $RUN_LOG" >&2
 fi
@@ -105,23 +111,53 @@ if [ ! -x "$EXECUTABLE" ]; then
     exit 1
 fi
 
-# Capture non-zero exits from the app without tripping `set -e`.
-set +e
-if [ "$METAL_DEBUG" -eq 1 ]; then
-    OFL_METAL_DEBUG=1 "$EXECUTABLE"
-else
-    "$EXECUTABLE"
+CRASH_DIR="$HOME/Library/Logs/DiagnosticReports"
+LATEST_CRASH_BEFORE=""
+if [ -d "$CRASH_DIR" ]; then
+    LATEST_CRASH_BEFORE="$(ls -t "$CRASH_DIR"/"$APP_NAME"* 2>/dev/null | head -n 1 || true)"
 fi
-APP_EXIT_CODE=$?
-set -e
+
+LATEST_CRASH=""
+APP_EXIT_CODE=0
+
+if [ "$AUTO_QUIT_SECS" -gt 0 ]; then
+    log_echo "Auto-quit enabled: $AUTO_QUIT_SECS seconds"
+    open -a "$APP_PATH"
+    sleep "$AUTO_QUIT_SECS"
+    if command -v osascript >/dev/null 2>&1; then
+        osascript -e "tell application \"$APP_NAME\" to quit" || true
+    fi
+    sleep 2
+    if [ -d "$CRASH_DIR" ]; then
+        LATEST_CRASH="$(ls -t "$CRASH_DIR"/"$APP_NAME"* 2>/dev/null | head -n 1 || true)"
+        if [ -n "$LATEST_CRASH" ] && [ "$LATEST_CRASH" != "$LATEST_CRASH_BEFORE" ]; then
+            APP_EXIT_CODE=134
+        fi
+    fi
+else
+    # Capture non-zero exits from the app without tripping `set -e`.
+    set +e
+    if [ "$METAL_DEBUG" -eq 1 ]; then
+        OFL_METAL_DEBUG=1 "$EXECUTABLE"
+    else
+        "$EXECUTABLE"
+    fi
+    APP_EXIT_CODE=$?
+    set -e
+fi
 
 if [ "$APP_EXIT_CODE" -ne 0 ]; then
     log_echo "Command failed with code $APP_EXIT_CODE"
-    CRASH_DIR="$HOME/Library/Logs/DiagnosticReports"
     if [ -d "$CRASH_DIR" ]; then
-        LATEST_CRASH="$(ls -t "$CRASH_DIR"/"$APP_NAME"* 2>/dev/null | head -n 1 || true)"
+        if [ -z "${LATEST_CRASH:-}" ]; then
+            LATEST_CRASH="$(ls -t "$CRASH_DIR"/"$APP_NAME"* 2>/dev/null | head -n 1 || true)"
+        fi
         if [ -n "${LATEST_CRASH:-}" ] && [ -f "$LATEST_CRASH" ]; then
-            log_echo "Latest crash report: $LATEST_CRASH"
+            if [ -n "$LATEST_CRASH_BEFORE" ] && [ "$LATEST_CRASH" = "$LATEST_CRASH_BEFORE" ]; then
+                log_echo "No new crash report found (latest is older): $LATEST_CRASH"
+            else
+                log_echo "Latest crash report: $LATEST_CRASH"
+            fi
             if command -v rg >/dev/null 2>&1; then
                 if [ "$LOG_ENABLED" -eq 1 ]; then
                     rg -n "Termination Reason|Exception Type|Application Specific Information|BUG IN CLIENT|Trace/BPT|Namespace SIGNAL|signal" \

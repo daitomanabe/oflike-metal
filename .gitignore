@@ -23,3 +23,5 @@ DerivedData/
 # Ralph orchestrator
 .agent/
 .ralph/
+# Local debug logs
+docs/run_app_debug.log
