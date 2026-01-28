@@ -37,3 +37,6 @@ Each API documentation includes:
 - [openFrameworks Documentation](https://openframeworks.cc/documentation/)
 - [ARCHITECTURE.md](../ARCHITECTURE.md)
 - [IMPLEMENTATION.md](../IMPLEMENTATION.md)
+## Checklist
+
+- API development checklist: `API_CHECKLIST.md`
