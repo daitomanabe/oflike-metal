@@ -25,6 +25,7 @@ private:
     void drawScene();
     void drawOverlay();
     void drawSceneOverview();
+    void drawSceneFoundation();
     void drawScenePrimitives();
     void drawSceneTransforms();
     void drawSceneImageText();
@@ -36,6 +37,13 @@ private:
     int currentScene_ = 0;
     float angle_ = 0.0f;
     uint64_t frameCount_ = 0;
+
+    int lastWindowWidth_ = 0;
+    int lastWindowHeight_ = 0;
+    int windowResizedCount_ = 0;
+    float targetFrameRate_ = 60.0f;
+    int lastKeyPressed_ = 0;
+    int lastKeyReleased_ = 0;
 
     ofTrueTypeFont overlayFont_;
     bool overlayFontLoaded_ = false;

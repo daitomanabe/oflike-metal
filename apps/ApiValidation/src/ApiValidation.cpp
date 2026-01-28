@@ -9,9 +9,11 @@ using oflike::ofPixels;
 
 void ApiValidation::setup() {
     ofSetWindowTitle("ApiValidation");
+    ofSetFrameRate(targetFrameRate_);
 
     sceneNames_ = {
         "Overview",
+        "Foundation",
         "2D Primitives",
         "Transforms",
         "Image + Text"
@@ -55,12 +57,14 @@ void ApiValidation::keyPressed(int key) {
             currentScene_ = idx;
             updateSceneLabel();
         }
+        lastKeyPressed_ = key;
         return;
     }
 
     if (key == 'n') {
         currentScene_ = (currentScene_ + 1) % static_cast<int>(sceneNames_.size());
         updateSceneLabel();
+        lastKeyPressed_ = key;
         return;
     }
 
@@ -70,11 +74,28 @@ void ApiValidation::keyPressed(int key) {
             currentScene_ = static_cast<int>(sceneNames_.size()) - 1;
         }
         updateSceneLabel();
+        lastKeyPressed_ = key;
+        return;
     }
+
+    if (key == 'f') {
+        if (targetFrameRate_ <= 30.0f) {
+            targetFrameRate_ = 60.0f;
+        } else if (targetFrameRate_ <= 60.0f) {
+            targetFrameRate_ = 120.0f;
+        } else {
+            targetFrameRate_ = 30.0f;
+        }
+        ofSetFrameRate(targetFrameRate_);
+        lastKeyPressed_ = key;
+        return;
+    }
+
+    lastKeyPressed_ = key;
 }
 
 void ApiValidation::keyReleased(int key) {
-    (void)key;
+    lastKeyReleased_ = key;
 }
 
 void ApiValidation::mouseMoved(int x, int y) {
@@ -101,8 +122,9 @@ void ApiValidation::mouseReleased(int x, int y, int button) {
 }
 
 void ApiValidation::windowResized(int w, int h) {
-    (void)w;
-    (void)h;
+    lastWindowWidth_ = w;
+    lastWindowHeight_ = h;
+    windowResizedCount_ += 1;
 }
 
 void ApiValidation::drawScene() {
@@ -111,17 +133,53 @@ void ApiValidation::drawScene() {
             drawSceneOverview();
             break;
         case 1:
-            drawScenePrimitives();
+            drawSceneFoundation();
             break;
         case 2:
-            drawSceneTransforms();
+            drawScenePrimitives();
             break;
         case 3:
+            drawSceneTransforms();
+            break;
+        case 4:
             drawSceneImageText();
             break;
         default:
             drawSceneOverview();
             break;
+    }
+}
+
+void ApiValidation::drawSceneFoundation() {
+    const float left = 80.0f;
+    float y = 120.0f;
+    const float lineGap = 28.0f;
+
+    std::vector<std::string> lines;
+    lines.push_back("Elapsed (s): " + ofToString(ofGetElapsedTimef(), 2));
+    lines.push_back("Elapsed (ms): " + ofToString(ofGetElapsedTimeMillis()));
+    lines.push_back("FPS (avg): " + ofToString(ofGetFrameRate(), 1));
+    lines.push_back("Target FPS: " + ofToString(targetFrameRate_, 0));
+    lines.push_back("Window: " + ofToString(ofGetWidth()) + " x " + ofToString(ofGetHeight()));
+    lines.push_back("Resized: " + ofToString(windowResizedCount_));
+    lines.push_back("Last key: " + ofToString(lastKeyPressed_));
+    lines.push_back("Last key up: " + ofToString(lastKeyReleased_));
+    lines.push_back("Toggle FPS: f (30/60/120)");
+
+    ofSetColor(40, 40, 40);
+    ofDrawRectangle(left - 20.0f, y - 30.0f, 520.0f, lineGap * static_cast<float>(lines.size()) + 20.0f);
+
+    ofSetColor(255);
+    if (contentFontLoaded_) {
+        for (const auto& line : lines) {
+            contentFont_.drawString(line, left, y);
+            y += lineGap;
+        }
+    } else {
+        for (size_t i = 0; i < lines.size(); ++i) {
+            ofDrawRectangle(left, y - 14.0f, 280.0f, 6.0f);
+            y += lineGap;
+        }
     }
 }
 
@@ -184,7 +242,7 @@ void ApiValidation::drawSceneImageText() {
     if (contentFontLoaded_) {
         ofSetColor(255);
         contentFont_.drawString("API Validation", 360, 180);
-        contentFont_.drawString("Press 1-4 to switch", 360, 220);
+        contentFont_.drawString("Press 1-5 to switch", 360, 220);
     } else {
         ofSetColor(220);
         ofDrawRectangle(360, 150, 260, 12);
@@ -205,7 +263,7 @@ void ApiValidation::drawOverlay() {
     lines.push_back("FPS: " + ofToString(ofGetFrameRate(), 1));
     lines.push_back("Frame: " + ofToString(frameCount_));
     lines.push_back("Size: " + ofToString(ofGetWidth()) + " x " + ofToString(ofGetHeight()));
-    lines.push_back("Keys: 1-4, n/p");
+    lines.push_back("Keys: 1-5, n/p, f");
 
     float boxWidth = 200.0f;
     if (overlayFontLoaded_) {

@@ -72,4 +72,17 @@ Place assets in `apps/ApiValidation/data/`:
 - `font.ttf` (optional)
 
 If assets are missing, the app falls back to a generated checker image and system fonts.
+## Scenes
+
+1. Overview
+2. Foundation (time / FPS / window info)
+3. 2D Primitives
+4. Transforms
+5. Image + Text
+
+## Controls
+
+- `1` - `5`: switch scenes
+- `n` / `p`: next / previous scene
+- `f`: toggle target FPS (30 / 60 / 120)
 
