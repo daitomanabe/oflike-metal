@@ -6,10 +6,10 @@
 # - Phase 3: メディア対応 (ofVideoPlayer, ofVideoGrabber, Image Filters)
 #
 # Flow:
-#   git_setup → phase1_planner → phase1_builder → phase1_tester
-#             → phase2_planner → phase2_builder → phase2_tester
-#             → phase3_planner → phase3_builder → phase3_tester
-#             → finalizer → LOOP_COMPLETE
+#   work.start → git_setup → phase1_planner → phase1_builder → phase1_tester
+#              → phase2_planner → phase2_builder → phase2_tester
+#              → phase3_planner → phase3_builder → phase3_tester
+#              → finalizer → LOOP_COMPLETE
 #
 # Usage:
 #   ralph run -c ralph.yml -p "PROMPT.md"
@@ -35,20 +35,21 @@ hats:
       Git/GitHub初期化と状態確認。
 
       実行手順:
-      1. gh auth status (認証確認、失敗→LOOP_COMPLETE)
+      1. gh auth status (認証確認)
       2. git status で現在の状態確認
       3. 未コミットの変更があれば git add -A && git commit
-      4. git push origin master
+      4. git push origin master (可能であれば)
 
-      全て成功 → git.ready / いずれか失敗 → LOOP_COMPLETE
+      重要: エラーが発生しても処理を継続する。
+      git操作に失敗しても git.ready を発行して次のフェーズへ進む。
 
       完了後:
       1. .agent/iteration.log に記録
+      2. 必ず git.ready を発行 (LOOP_COMPLETEは発行しない)
     triggers:
       - "work.start"
     publishes:
       - "git.ready"
-      - "LOOP_COMPLETE"
 
   phase1_planner:
     name: "Phase1 Planner"
@@ -64,7 +65,8 @@ hats:
 
       完了後:
       1. .agent/iteration.log に記録
-      2. git add -A && git commit && git push
+      2. git add -A && git commit && git push (可能であれば)
+      3. phase1.planned を発行
     triggers:
       - "git.ready"
     publishes:
@@ -90,11 +92,28 @@ hats:
       完了後:
       1. .agent/iteration.log に記録
       2. git add -A && git commit && git push
+      3. phase1.built を発行
     triggers:
       - "phase1.planned"
-      - "phase1.test.fix_requested"
     publishes:
       - "phase1.built"
+
+  phase1_fix_builder:
+    name: "Phase1 Fix Builder"
+    description: |
+      Phase1テストで発見された問題を修正。
+
+      実行手順:
+      1. テストログから問題を特定
+      2. 該当コードを修正
+      3. ビルド確認
+      4. .agent/iteration.log に記録
+      5. git add -A && git commit && git push
+      6. phase1.fixed を発行
+    triggers:
+      - "phase1.test.fix_requested"
+    publishes:
+      - "phase1.fixed"
 
   phase1_tester:
     name: "Phase1 Tester"
@@ -102,17 +121,36 @@ hats:
       Phase1のテスト。
 
       実行手順:
-      1. テストアプリ apps/test_phase1/ を作成
+      1. テストアプリ apps/test_phase1/ を作成/更新
       2. ビルド (./scripts/build_app.sh test_phase1)
       3. 各機能の動作確認
-      4. 問題発見時は phase1.test.fix_requested
-      5. 全て成功なら phase1.complete
+      4. 問題発見時は phase1.test.fix_requested を発行
+      5. 全て成功なら phase1.complete を発行
 
       完了後:
       1. .agent/iteration.log に記録
       2. git add -A && git commit && git push
     triggers:
       - "phase1.built"
+    publishes:
+      - "phase1.test.fix_requested"
+      - "phase1.complete"
+
+  phase1_retest:
+    name: "Phase1 Retest"
+    description: |
+      Phase1修正後の再テスト。
+
+      実行手順:
+      1. 修正されたコードのビルド確認
+      2. テスト実行
+      3. 問題があれば phase1.test.fix_requested
+      4. 成功なら phase1.complete
+
+      完了後:
+      1. .agent/iteration.log に記録
+    triggers:
+      - "phase1.fixed"
     publishes:
       - "phase1.test.fix_requested"
       - "phase1.complete"
@@ -132,6 +170,7 @@ hats:
       完了後:
       1. .agent/iteration.log に記録
       2. git add -A && git commit && git push
+      3. phase2.planned を発行
     triggers:
       - "phase1.complete"
     publishes:
@@ -151,11 +190,28 @@ hats:
       完了後:
       1. .agent/iteration.log に記録
       2. git add -A && git commit && git push
+      3. phase2.built を発行
     triggers:
       - "phase2.planned"
-      - "phase2.test.fix_requested"
     publishes:
       - "phase2.built"
+
+  phase2_fix_builder:
+    name: "Phase2 Fix Builder"
+    description: |
+      Phase2テストで発見された問題を修正。
+
+      実行手順:
+      1. テストログから問題を特定
+      2. 該当コードを修正
+      3. ビルド確認
+      4. .agent/iteration.log に記録
+      5. git add -A && git commit && git push
+      6. phase2.fixed を発行
+    triggers:
+      - "phase2.test.fix_requested"
+    publishes:
+      - "phase2.fixed"
 
   phase2_tester:
     name: "Phase2 Tester"
@@ -163,17 +219,37 @@ hats:
       Phase2のテスト。
 
       実行手順:
-      1. テストアプリ apps/test_phase2/ を作成
+      1. テストアプリ apps/test_phase2/ を作成/更新
       2. ビルド確認
       3. ライティングの視覚確認
       4. VBOパフォーマンス確認
-      5. 問題発見時は phase2.test.fix_requested
+      5. 問題発見時は phase2.test.fix_requested を発行
+      6. 成功なら phase2.complete を発行
 
       完了後:
       1. .agent/iteration.log に記録
       2. git add -A && git commit && git push
     triggers:
       - "phase2.built"
+    publishes:
+      - "phase2.test.fix_requested"
+      - "phase2.complete"
+
+  phase2_retest:
+    name: "Phase2 Retest"
+    description: |
+      Phase2修正後の再テスト。
+
+      実行手順:
+      1. 修正されたコードのビルド確認
+      2. テスト実行
+      3. 問題があれば phase2.test.fix_requested
+      4. 成功なら phase2.complete
+
+      完了後:
+      1. .agent/iteration.log に記録
+    triggers:
+      - "phase2.fixed"
     publishes:
       - "phase2.test.fix_requested"
       - "phase2.complete"
@@ -193,6 +269,7 @@ hats:
       完了後:
       1. .agent/iteration.log に記録
       2. git add -A && git commit && git push
+      3. phase3.planned を発行
     triggers:
       - "phase2.complete"
     publishes:
@@ -212,11 +289,28 @@ hats:
       完了後:
       1. .agent/iteration.log に記録
       2. git add -A && git commit && git push
+      3. phase3.built を発行
     triggers:
       - "phase3.planned"
-      - "phase3.test.fix_requested"
     publishes:
       - "phase3.built"
+
+  phase3_fix_builder:
+    name: "Phase3 Fix Builder"
+    description: |
+      Phase3テストで発見された問題を修正。
+
+      実行手順:
+      1. テストログから問題を特定
+      2. 該当コードを修正
+      3. ビルド確認
+      4. .agent/iteration.log に記録
+      5. git add -A && git commit && git push
+      6. phase3.fixed を発行
+    triggers:
+      - "phase3.test.fix_requested"
+    publishes:
+      - "phase3.fixed"
 
   phase3_tester:
     name: "Phase3 Tester"
@@ -224,17 +318,37 @@ hats:
       Phase3のテスト。
 
       実行手順:
-      1. テストアプリ apps/test_phase3/ を作成
+      1. テストアプリ apps/test_phase3/ を作成/更新
       2. 動画再生テスト
       3. カメラ入力テスト
       4. フィルター適用テスト
-      5. 問題発見時は phase3.test.fix_requested
+      5. 問題発見時は phase3.test.fix_requested を発行
+      6. 成功なら phase3.complete を発行
 
       完了後:
       1. .agent/iteration.log に記録
       2. git add -A && git commit && git push
     triggers:
       - "phase3.built"
+    publishes:
+      - "phase3.test.fix_requested"
+      - "phase3.complete"
+
+  phase3_retest:
+    name: "Phase3 Retest"
+    description: |
+      Phase3修正後の再テスト。
+
+      実行手順:
+      1. 修正されたコードのビルド確認
+      2. テスト実行
+      3. 問題があれば phase3.test.fix_requested
+      4. 成功なら phase3.complete
+
+      完了後:
+      1. .agent/iteration.log に記録
+    triggers:
+      - "phase3.fixed"
     publishes:
       - "phase3.test.fix_requested"
       - "phase3.complete"

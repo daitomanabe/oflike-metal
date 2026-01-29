@@ -1,0 +1,42 @@
+name: test11
+options:
+  bundleIdPrefix: com.example.test11
+  deploymentTarget:
+    macOS: "13.0"
+
+targets:
+  test11:
+    type: application
+    platform: macOS
+    sources:
+      - src
+      - ../../shaders/Basic2D.metal
+      - ../../shaders/Basic3D.metal
+      - path: data
+        type: folder
+        buildPhase: resources
+      - path: resources
+        type: folder
+        buildPhase: resources
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: com.example.test11
+      INFOPLIST_FILE: resources/Info.plist
+      SWIFT_VERSION: "5.9"
+      MTL_ENABLE_DEBUG_INFO: "NO"
+      MTL_COMPILER_FLAGS: "-fmodules-cache-path=/tmp/oflike_metal_module_cache"
+      SWIFT_OBJC_BRIDGING_HEADER: "$(PROJECT_DIR)/../../src/platform/bridge/oflike-metal-Bridging-Header.h"
+      CLANG_CXX_LANGUAGE_STANDARD: "c++20"
+      CLANG_CXX_LIBRARY: "libc++"
+      ENABLE_HARDENED_RUNTIME: NO
+      CODE_SIGNING_ALLOWED: NO
+      CODE_SIGNING_REQUIRED: NO
+      CODE_SIGN_IDENTITY: ""
+      HEADER_SEARCH_PATHS:
+        - "$(PROJECT_DIR)/../../src"
+
+    dependencies:
+      - framework: oflike-metal.framework
+        embed: true
+
+    scheme:
+      testTargets: []
