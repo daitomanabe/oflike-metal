@@ -104,7 +104,8 @@ src/oflike/
 │   └── ofVbo.h/.mm        # Phase 2
 ├── image/
 │   ├── ofTexture.h/.mm    # Phase 2 (extensions)
-│   └── ofImage.h/.mm      # Phase 3 (filters)
+│   ├── ofImage.h/.mm      # Phase 3 (filters)
+│   └── ofImageFilter.h/.mm # Phase 3 (image filters)
 ├── video/                  # Phase 3
 │   ├── ofVideoPlayer.h/.mm
 │   └── ofVideoGrabber.h/.mm
@@ -135,9 +136,9 @@ src/oflike/
 **Phase 2 COMPLETE** (2026-01-30)
 
 ### Phase 3 Complete When:
-- [ ] ofVideoPlayer: Video playback working
-- [ ] ofVideoGrabber: Camera input working
-- [ ] Image Filters: blur, sharpen, etc. working
+- [x] ofVideoPlayer: Video playback with AVFoundation implemented (2026-01-30)
+- [x] ofVideoGrabber: Camera input with AVCaptureSession implemented (2026-01-30)
+- [x] Image Filters: blur, sharpen, contrast, etc. with Accelerate implemented (2026-01-30)
 - [ ] test_phase3 app builds and runs successfully
 
 ### Final Criteria:
