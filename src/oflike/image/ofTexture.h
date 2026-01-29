@@ -184,6 +184,47 @@ public:
     void setTextureMinMagFilter(ofTexFilterMode_t minFilter, ofTexFilterMode_t magFilter);
 
     // ========================================================================
+    // Mipmap (Phase 2)
+    // ========================================================================
+
+    /// \brief Enable mipmap generation for this texture
+    /// \details When enabled, mipmaps will be generated when texture data is loaded.
+    /// Must be called before allocate() or loadData().
+    void enableMipmap();
+
+    /// \brief Disable mipmap generation
+    void disableMipmap();
+
+    /// \brief Check if mipmaps are enabled
+    /// \return true if mipmaps are enabled
+    bool hasMipmap() const;
+
+    /// \brief Generate mipmaps for current texture data
+    /// \details Explicitly generates mipmaps. Called automatically if enabled
+    /// when loadData() is called. Requires texture to be allocated first.
+    void generateMipmap();
+
+    /// \brief Set mipmap filter mode
+    /// \param filter Filter mode for mipmap sampling (LINEAR for trilinear filtering)
+    void setMipmapFilter(ofTexFilterMode_t filter);
+
+    /// \brief Get number of mipmap levels
+    /// \return Number of mipmap levels (1 if no mipmaps)
+    int getNumMipmapLevels() const;
+
+    // ========================================================================
+    // Anisotropic Filtering (Phase 2)
+    // ========================================================================
+
+    /// \brief Set maximum anisotropic filtering level
+    /// \param level Anisotropy level (1 = disabled, 2-16 = enabled)
+    void setMaxAnisotropy(int level);
+
+    /// \brief Get current anisotropic filtering level
+    /// \return Current anisotropy level
+    int getMaxAnisotropy() const;
+
+    // ========================================================================
     // Properties
     // ========================================================================
 

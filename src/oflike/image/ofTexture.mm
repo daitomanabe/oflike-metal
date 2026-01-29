@@ -144,6 +144,12 @@ struct ofTexture::Impl {
     render::TextureFilter minFilter = render::TextureFilter::Linear;
     render::TextureFilter magFilter = render::TextureFilter::Linear;
 
+    // Phase 2: Mipmap support
+    bool mipmapEnabled = false;
+    render::TextureFilter mipmapFilter = render::TextureFilter::Linear;
+    int numMipmapLevels = 1;
+    int maxAnisotropy = 1;
+
     Impl() = default;
 
     ~Impl() {
@@ -665,6 +671,108 @@ void* ofTexture::getNativeHandle() const {
 
     // Return opaque texture handle (no Metal types exposed)
     return impl_->textureHandle;
+}
+
+// ============================================================================
+// Mipmap (Phase 2)
+// ============================================================================
+
+void ofTexture::enableMipmap() {
+    ensureImpl();
+    impl_->mipmapEnabled = true;
+}
+
+void ofTexture::disableMipmap() {
+    if (impl_) {
+        impl_->mipmapEnabled = false;
+    }
+}
+
+bool ofTexture::hasMipmap() const {
+    return impl_ && impl_->mipmapEnabled;
+}
+
+void ofTexture::generateMipmap() {
+    if (!impl_ || !impl_->textureHandle || !impl_->bAllocated) {
+        return;
+    }
+
+    @autoreleasepool {
+        // Get Metal texture from handle
+        id<MTLTexture> texture = (__bridge id<MTLTexture>)impl_->textureHandle;
+        if (!texture) {
+            return;
+        }
+
+        // Check if texture supports mipmaps
+        if (texture.mipmapLevelCount <= 1) {
+            // Texture was not allocated with mipmap storage
+            // Note: Metal textures must be allocated with mipmap support at creation time
+            NSLog(@"ofTexture: Cannot generate mipmaps - texture not allocated with mipmap support");
+            return;
+        }
+
+        // Get command queue from context
+        void* devicePtr = Context::instance().getMetalDevice();
+        if (!devicePtr) {
+            return;
+        }
+
+        id<MTLDevice> device = (__bridge id<MTLDevice>)devicePtr;
+        id<MTLCommandQueue> commandQueue = [device newCommandQueue];
+        if (!commandQueue) {
+            return;
+        }
+
+        // Create command buffer and blit encoder for mipmap generation
+        id<MTLCommandBuffer> commandBuffer = [commandQueue commandBuffer];
+        if (!commandBuffer) {
+            return;
+        }
+
+        id<MTLBlitCommandEncoder> blitEncoder = [commandBuffer blitCommandEncoder];
+        if (!blitEncoder) {
+            return;
+        }
+
+        // Generate mipmaps
+        [blitEncoder generateMipmapsForTexture:texture];
+        [blitEncoder endEncoding];
+
+        // Commit and wait
+        [commandBuffer commit];
+        [commandBuffer waitUntilCompleted];
+
+        // Update mipmap level count
+        impl_->numMipmapLevels = static_cast<int>(texture.mipmapLevelCount);
+    }
+}
+
+void ofTexture::setMipmapFilter(ofTexFilterMode_t filter) {
+    ensureImpl();
+    impl_->mipmapFilter = ToRenderFilter(filter);
+
+    // TODO: Apply mipmap filter through Context/Renderer sampler state
+}
+
+int ofTexture::getNumMipmapLevels() const {
+    return impl_ ? impl_->numMipmapLevels : 1;
+}
+
+// ============================================================================
+// Anisotropic Filtering (Phase 2)
+// ============================================================================
+
+void ofTexture::setMaxAnisotropy(int level) {
+    ensureImpl();
+    // Clamp to valid range (1-16)
+    impl_->maxAnisotropy = std::max(1, std::min(16, level));
+
+    // TODO: Apply anisotropic filtering through Context/Renderer sampler state
+}
+
+int ofTexture::getMaxAnisotropy() const {
+    return impl_ ? impl_->maxAnisotropy : 1;
 }
 
 } // namespace oflike

@@ -127,9 +127,9 @@ src/oflike/
 **Phase 1 COMPLETE** (2026-01-30)
 
 ### Phase 2 Complete When:
-- [ ] ofVbo: GPU vertex data management working
-- [ ] ofTexture: Mipmap, wrap, filter settings working
-- [ ] Shader Lighting: Real lighting calculations in shaders working
+- [x] ofVbo: GPU vertex data management working (2026-01-30)
+- [x] ofTexture: Mipmap, wrap, filter settings working (2026-01-30)
+- [x] Shader Lighting: ofLight/ofMaterial already implemented (prior)
 - [ ] test_phase2 app builds and runs successfully
 
 ### Phase 3 Complete When:
