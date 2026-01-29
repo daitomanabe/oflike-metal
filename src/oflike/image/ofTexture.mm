@@ -249,36 +249,39 @@ void ofTexture::loadData(const ofShortPixels& pix) {
         imageType = OF_IMAGE_COLOR_ALPHA;
     }
 
-    // Determine texture format (16-bit unsigned integer)
-    render::TextureFormat format = ImageTypeToTextureFormat16(imageType);
+    // Convert 16-bit to 8-bit RGBA for Metal
+    std::vector<unsigned char> rgbaData(w * h * 4);
+    const uint16_t* srcData = pix.getData();
 
-    // Allocate if not already allocated or dimensions changed
-    if (!isAllocated() || impl_->width != w || impl_->height != h) {
-        impl_->width = w;
-        impl_->height = h;
-        impl_->internalFormat = imageType;
-        impl_->bAllocated = true;
-    }
-
-    // Handle RGB -> RGBA conversion if needed
-    if (channels == 3) {
-        // Convert RGB16 to RGBA16
-        std::vector<uint16_t> rgba_data(w * h * 4);
-        ConvertRGBToRGBA16(pix.getData(), rgba_data.data(), w, h);
-
-        // Upload RGBA16 data through Context/Renderer
-        // TODO: Implement Context::updateTextureData() for proper texture uploads
-        // For now, texture data will be uploaded on first draw
-        (void)rgba_data;  // Suppress unused warning
+    if (channels == 1) {
+        // Grayscale 16-bit to RGBA 8-bit
+        for (int i = 0; i < w * h; ++i) {
+            unsigned char v = static_cast<unsigned char>(srcData[i] >> 8);
+            rgbaData[i * 4 + 0] = v;
+            rgbaData[i * 4 + 1] = v;
+            rgbaData[i * 4 + 2] = v;
+            rgbaData[i * 4 + 3] = 255;
+        }
+    } else if (channels == 3) {
+        // RGB 16-bit to RGBA 8-bit
+        for (int i = 0; i < w * h; ++i) {
+            rgbaData[i * 4 + 0] = static_cast<unsigned char>(srcData[i * 3 + 0] >> 8);
+            rgbaData[i * 4 + 1] = static_cast<unsigned char>(srcData[i * 3 + 1] >> 8);
+            rgbaData[i * 4 + 2] = static_cast<unsigned char>(srcData[i * 3 + 2] >> 8);
+            rgbaData[i * 4 + 3] = 255;
+        }
     } else {
-        // Direct upload for grayscale or RGBA
-        const uint16_t* data = pix.getData();
-
-        // Upload texture data through Context/Renderer
-        // TODO: Implement Context::updateTextureData() for proper texture uploads
-        // For now, texture data will be uploaded on first draw
-        (void)data;  // Suppress unused warning
+        // RGBA 16-bit to RGBA 8-bit
+        for (int i = 0; i < w * h; ++i) {
+            rgbaData[i * 4 + 0] = static_cast<unsigned char>(srcData[i * 4 + 0] >> 8);
+            rgbaData[i * 4 + 1] = static_cast<unsigned char>(srcData[i * 4 + 1] >> 8);
+            rgbaData[i * 4 + 2] = static_cast<unsigned char>(srcData[i * 4 + 2] >> 8);
+            rgbaData[i * 4 + 3] = static_cast<unsigned char>(srcData[i * 4 + 3] >> 8);
+        }
     }
+
+    // Use the main loadData to upload
+    loadData(rgbaData.data(), w, h, OF_IMAGE_COLOR_ALPHA);
 }
 
 void ofTexture::loadData(const ofFloatPixels& pix) {
@@ -302,36 +305,43 @@ void ofTexture::loadData(const ofFloatPixels& pix) {
         imageType = OF_IMAGE_COLOR_ALPHA;
     }
 
-    // Determine texture format (32-bit float)
-    render::TextureFormat format = ImageTypeToTextureFormat32F(imageType);
+    // Convert float to 8-bit RGBA for Metal
+    std::vector<unsigned char> rgbaData(w * h * 4);
+    const float* srcData = pix.getData();
 
-    // Allocate if not already allocated or dimensions changed
-    if (!isAllocated() || impl_->width != w || impl_->height != h) {
-        impl_->width = w;
-        impl_->height = h;
-        impl_->internalFormat = imageType;
-        impl_->bAllocated = true;
-    }
+    auto clampToByte = [](float v) -> unsigned char {
+        return static_cast<unsigned char>(std::max(0.0f, std::min(1.0f, v)) * 255.0f);
+    };
 
-    // Handle RGB -> RGBA conversion if needed
-    if (channels == 3) {
-        // Convert RGB32F to RGBA32F
-        std::vector<float> rgba_data(w * h * 4);
-        ConvertRGBToRGBAFloat(pix.getData(), rgba_data.data(), w, h);
-
-        // Upload RGBA32F data through Context/Renderer
-        // TODO: Implement Context::updateTextureData() for proper texture uploads
-        // For now, texture data will be uploaded on first draw
-        (void)rgba_data;  // Suppress unused warning
+    if (channels == 1) {
+        // Grayscale float to RGBA 8-bit
+        for (int i = 0; i < w * h; ++i) {
+            unsigned char v = clampToByte(srcData[i]);
+            rgbaData[i * 4 + 0] = v;
+            rgbaData[i * 4 + 1] = v;
+            rgbaData[i * 4 + 2] = v;
+            rgbaData[i * 4 + 3] = 255;
+        }
+    } else if (channels == 3) {
+        // RGB float to RGBA 8-bit
+        for (int i = 0; i < w * h; ++i) {
+            rgbaData[i * 4 + 0] = clampToByte(srcData[i * 3 + 0]);
+            rgbaData[i * 4 + 1] = clampToByte(srcData[i * 3 + 1]);
+            rgbaData[i * 4 + 2] = clampToByte(srcData[i * 3 + 2]);
+            rgbaData[i * 4 + 3] = 255;
+        }
     } else {
-        // Direct upload for grayscale or RGBA
-        const float* data = pix.getData();
-
-        // Upload texture data through Context/Renderer
-        // TODO: Implement Context::updateTextureData() for proper texture uploads
-        // For now, texture data will be uploaded on first draw
-        (void)data;  // Suppress unused warning
+        // RGBA float to RGBA 8-bit
+        for (int i = 0; i < w * h; ++i) {
+            rgbaData[i * 4 + 0] = clampToByte(srcData[i * 4 + 0]);
+            rgbaData[i * 4 + 1] = clampToByte(srcData[i * 4 + 1]);
+            rgbaData[i * 4 + 2] = clampToByte(srcData[i * 4 + 2]);
+            rgbaData[i * 4 + 3] = clampToByte(srcData[i * 4 + 3]);
+        }
     }
+
+    // Use the main loadData to upload
+    loadData(rgbaData.data(), w, h, OF_IMAGE_COLOR_ALPHA);
 }
 
 void ofTexture::loadData(const void* data, int w, int h, int glFormat) {
@@ -341,16 +351,59 @@ void ofTexture::loadData(const void* data, int w, int h, int glFormat) {
         return;
     }
 
-    // Allocate if not already allocated or dimensions changed
-    if (!isAllocated() || impl_->width != w || impl_->height != h ||
-        impl_->internalFormat != glFormat) {
-        allocate(w, h, glFormat);
+    // Release old texture if exists
+    if (impl_->textureHandle) {
+        auto* renderer = Context::instance().renderer();
+        if (renderer) {
+            renderer->destroyTexture(impl_->textureHandle);
+        }
+        impl_->textureHandle = nullptr;
     }
 
-    // Upload texture data through Context/Renderer
-    // TODO: Implement Context::updateTextureData() for proper texture uploads
-    // For now, texture data will be uploaded on first draw
-    (void)data;  // Suppress unused warning
+    // Update dimensions and format
+    impl_->width = w;
+    impl_->height = h;
+    impl_->internalFormat = glFormat;
+
+    // Determine number of channels from format
+    size_t channels = 4;  // Default to RGBA
+    if (glFormat == OF_IMAGE_GRAYSCALE || glFormat == 1) {
+        channels = 1;
+    } else if (glFormat == OF_IMAGE_COLOR || glFormat == 3) {
+        channels = 3;
+    } else if (glFormat == OF_IMAGE_COLOR_ALPHA || glFormat == 4) {
+        channels = 4;
+    }
+
+    // Prepare RGBA data for Metal (Metal requires RGBA8)
+    std::vector<unsigned char> rgbaData;
+    const unsigned char* uploadData = static_cast<const unsigned char*>(data);
+
+    if (channels == 1) {
+        // Convert grayscale to RGBA
+        rgbaData.resize(w * h * 4);
+        for (int i = 0; i < w * h; ++i) {
+            unsigned char v = uploadData[i];
+            rgbaData[i * 4 + 0] = v;
+            rgbaData[i * 4 + 1] = v;
+            rgbaData[i * 4 + 2] = v;
+            rgbaData[i * 4 + 3] = 255;
+        }
+        uploadData = rgbaData.data();
+    } else if (channels == 3) {
+        // Convert RGB to RGBA
+        rgbaData.resize(w * h * 4);
+        ConvertRGBToRGBA(static_cast<const unsigned char*>(data), rgbaData.data(), w, h);
+        uploadData = rgbaData.data();
+    }
+    // For channels == 4, use data directly
+
+    // Create texture through renderer
+    auto* renderer = Context::instance().renderer();
+    if (renderer) {
+        impl_->textureHandle = renderer->createTexture(w, h, uploadData);
+        impl_->bAllocated = (impl_->textureHandle != nullptr);
+    }
 }
 
 // ============================================================================

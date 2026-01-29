@@ -109,6 +109,7 @@ struct MetalRenderer::Impl {
 
     // Pipeline states (cached by blend mode)
     id<MTLRenderPipelineState> pipeline2D[8] = {nil};  // One per BlendMode
+    id<MTLRenderPipelineState> pipeline2DTextured[8] = {nil};  // One per BlendMode (textured)
     id<MTLRenderPipelineState> pipeline3D[8] = {nil};  // One per BlendMode
 
     // Depth/stencil states
@@ -266,6 +267,7 @@ void MetalRenderer::Impl::shutdown() {
         // Release pipeline variants
         for (int i = 0; i < 8; i++) {
             pipeline2D[i] = nil;
+            pipeline2DTextured[i] = nil;
             pipeline3D[i] = nil;
         }
 
@@ -467,6 +469,16 @@ fragment float4 fragment3D(RasterizerData3D in [[stage_in]]) {
             pipeline2D[i] = createPipelineVariant(library, "vertex2D", "fragment2D", mode);
             if (!pipeline2D[i]) {
                 NSLog(@"MetalRenderer: Failed to create 2D pipeline variant for blend mode %d", i);
+                return false;
+            }
+        }
+
+        // Create 2D textured pipeline variants for common blend modes
+        for (int i = 0; i <= 6; i++) {
+            BlendMode mode = (BlendMode)i;
+            pipeline2DTextured[i] = createPipelineVariant(library, "vertex2D", "fragment2DTextured", mode);
+            if (!pipeline2DTextured[i]) {
+                NSLog(@"MetalRenderer: Failed to create 2D textured pipeline variant for blend mode %d", i);
                 return false;
             }
         }
@@ -752,10 +764,14 @@ bool MetalRenderer::Impl::executeDraw2D(const DrawCommand2D& cmd, const DrawList
         uint8_t* bufferPtr = (uint8_t*)[currentBuffer contents];
         memcpy(bufferPtr + bufferOffset, vertices + cmd.vertexOffset, vertexDataSize);
 
-        // Set pipeline (select variant based on blend mode)
+        // Set pipeline (select variant based on blend mode and texture presence)
         uint32_t blendIndex = (uint32_t)cmd.blendMode;
         if (blendIndex > 6) blendIndex = 1; // Default to Alpha if out of range
-        [currentEncoder setRenderPipelineState:pipeline2D[blendIndex]];
+        if (cmd.texture) {
+            [currentEncoder setRenderPipelineState:pipeline2DTextured[blendIndex]];
+        } else {
+            [currentEncoder setRenderPipelineState:pipeline2D[blendIndex]];
+        }
 
         // Set vertex buffer
         [currentEncoder setVertexBuffer:currentBuffer offset:bufferOffset atIndex:0];

@@ -1158,16 +1158,147 @@ void ofDrawBox(float x, float y, float z, float size) {
 }
 
 void ofDrawBox(float x, float y, float z, float width, float height, float depth) {
-    // TODO: Implement 3D box rendering using DrawList
-    // For now, this is a placeholder that will be integrated with the 3D rendering pipeline
+    auto& state = getGraphicsState();
 
-    // Box vertices (8 corners)
-    // Front face: CCW from bottom-left
-    // Back face: CCW from bottom-left
-    // Will be implemented with proper vertex buffer and index buffer
+    float hw = width / 2.0f;
+    float hh = height / 2.0f;
+    float hd = depth / 2.0f;
 
-    (void)x; (void)y; (void)z;
-    (void)width; (void)height; (void)depth;
+    simd_float4 color = colorToFloat4(state.currentColor[0], state.currentColor[1],
+                                       state.currentColor[2], state.currentColor[3]);
+
+    // Box has 6 faces, each with 4 vertices (24 vertices total for proper normals)
+    // Each face has 2 triangles (6 indices per face, 36 indices total)
+
+    std::vector<render::Vertex3D> vertices;
+    std::vector<uint32_t> indices;
+    vertices.reserve(24);
+    indices.reserve(36);
+
+    auto addFace = [&](simd_float3 p0, simd_float3 p1, simd_float3 p2, simd_float3 p3, simd_float3 normal) {
+        uint32_t baseIdx = static_cast<uint32_t>(vertices.size());
+
+        // Add 4 vertices for this face
+        vertices.push_back(render::Vertex3D(p0.x, p0.y, p0.z, normal.x, normal.y, normal.z, 0, 0, color.x, color.y, color.z, color.w));
+        vertices.push_back(render::Vertex3D(p1.x, p1.y, p1.z, normal.x, normal.y, normal.z, 1, 0, color.x, color.y, color.z, color.w));
+        vertices.push_back(render::Vertex3D(p2.x, p2.y, p2.z, normal.x, normal.y, normal.z, 1, 1, color.x, color.y, color.z, color.w));
+        vertices.push_back(render::Vertex3D(p3.x, p3.y, p3.z, normal.x, normal.y, normal.z, 0, 1, color.x, color.y, color.z, color.w));
+
+        // Add 6 indices for 2 triangles (CCW winding)
+        indices.push_back(baseIdx + 0);
+        indices.push_back(baseIdx + 1);
+        indices.push_back(baseIdx + 2);
+        indices.push_back(baseIdx + 0);
+        indices.push_back(baseIdx + 2);
+        indices.push_back(baseIdx + 3);
+    };
+
+    // Define box corners (centered at x, y, z)
+    // Front face (z+)
+    addFace(simd_make_float3(x - hw, y - hh, z + hd),
+            simd_make_float3(x + hw, y - hh, z + hd),
+            simd_make_float3(x + hw, y + hh, z + hd),
+            simd_make_float3(x - hw, y + hh, z + hd),
+            simd_make_float3(0, 0, 1));
+
+    // Back face (z-)
+    addFace(simd_make_float3(x + hw, y - hh, z - hd),
+            simd_make_float3(x - hw, y - hh, z - hd),
+            simd_make_float3(x - hw, y + hh, z - hd),
+            simd_make_float3(x + hw, y + hh, z - hd),
+            simd_make_float3(0, 0, -1));
+
+    // Top face (y+)
+    addFace(simd_make_float3(x - hw, y + hh, z + hd),
+            simd_make_float3(x + hw, y + hh, z + hd),
+            simd_make_float3(x + hw, y + hh, z - hd),
+            simd_make_float3(x - hw, y + hh, z - hd),
+            simd_make_float3(0, 1, 0));
+
+    // Bottom face (y-)
+    addFace(simd_make_float3(x - hw, y - hh, z - hd),
+            simd_make_float3(x + hw, y - hh, z - hd),
+            simd_make_float3(x + hw, y - hh, z + hd),
+            simd_make_float3(x - hw, y - hh, z + hd),
+            simd_make_float3(0, -1, 0));
+
+    // Right face (x+)
+    addFace(simd_make_float3(x + hw, y - hh, z + hd),
+            simd_make_float3(x + hw, y - hh, z - hd),
+            simd_make_float3(x + hw, y + hh, z - hd),
+            simd_make_float3(x + hw, y + hh, z + hd),
+            simd_make_float3(1, 0, 0));
+
+    // Left face (x-)
+    addFace(simd_make_float3(x - hw, y - hh, z - hd),
+            simd_make_float3(x - hw, y - hh, z + hd),
+            simd_make_float3(x - hw, y + hh, z + hd),
+            simd_make_float3(x - hw, y + hh, z - hd),
+            simd_make_float3(-1, 0, 0));
+
+    if (state.fillEnabled) {
+        // Add vertices and indices to DrawList
+        auto& drawList = Context::instance().getDrawList();
+        uint32_t vtxOffset = drawList.addVertices3D(vertices.data(), vertices.size());
+        uint32_t idxOffset = drawList.addIndices(indices.data(), indices.size());
+
+        // Create 3D draw command
+        render::DrawCommand3D cmd;
+        cmd.vertexOffset = vtxOffset;
+        cmd.vertexCount = static_cast<uint32_t>(vertices.size());
+        cmd.indexOffset = idxOffset;
+        cmd.indexCount = static_cast<uint32_t>(indices.size());
+        cmd.primitiveType = render::PrimitiveType::Triangle;
+        cmd.blendMode = static_cast<render::BlendMode>(state.blendMode);
+        cmd.texture = nullptr;
+
+        // Get view matrix from Context (set by camera)
+        simd_float4x4 viewMatrix = Context::instance().getViewMatrix();
+
+        // Model matrix from current transform
+        auto& m = state.currentMatrix;
+        simd_float4x4 modelMatrix = simd_matrix(
+            simd_make_float4(m(0,0), m(1,0), m(2,0), m(3,0)),
+            simd_make_float4(m(0,1), m(1,1), m(2,1), m(3,1)),
+            simd_make_float4(m(0,2), m(1,2), m(2,2), m(3,2)),
+            simd_make_float4(m(0,3), m(1,3), m(2,3), m(3,3))
+        );
+
+        // ModelView = View * Model
+        cmd.modelViewMatrix = simd_mul(viewMatrix, modelMatrix);
+
+        // Projection matrix from Context (set by camera)
+        cmd.projectionMatrix = Context::instance().getProjectionMatrix();
+
+        // Normal matrix (upper-left 3x3 of modelView)
+        cmd.normalMatrix = simd_matrix(
+            simd_make_float3(cmd.modelViewMatrix.columns[0].x, cmd.modelViewMatrix.columns[0].y, cmd.modelViewMatrix.columns[0].z),
+            simd_make_float3(cmd.modelViewMatrix.columns[1].x, cmd.modelViewMatrix.columns[1].y, cmd.modelViewMatrix.columns[1].z),
+            simd_make_float3(cmd.modelViewMatrix.columns[2].x, cmd.modelViewMatrix.columns[2].y, cmd.modelViewMatrix.columns[2].z)
+        );
+
+        cmd.depthTestEnabled = state.depthTestEnabled;
+        cmd.depthWriteEnabled = state.depthWriteEnabled;
+        cmd.cullBackFace = state.cullingEnabled;
+
+        drawList.addCommand(cmd);
+    } else {
+        // Wireframe mode: draw 12 edges
+        ofDrawLine(x - hw, y - hh, z + hd, x + hw, y - hh, z + hd);
+        ofDrawLine(x + hw, y - hh, z + hd, x + hw, y + hh, z + hd);
+        ofDrawLine(x + hw, y + hh, z + hd, x - hw, y + hh, z + hd);
+        ofDrawLine(x - hw, y + hh, z + hd, x - hw, y - hh, z + hd);
+
+        ofDrawLine(x - hw, y - hh, z - hd, x + hw, y - hh, z - hd);
+        ofDrawLine(x + hw, y - hh, z - hd, x + hw, y + hh, z - hd);
+        ofDrawLine(x + hw, y + hh, z - hd, x - hw, y + hh, z - hd);
+        ofDrawLine(x - hw, y + hh, z - hd, x - hw, y - hh, z - hd);
+
+        ofDrawLine(x - hw, y - hh, z + hd, x - hw, y - hh, z - hd);
+        ofDrawLine(x + hw, y - hh, z + hd, x + hw, y - hh, z - hd);
+        ofDrawLine(x + hw, y + hh, z + hd, x + hw, y + hh, z - hd);
+        ofDrawLine(x - hw, y + hh, z + hd, x - hw, y + hh, z - hd);
+    }
 }
 
 void ofDrawBox(float size) {
