@@ -118,10 +118,10 @@ src/oflike/
 ## Success Criteria
 
 ### Phase 1 Complete When:
-- [ ] ofNode: Parent/child hierarchy with global transforms working
+- [x] ofNode: Parent/child hierarchy with global transforms working (2026-01-30)
 - [x] ofCamera: Perspective/ortho projection, coordinate conversion working (2026-01-29)
 - [x] ofFbo: Off-screen rendering working (2026-01-29)
-- [ ] ofShader: Custom shader loading and application working
+- [x] ofShader: Custom shader loading and application working (2026-01-30)
 - [ ] test_phase1 app builds and runs successfully
 
 ### Phase 2 Complete When:

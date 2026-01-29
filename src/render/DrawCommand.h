@@ -28,6 +28,7 @@ enum class CommandType : uint32_t {
     SetScissor,             // Set scissor test rectangle
     Clear,                  // Clear render target
     SetRenderTarget,        // Change render target
+    SetCustomShader,        // Use custom shader pipeline
 
     // State changes
     SetBlendMode,           // Change blend mode
@@ -196,6 +197,24 @@ struct SetRenderTargetCommand {
         : renderTarget(target) {}
 };
 
+/// Custom shader command
+struct SetCustomShaderCommand {
+    CommandType type = CommandType::SetCustomShader;
+    void* pipelineState;        // id<MTLRenderPipelineState> handle or nullptr for default
+    void* uniformData;          // Uniform buffer data
+    size_t uniformSize;         // Size of uniform buffer
+    void* textures[16];         // Texture bindings (max 16 texture units)
+
+    SetCustomShaderCommand()
+        : pipelineState(nullptr)
+        , uniformData(nullptr)
+        , uniformSize(0) {
+        for (int i = 0; i < 16; ++i) {
+            textures[i] = nullptr;
+        }
+    }
+};
+
 // ============================================================================
 // Generic Command Container
 // ============================================================================
@@ -212,6 +231,7 @@ struct DrawCommand {
         SetScissorCommand scissor;
         SetClearCommand clear;
         SetRenderTargetCommand renderTarget;
+        SetCustomShaderCommand customShader;
     };
 
     // Constructors for different command types
@@ -234,6 +254,9 @@ struct DrawCommand {
 
     explicit DrawCommand(const SetRenderTargetCommand& cmd)
         : type(CommandType::SetRenderTarget), renderTarget(cmd) {}
+
+    explicit DrawCommand(const SetCustomShaderCommand& cmd)
+        : type(CommandType::SetCustomShader), customShader(cmd) {}
 
     // Copy constructor and assignment
     DrawCommand(const DrawCommand& other);

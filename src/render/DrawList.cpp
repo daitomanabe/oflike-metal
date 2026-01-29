@@ -47,6 +47,10 @@ void DrawList::addCommand(const SetRenderTargetCommand& cmd) {
     commands_.emplace_back(cmd);
 }
 
+void DrawList::addCommand(const SetCustomShaderCommand& cmd) {
+    commands_.emplace_back(cmd);
+}
+
 // ============================================================================
 // Vertex Management (2D)
 // ============================================================================

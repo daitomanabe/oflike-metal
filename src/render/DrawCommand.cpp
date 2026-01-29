@@ -29,6 +29,9 @@ DrawCommand::DrawCommand(const DrawCommand& other)
         case CommandType::SetRenderTarget:
             renderTarget = other.renderTarget;
             break;
+        case CommandType::SetCustomShader:
+            customShader = other.customShader;
+            break;
         default:
             break;
     }
@@ -57,6 +60,9 @@ DrawCommand& DrawCommand::operator=(const DrawCommand& other) {
                 break;
             case CommandType::SetRenderTarget:
                 renderTarget = other.renderTarget;
+                break;
+            case CommandType::SetCustomShader:
+                customShader = other.customShader;
                 break;
             default:
                 break;

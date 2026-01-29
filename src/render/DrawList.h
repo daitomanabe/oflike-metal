@@ -76,6 +76,12 @@ public:
     void addCommand(const SetRenderTargetCommand& cmd);
 
     /**
+     * Add a custom shader command to the list.
+     * @param cmd The custom shader command to add
+     */
+    void addCommand(const SetCustomShaderCommand& cmd);
+
+    /**
      * Get all commands in the list.
      * @return Const reference to the command vector
      */
