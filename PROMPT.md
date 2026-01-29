@@ -1,6 +1,6 @@
-# oflike-metal prompt
+# oflike-metal Feature Development
 
-## Project summary
+## Project Summary
 - oflike-metal is a macOS-native reimplementation of openFrameworks.
 - User code is C++ and targets the oflike API.
 - Rendering is Metal via a render abstraction, with SwiftUI for windows and events.
@@ -13,7 +13,7 @@
 4) openFrameworks API compatibility.
 5) Apple native frameworks (Core ML, Vision, PHASE, MetalFX, etc.).
 
-## Absolute rules
+## Absolute Rules
 - No AppKit direct use. SwiftUI only, with MTKView or low-level bridging when necessary.
 - No OpenGL or GLSL.
 - No FreeType. Use Core Text.
@@ -27,26 +27,125 @@
 - Minimum macOS 13.0.
 - macOS 14+ frameworks (VisionKit) are optional or weak-linked.
 
-## Coordinate system
-- 2D origin is top-left (+X right, +Y down).
-- 3D is right-handed (oF compatible).
-- Texture origin is top-left.
-- Metal NDC conversion, Y flip, and Z range (0..1) are handled in the renderer.
+---
 
-## Implementation patterns
-- Public headers are pure C++ (.h).
-- Use pImpl to hide Objective-C++.
-- Use .mm for Apple framework implementations.
-- Wrap Objective-C object creation in @autoreleasepool.
+## Current Development: Feature Enhancement
 
-## Source layout (canonical)
-- src/core, src/math, src/oflike, src/render, src/platform.
-- Metal implementation lives in src/render/metal.
-- SwiftUI implementation lives in src/platform/swiftui.
-- Addons live under src/addons/core and src/addons/native.
+### Phases Overview
 
-## Workflow
-- Read docs/ARCHITECTURE.md first, then docs/CHECKLIST.md.
-- Follow CHECKLIST phases in order. Addons are last (Phase 12).
-- Update docs/CHECKLIST.md from [ ] to [x] when a task is completed.
-- Only perform actions required by the current task or explicit request.
+| Phase | Focus | Features |
+|-------|-------|----------|
+| 1 | 基盤強化 | ofNode, ofCamera, ofFbo, ofShader |
+| 2 | 表現力向上 | ofVbo, ofTexture拡張, Shader Lighting |
+| 3 | メディア対応 | ofVideoPlayer, ofVideoGrabber, Image Filters |
+
+### Phase 1: Foundation (基盤強化)
+
+| Feature | Description | Dependencies |
+|---------|-------------|--------------|
+| ofNode | Scene graph base node with parent/child transforms | None |
+| ofCamera | General camera class (base for ofEasyCam) | ofNode |
+| ofFbo | Off-screen rendering / framebuffer object | MetalRenderer |
+| ofShader | Custom Metal shader management | MetalRenderer |
+
+### Phase 2: Enhancement (表現力向上)
+
+| Feature | Description | Dependencies |
+|---------|-------------|--------------|
+| ofVbo | GPU vertex buffer management | MetalRenderer |
+| ofTexture Extension | Mipmap, Wrap, Filter settings | ofTexture |
+| Shader Lighting | Integrate ofLight/ofMaterial with shaders | ofShader, ofLight |
+
+### Phase 3: Media (メディア対応)
+
+| Feature | Description | Dependencies |
+|---------|-------------|--------------|
+| ofVideoPlayer | Video playback with AVFoundation | AVPlayer |
+| ofVideoGrabber | Camera input with AVCaptureSession | AVFoundation |
+| Image Filters | blur, sharpen, contrast, etc. | Accelerate/Metal |
+
+---
+
+## Critical Rules for Ralph
+
+### Every Iteration Must Do:
+
+1. **Log to `.agent/iteration.log`**
+   ```
+   [{ISO8601}] iteration #{n} | {Hat名} | {状態} | {概要}
+   ```
+
+2. **Git commit & push**
+   ```bash
+   git add -A
+   git commit -m "[Ralph] {Hat名}: {完了内容}"
+   git push origin master
+   ```
+
+### On LOOP_COMPLETE:
+
+1. Generate `COMPLETION_REPORT.md`
+2. Final git push
+
+---
+
+## Directory Structure
+
+```
+src/oflike/
+├── 3d/
+│   ├── ofNode.h/.cpp      # Phase 1
+│   ├── ofCamera.h/.cpp    # Phase 1 (inherits ofNode)
+│   ├── ofEasyCam.h/.cpp   # Existing (inherits ofCamera)
+│   └── ofMesh.h/.cpp      # Existing
+├── graphics/
+│   ├── ofFbo.h/.mm        # Phase 1
+│   ├── ofShader.h/.mm     # Phase 1
+│   └── ofVbo.h/.mm        # Phase 2
+├── image/
+│   ├── ofTexture.h/.mm    # Phase 2 (extensions)
+│   └── ofImage.h/.mm      # Phase 3 (filters)
+├── video/                  # Phase 3
+│   ├── ofVideoPlayer.h/.mm
+│   └── ofVideoGrabber.h/.mm
+└── lighting/
+    ├── ofLight.h/.cpp     # Phase 2 (shader integration)
+    └── ofMaterial.h/.cpp  # Phase 2 (shader integration)
+```
+
+---
+
+## Success Criteria
+
+### Phase 1 Complete When:
+- [ ] ofNode: Parent/child hierarchy with global transforms working
+- [ ] ofCamera: Perspective/ortho projection, coordinate conversion working
+- [ ] ofFbo: Off-screen rendering working
+- [ ] ofShader: Custom shader loading and application working
+- [ ] test_phase1 app builds and runs successfully
+
+### Phase 2 Complete When:
+- [ ] ofVbo: GPU vertex data management working
+- [ ] ofTexture: Mipmap, wrap, filter settings working
+- [ ] Shader Lighting: Real lighting calculations in shaders working
+- [ ] test_phase2 app builds and runs successfully
+
+### Phase 3 Complete When:
+- [ ] ofVideoPlayer: Video playback working
+- [ ] ofVideoGrabber: Camera input working
+- [ ] Image Filters: blur, sharpen, etc. working
+- [ ] test_phase3 app builds and runs successfully
+
+### Final Criteria:
+- [ ] All changes pushed to remote
+- [ ] .agent/iteration.log up to date
+- [ ] COMPLETION_REPORT.md generated
+- [ ] LOOP_COMPLETE issued
+
+---
+
+## Reference Documents
+
+- `docs/FEATURE_IDEAS.md` - Detailed feature ideas
+- `docs/ARCHITECTURE.md` - Architecture guidelines
+- Existing code: `src/oflike/`, `src/render/metal/`

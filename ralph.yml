@@ -1,440 +1,270 @@
-# oflike-metal Development Configuration
+# oflike-metal Feature Development Orchestrator
 #
-# SwiftUI + Metal で openFrameworks を再実装
-# チェックリスト駆動開発: CHECKLIST.md の [ ] を [x] に変えていく
+# 3つのPhaseで機能を段階的に実装:
+# - Phase 1: 基盤強化 (ofFbo, ofShader, ofNode, ofCamera)
+# - Phase 2: 表現力向上 (ofVbo, Shader Lighting, ofTexture拡張)
+# - Phase 3: メディア対応 (ofVideoPlayer, ofVideoGrabber, Image Filters)
 #
 # Flow:
-#   Builder → Confessor → Committer → Handler → (repeat)
-#   - Builder: タスク実装 + CHECKLIST更新
-#   - Confessor: ARCHITECTURE準拠チェック
-#   - Committer: git commit + push (GitHubで進捗確認可能)
-#   - Handler: 次のタスク選定
+#   git_setup → phase1_planner → phase1_builder → phase1_tester
+#             → phase2_planner → phase2_builder → phase2_tester
+#             → phase3_planner → phase3_builder → phase3_tester
+#             → finalizer → LOOP_COMPLETE
 #
 # Usage:
-#   cd /path/to/oflike_metal_skeleton
-#   ralph run -c ralph.yml -p "docs/CHECKLIST.md"
-#
-# Examples:
-#   # Phase別に作業:
-#   ralph run -c ralph.yml -p "Phase 1: SwiftUI + Metal 基盤を実装"
-#
-#   # 特定タスクを実行:
-#   ralph run -c ralph.yml -p "ofDrawCircle() を実装"
-#
-#   # 次のタスクを自動選択:
-#   ralph run -c ralph.yml -p "docs/CHECKLIST.md の次のタスクを実装"
-#
-# GitHub Progress:
-#   各タスク完了後に自動でpushされるので、リモートで進捗確認可能
-
-event_loop:
-  prompt_file: "PROMPT.md"
-  completion_promise: "LOOP_COMPLETE"
-  max_iterations: 1000
-  max_runtime_seconds: 14400  # 4 hours
-  checkpoint_interval: 5
-  starting_event: "build.task"
+#   ralph run -c ralph.yml -p "PROMPT.md"
 
 cli:
   backend: "claude"
 
+event_loop:
+  completion_promise: "LOOP_COMPLETE"
+  max_iterations: 100
+  prompt_file: "PROMPT.md"
+  starting_event: "work.start"
+  checkpoint_interval: 1
+
 core:
-  specs_dir: "./docs/"
-  guardrails:
-    # === チェックリスト駆動 (最重要) ===
-    - "docs/CHECKLIST.md の [ ] を見つけて実装 → [x] に更新"
-    - "Phase 0 → Phase 1 → ... の順に進める (AddonsはPhase 12で最後)"
-    - "⚠️ CHECKLIST.md の [x] 更新なしに次に進んではいけない"
-    - "⚠️ build.done 発行前に grep で [x] 更新を必ず検証"
-    # === ARCHITECTURE.md 絶対ルール ===
-    - "SwiftUIが唯一のエントリーポイント (ofMainは撤廃)"
-    - "macOS 13.0最小; macOS 14+機能はオプション (例: VisionKit)"
-    - "座標系: 2D左上/3D右手/Texture左上; Metal NDC(Y反転/Z0..1)はrendererで吸収"
-    - "❌ FreeType → Core Text"
-    - "❌ OpenGL → Metal"
-    - "❌ SDL/GLFW → SwiftUI + MTKView"
-    - "❌ stb_image → ImageIO / MTKTextureLoader"
-    - "❌ AppKit直接使用 → SwiftUI (低レベルブリッジのみ許可)"
-    - "❌ GLM/外部SIMD → simd/simd.h, Accelerate"
-    - "❌ Poco/Cairo/Assimp → Foundation/Network, Core Graphics, Model I/O"
-    # === 5つの柱 ===
-    - "✅ SwiftUI - ウィンドウ、イベント、UI"
-    - "✅ Metal - GPUレンダリング"
-    - "✅ C++記述 - ユーザーコードはC++"
-    - "✅ oF API互換 - openFrameworksと同じAPI"
-    - "✅ Apple Native - Core ML/Vision/PHASE/MetalFX等"
-    # === 実装パターン ===
-    - "pImplパターン - パブリックヘッダーは純粋C++ (.h)"
-    - "Objective-C++ - 実装ファイルのみ (.mm)"
-    - "@autoreleasepool - ObjCオブジェクト生成時は必須"
-    # === Git ワークフロー ===
-    - "タスク完了ごとにコミット + GitHubにpush"
-    - "Conventional Commits形式: feat(phase-X): description"
-    - "CHECKLIST.md の更新も必ずコミットに含める"
+  scratchpad: ".agent/scratchpad.md"
+  specs_dir: "./specs/"
 
 hats:
-  builder:
-    name: "🔨 Builder"
-    description: "CHECKLIST.mdの次の[ ]タスクを実装し[x]に更新"
-    triggers: ["build.task"]
-    publishes: ["build.done", "build.blocked"]
-    default_publishes: "build.done"
-    instructions: |
-      ## BUILDER PHASE
+  git_setup:
+    name: "Git Setup"
+    description: |
+      Git/GitHub初期化と状態確認。
 
-      CHECKLIST.md のタスクを1つずつ実装する。
+      実行手順:
+      1. gh auth status (認証確認、失敗→LOOP_COMPLETE)
+      2. git status で現在の状態確認
+      3. 未コミットの変更があれば git add -A && git commit
+      4. git push origin master
 
-      ### ⚠️ 毎回必ず実行するワークフロー
+      全て成功 → git.ready / いずれか失敗 → LOOP_COMPLETE
 
-      **Step 1: CHECKLIST.md を読んで次の [ ] を見つける**
-      ```bash
-      cat docs/CHECKLIST.md
-      ```
-      → 最初に見つかった `- [ ]` がターゲット
-      → Phase順に進める (Phase 0 → 1 → 2 → ...)
-      → タスクに参照ファイルがある場合は該当docsも読む (MIGRATION/PROJECT_STRUCTURE/IMPLEMENTATION など)
+      完了後:
+      1. .agent/iteration.log に記録
+    triggers:
+      - "work.start"
+    publishes:
+      - "git.ready"
+      - "LOOP_COMPLETE"
 
-      **Step 2: ARCHITECTURE.md を読んで禁止事項を確認**
-      ```bash
-      cat docs/ARCHITECTURE.md
-      ```
-      確認ポイント:
-      - 禁止ライブラリ (FreeType, OpenGL, SDL, stb_image, AppKit)
-      - 5つの柱 (SwiftUI, Metal, C++, oF API互換, Apple Native)
-      - 実装パターン (pImpl, @autoreleasepool)
-      - 座標系 (2D: 左上原点, 3D: 右手系, Texture: 左上原点)
-      - Metal NDC変換/Y反転はrenderer側で吸収
+  phase1_planner:
+    name: "Phase1 Planner"
+    description: |
+      Phase1 (基盤強化) の設計・計画。
+      対象: ofFbo, ofShader, ofNode, ofCamera
 
-      **Step 3: 実装**
-      ディレクトリ構造に従う (ARCHITECTURE.md優先。CHECKLISTのパス指定がある場合はそれに従う):
-      ```
-      src/
-      ├── core/           # AppBase, Context
-      ├── math/           # Types.h (simd), ofVec*, ofMatrix*
-      ├── addons/
-      │   ├── core/       # Core Addons
-      │   └── native/     # Apple Native Addons (CHECKLISTがapple_native表記ならそちら)
-      ├── platform/
-      │   ├── swiftui/    # App.swift, MetalView.swift
-      │   └── bridge/     # SwiftBridge.h/.mm
-      ├── render/
-      │   ├── DrawList, DrawCommand, RenderTypes
-      │   └── metal/      # MetalRenderer, MetalTexture
-      └── oflike/
-          ├── app/        # ofBaseApp, ofAppRunner
-          ├── graphics/   # ofGraphics, ofPath, ofTrueTypeFont
-          ├── 3d/         # ofMesh, ofCamera, of3dPrimitive
-          ├── image/      # ofTexture, ofPixels, ofImage
-          ├── lighting/   # ofLight, ofMaterial
-          ├── types/      # ofColor, ofRectangle
-          └── utils/      # ofUtils, ofLog
-      ```
+      実行手順:
+      1. 既存コードを分析 (src/oflike/, src/render/)
+      2. 各クラスのAPI設計を specs/phase1_*.md に記述
+      3. 依存関係を整理 (ofNode → ofCamera の順序等)
+      4. .agent/scratchpad.md に進捗記録
 
-      **Step 4: ビルド確認**
-      ```bash
-      # Xcode プロジェクトの場合
-      xcodebuild -scheme oflike-metal build 2>&1 | head -50
-      # または CMake
-      cd build && cmake .. && make -j8 2>&1 | head -100
-      ```
+      完了後:
+      1. .agent/iteration.log に記録
+      2. git add -A && git commit && git push
+    triggers:
+      - "git.ready"
+    publishes:
+      - "phase1.planned"
 
-      **Step 5: CHECKLIST.md を更新 (必須)**
-      完了したタスクを `- [ ]` → `- [x]` に変更
+  phase1_builder:
+    name: "Phase1 Builder"
+    description: |
+      Phase1の実装。
+      対象: ofFbo, ofShader, ofNode, ofCamera
 
-      **Step 6: CHECKLIST更新を検証 (必須)**
-      ```bash
-      # 更新前の状態を確認
-      grep -n "\- \[ \]" docs/CHECKLIST.md | head -5
+      実装順序:
+      1. ofNode (シーングラフ基盤)
+      2. ofCamera (ofNodeを継承)
+      3. ofFbo (オフスクリーンレンダリング)
+      4. ofShader (カスタムシェーダー)
 
-      # ファイルを編集して [ ] → [x] に変更
-      # (実装したタスクの行を編集)
+      各クラスごとに:
+      - ヘッダファイル (.h) 作成
+      - 実装ファイル (.cpp/.mm) 作成
+      - 既存コードとの統合
 
-      # 更新後: 該当行が [x] になっていることを確認
-      grep -n "\- \[x\].*<実装したタスク名の一部>" docs/CHECKLIST.md
-      ```
-      → **[x] が確認できるまで build.done を発行しない**
+      完了後:
+      1. .agent/iteration.log に記録
+      2. git add -A && git commit && git push
+    triggers:
+      - "phase1.planned"
+      - "phase1.test.fix_requested"
+    publishes:
+      - "phase1.built"
 
-      ### Before Starting
-      1. `ralph tools task list` で open tasks 確認
-      2. なければ CHECKLIST.md から次の [ ] を選択
-      3. `ralph tools task add "Phase X.Y: <タスク名>" -p 1`
+  phase1_tester:
+    name: "Phase1 Tester"
+    description: |
+      Phase1のテスト。
 
-      ### 完了時 (この順序を厳守)
-      1. docs/CHECKLIST.md の該当項目を `[x]` に更新
-      2. **grep で [x] 更新を検証** ← 必須
-      3. `ralph tools task close <id>`
-      4. `ralph emit "build.done" "completed: <タスク名>, checklist: updated"`
+      実行手順:
+      1. テストアプリ apps/test_phase1/ を作成
+      2. ビルド (./scripts/build_app.sh test_phase1)
+      3. 各機能の動作確認
+      4. 問題発見時は phase1.test.fix_requested
+      5. 全て成功なら phase1.complete
 
-      ### ⚠️ CHECKLIST未更新で build.done を発行してはいけない
-      CHECKLIST.md に [x] が入っていない場合は、先に更新すること。
+      完了後:
+      1. .agent/iteration.log に記録
+      2. git add -A && git commit && git push
+    triggers:
+      - "phase1.built"
+    publishes:
+      - "phase1.test.fix_requested"
+      - "phase1.complete"
 
-      ### ブロック時
-      ```bash
-      ralph emit "build.blocked" "tried: <what>, blocked: <why>"
-      ```
+  phase2_planner:
+    name: "Phase2 Planner"
+    description: |
+      Phase2 (表現力向上) の設計・計画。
+      対象: ofVbo, Shader-based Lighting, ofTexture拡張
 
-  confessor:
-    name: "🔍 Confessor"
-    description: "ARCHITECTURE.md準拠と実装品質を監査"
-    triggers: ["build.done"]
-    publishes: ["confession.clean", "confession.issues_found"]
-    default_publishes: "confession.clean"
-    instructions: |
-      ## CONFESSION PHASE
+      実行手順:
+      1. Phase1の成果を確認
+      2. 各機能のAPI設計を specs/phase2_*.md に記述
+      3. Metal シェーダー拡張計画
+      4. .agent/scratchpad.md に進捗記録
 
-      実装がARCHITECTURE.mdに準拠しているか監査する。
+      完了後:
+      1. .agent/iteration.log に記録
+      2. git add -A && git commit && git push
+    triggers:
+      - "phase1.complete"
+    publishes:
+      - "phase2.planned"
 
-      ### ⚠️ 毎回必ず実行するチェック
+  phase2_builder:
+    name: "Phase2 Builder"
+    description: |
+      Phase2の実装。
+      対象: ofVbo, Shader-based Lighting, ofTexture拡張
 
-      **Step 1: ARCHITECTURE.md を読む**
-      ```bash
-      cat docs/ARCHITECTURE.md
-      ```
+      実装順序:
+      1. ofVbo (GPU頂点バッファ)
+      2. ofTexture拡張 (mipmap, wrap, filter)
+      3. Shader-based Lighting (ofLight/ofMaterial統合)
 
-      **Step 2: 禁止ライブラリ検出**
-      ```bash
-      # FreeType
-      grep -r "FT_\|freetype\|FreeType" src/ --include="*.h" --include="*.cpp" --include="*.mm"
-      # OpenGL
-      grep -r "glBegin\|glEnd\|GL_\|glGen\|glBind\|#include.*gl\.h" src/
-      # SDL/GLFW
-      grep -r "SDL_\|GLFW\|glfwInit" src/
-      # stb_image
-      grep -r "stb_image\|STB_IMAGE\|stbi_" src/
-      # AppKit直接使用 (SwiftUI/MTKViewの低レベルブリッジのみ許可)
-      grep -r "NSWindow\|NSView\|NSEvent\|NSResponder" src/ --include="*.swift"
-      # GLM (新規コードでは非推奨)
-      grep -r "glm::" src/ --include="*.h" --include="*.cpp"
-      ```
-      → ヒットしたら用途を確認 (SwiftUI/MTKViewの低レベルブリッジ以外はNG)。問題があれば `confession.issues_found`
+      完了後:
+      1. .agent/iteration.log に記録
+      2. git add -A && git commit && git push
+    triggers:
+      - "phase2.planned"
+      - "phase2.test.fix_requested"
+    publishes:
+      - "phase2.built"
 
-      **Step 3: 実装パターン確認**
-      - パブリックヘッダー (.h) に Objective-C 型がないか
-      - pImpl パターンが使われているか
-      - @autoreleasepool が適切に使われているか
+  phase2_tester:
+    name: "Phase2 Tester"
+    description: |
+      Phase2のテスト。
 
-      **Step 4: oF API互換性確認**
-      - 関数シグネチャがoFと一致しているか
-      - 座標系が正しいか (2D: 左上原点, 3D: 右手系, Texture: 左上原点)
-      - Metal NDC変換/Y反転がrenderer側にあるか
+      実行手順:
+      1. テストアプリ apps/test_phase2/ を作成
+      2. ビルド確認
+      3. ライティングの視覚確認
+      4. VBOパフォーマンス確認
+      5. 問題発見時は phase2.test.fix_requested
 
-      **Step 5: CHECKLIST.md 更新確認 (最重要)**
+      完了後:
+      1. .agent/iteration.log に記録
+      2. git add -A && git commit && git push
+    triggers:
+      - "phase2.built"
+    publishes:
+      - "phase2.test.fix_requested"
+      - "phase2.complete"
 
-      ```bash
-      # 最近のgit diffでCHECKLIST.mdの変更を確認
-      git diff docs/CHECKLIST.md
+  phase3_planner:
+    name: "Phase3 Planner"
+    description: |
+      Phase3 (メディア対応) の設計・計画。
+      対象: ofVideoPlayer, ofVideoGrabber, Image Filters
 
-      # または未コミットの変更を確認
-      git diff --cached docs/CHECKLIST.md
+      実行手順:
+      1. AVFoundation APIの調査
+      2. 各機能のAPI設計を specs/phase3_*.md に記述
+      3. Accelerate/Metal Compute活用計画
+      4. .agent/scratchpad.md に進捗記録
 
-      # [x] の数をカウント（増えているはず）
-      grep -c "\- \[x\]" docs/CHECKLIST.md
-      ```
+      完了後:
+      1. .agent/iteration.log に記録
+      2. git add -A && git commit && git push
+    triggers:
+      - "phase2.complete"
+    publishes:
+      - "phase3.planned"
 
-      **必須チェック:**
-      - [ ] CHECKLIST.md に変更があるか
-      - [ ] 実装したタスクが `- [x]` になっているか
-      - [ ] `- [ ]` → `- [x]` の差分が見えるか
+  phase3_builder:
+    name: "Phase3 Builder"
+    description: |
+      Phase3の実装。
+      対象: ofVideoPlayer, ofVideoGrabber, Image Filters
 
-      → **[x] 更新が確認できない場合は即 `confession.issues_found`**
+      実装順序:
+      1. ofVideoPlayer (AVPlayer backend)
+      2. ofVideoGrabber (AVCaptureSession backend)
+      3. Image Filters (blur, sharpen, contrast等)
 
-      ### ConfessionReport
-      ```bash
-      ralph tools memory add "confession: arch-violation=<None|詳細>" -t context --tags confession
-      ralph tools memory add "confession: checklist-updated=<Yes|No|検証方法>" -t context --tags confession
-      ralph tools memory add "confession: oF-compat=<Yes|No|差異詳細>" -t context --tags confession
-      ```
+      完了後:
+      1. .agent/iteration.log に記録
+      2. git add -A && git commit && git push
+    triggers:
+      - "phase3.planned"
+      - "phase3.test.fix_requested"
+    publishes:
+      - "phase3.built"
 
-      ### Publish (厳格な判定)
+  phase3_tester:
+    name: "Phase3 Tester"
+    description: |
+      Phase3のテスト。
 
-      **即 `confession.issues_found` を発行:**
-      - ARCHITECTURE違反がある
-      - **CHECKLIST.md が更新されていない** ← 最重要
-      - **git diff で [x] 変更が確認できない**
+      実行手順:
+      1. テストアプリ apps/test_phase3/ を作成
+      2. 動画再生テスト
+      3. カメラ入力テスト
+      4. フィルター適用テスト
+      5. 問題発見時は phase3.test.fix_requested
 
-      **`confession.clean` を発行できる条件:**
-      - ARCHITECTURE違反なし AND
-      - **CHECKLIST.md に [x] 更新が確認できた** AND
-      - oF API互換性に問題なし
+      完了後:
+      1. .agent/iteration.log に記録
+      2. git add -A && git commit && git push
+    triggers:
+      - "phase3.built"
+    publishes:
+      - "phase3.test.fix_requested"
+      - "phase3.complete"
 
-      ⚠️ CHECKLIST未更新は重大な問題として扱う
+  finalizer:
+    name: "Finalizer"
+    description: |
+      全Phase完了後の最終処理。
 
-  committer:
-    name: "📦 Committer"
-    description: "変更をコミットしてGitHubにpush。開発進捗をリモートで確認可能に。"
-    triggers: ["confession.clean"]
-    publishes: ["commit.done", "commit.failed"]
-    default_publishes: "commit.done"
-    instructions: |
-      ## COMMITTER PHASE
+      実行手順:
+      1. 全テストの最終確認
+      2. ドキュメント更新 (README, API docs)
+      3. COMPLETION_REPORT.md 生成
+      4. 最終 git push
+      5. LOOP_COMPLETE 発行
 
-      実装が承認されたので、変更をコミットしてGitHubにpushする。
-
-      ### ⚠️ 毎回必ず実行するワークフロー
-
-      **Step 1: 変更内容を確認**
-      ```bash
-      git status
-      git diff --stat
-      ```
-
-      **Step 2: 変更をステージング**
-      ```bash
-      # 全ての変更をステージング
-      git add -A
-
-      # または特定のファイルのみ
-      git add src/ docs/CHECKLIST.md
-      ```
-
-      **Step 3: コミットメッセージ作成**
-      Conventional Commits 形式:
-      ```
-      <type>(<scope>): <description>
-
-      <body>
-
-      🤖 Auto-committed by ralph-orchestrator
-      ```
-
-      **Types:**
-      - `feat`: 新機能 (Phase X.Y の新規実装)
-      - `fix`: バグ修正
-      - `refactor`: リファクタリング
-      - `docs`: ドキュメント更新
-      - `chore`: その他
-
-      **Scope:** Phase番号 or コンポーネント名
-      - `phase-0`, `phase-1`, `swiftui`, `metal`, `oflike`, etc.
-
-      **例:**
-      ```bash
-      git commit -m "feat(phase-1): implement MTKView integration
-
-      - Add MetalView.swift with NSViewRepresentable
-      - Implement MTKViewDelegate for frame loop
-      - Update CHECKLIST.md progress
-
-      🤖 Auto-committed by ralph-orchestrator"
-      ```
-
-      **Step 4: GitHubにpush**
-      ```bash
-      git push origin main
-      ```
-      → push失敗時はエラー内容を確認
-
-      **Step 5: push成功を確認**
-      ```bash
-      git log --oneline -1
-      git remote -v
-      ```
-
-      ### コミットメッセージのガイドライン
-      - CHECKLIST.md のタスク名を含める
-      - 実装した内容を箇条書きで記載
-      - Phase番号を明記
-
-      ### 完了時
-      ```bash
-      ralph emit "commit.done" "pushed: <commit message summary>"
-      ```
-
-      ### 失敗時
-      ```bash
-      ralph emit "commit.failed" "error: <what went wrong>"
-      ```
-      → Handler が修正タスクを作成
-
-  handler:
-    name: "⚖️ Handler"
-    description: "次のタスクを決定。CHECKLIST.mdを参照。"
-    triggers: ["confession.issues_found", "commit.done", "commit.failed"]
-    publishes: ["build.task", "escalate.human"]
-    default_publishes: "build.task"
-    instructions: |
-      ## HANDLER PHASE
-
-      ### ⚠️ 最初に CHECKLIST.md を読む
-      ```bash
-      cat docs/CHECKLIST.md
-      ```
-
-      ### confession.issues_found の場合
-      1. 問題を検証
-      2. 問題が実在:
-         - ARCHITECTURE違反: 修正タスク作成
-         - CHECKLIST未更新: 更新タスク作成
-         ```bash
-         ralph tools task add "Fix: <issue>" -p 1
-         ralph emit "build.task" "fix needed: <summary>"
-         ```
-      3. 重大な設計違反: `escalate.human`
-
-      ### commit.failed の場合
-      1. エラー内容を確認
-      2. 修正タスクを作成:
-         ```bash
-         ralph tools task add "Fix git: <issue>" -p 1
-         ralph emit "build.task" "git fix needed: <summary>"
-         ```
-      3. リモート設定問題など重大な場合: `escalate.human`
-
-      ### commit.done の場合 (成功パス)
-
-      **まず CHECKLIST.md の進捗を検証:**
-      ```bash
-      # [x] の総数を確認（前回より増えているはず）
-      echo "Completed tasks: $(grep -c '\- \[x\]' docs/CHECKLIST.md)"
-
-      # 最新のコミットで CHECKLIST.md が更新されているか
-      git show --stat HEAD | grep CHECKLIST
-      ```
-      → CHECKLIST.md の更新がない場合は警告を記録
-
-      **CHECKLIST.md から次の [ ] を見つける:**
-
-      Phase順に進める:
-      - Phase 0: Structure & Policy (Must Decide First)
-      - Phase 1: Build Stabilization (Before Deeper Refactors)
-      - Phase 2: App Entry & Lifecycle
-      - Phase 3: Renderer Ownership & Bridge
-      - Phase 4: MetalRenderer Execution (Drawing Must Work)
-      - Phase 5: SwiftUI Integration (DrawList Path)
-      - Phase 6: oflike Graphics 2D + Matrix
-      - Phase 7: Device/Resource Ownership + Texture/FBO
-      - Phase 8: 3D / Camera / Mesh / Lighting
-      - Phase 9: Utilities / Image I/O
-      - Phase 10: Project Generator (CLI First)
-      - Phase 11: Validation
-      - Phase 12: Addons (Last)
-
-      ### 次のタスク作成
-      ```bash
-      # CHECKLIST.md から最初の [ ] を見つけてタスク作成
-      ralph tools task add "Phase X.Y: <タスク名>" -p 1
-      ralph emit "build.task" "next: <タスク名>"
-      ```
-
-      ### 進捗記録
-      ```bash
-      ralph tools memory add "completed: Phase X.Y, next: Phase X.Z" -t pattern --tags progress
-      ```
-
-      ### LOOP_COMPLETE 条件
-      - ユーザーが "stop" と言った場合
-      - 全Phaseが完了した場合 (CHECKLIST.mdに [ ] がない)
+      完了後:
+      1. .agent/iteration.log に記録
+      2. git add -A && git commit && git push
+    triggers:
+      - "phase3.complete"
+    publishes:
+      - "LOOP_COMPLETE"
 
 # Task tracking
 tasks:
   enabled: true
 
-# Memory - セッション間で学習を保持
+# Memory
 memories:
   enabled: true
   inject: auto
   budget: 3000
-  filter:
-    types: []
-    tags: []
-    recent: 0
