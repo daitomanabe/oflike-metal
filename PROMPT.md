@@ -130,7 +130,9 @@ src/oflike/
 - [x] ofVbo: GPU vertex data management working (2026-01-30)
 - [x] ofTexture: Mipmap, wrap, filter settings working (2026-01-30)
 - [x] Shader Lighting: ofLight/ofMaterial already implemented (prior)
-- [ ] test_phase2 app builds and runs successfully
+- [x] test_phase2 app builds and runs successfully (2026-01-30)
+
+**Phase 2 COMPLETE** (2026-01-30)
 
 ### Phase 3 Complete When:
 - [ ] ofVideoPlayer: Video playback working
