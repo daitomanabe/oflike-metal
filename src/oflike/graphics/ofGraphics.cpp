@@ -11,6 +11,8 @@
 #include <simd/simd.h>
 #include <vector>
 #include <stack>
+#include <map>
+#include <array>
 
 // ============================================================================
 // Internal Graphics State
@@ -1305,19 +1307,157 @@ void ofDrawBox(float size) {
     ofDrawBox(0.0f, 0.0f, 0.0f, size, size, size);
 }
 
+// Helper function to submit 3D geometry
+static void submit3DGeometry(const std::vector<render::Vertex3D>& vertices,
+                             const std::vector<uint32_t>& indices) {
+    auto& state = getGraphicsState();
+
+    auto& drawList = Context::instance().getDrawList();
+    uint32_t vtxOffset = drawList.addVertices3D(vertices.data(), vertices.size());
+    uint32_t idxOffset = drawList.addIndices(indices.data(), indices.size());
+
+    render::DrawCommand3D cmd;
+    cmd.vertexOffset = vtxOffset;
+    cmd.vertexCount = static_cast<uint32_t>(vertices.size());
+    cmd.indexOffset = idxOffset;
+    cmd.indexCount = static_cast<uint32_t>(indices.size());
+    cmd.primitiveType = render::PrimitiveType::Triangle;
+    cmd.blendMode = static_cast<render::BlendMode>(state.blendMode);
+    cmd.texture = nullptr;
+
+    // Get view matrix from Context
+    simd_float4x4 viewMatrix = Context::instance().getViewMatrix();
+
+    // Model matrix from current transform
+    auto& m = state.currentMatrix;
+    simd_float4x4 modelMatrix = simd_matrix(
+        simd_make_float4(m(0,0), m(1,0), m(2,0), m(3,0)),
+        simd_make_float4(m(0,1), m(1,1), m(2,1), m(3,1)),
+        simd_make_float4(m(0,2), m(1,2), m(2,2), m(3,2)),
+        simd_make_float4(m(0,3), m(1,3), m(2,3), m(3,3))
+    );
+
+    cmd.modelViewMatrix = simd_mul(viewMatrix, modelMatrix);
+    cmd.projectionMatrix = Context::instance().getProjectionMatrix();
+
+    cmd.normalMatrix = simd_matrix(
+        simd_make_float3(cmd.modelViewMatrix.columns[0].x, cmd.modelViewMatrix.columns[0].y, cmd.modelViewMatrix.columns[0].z),
+        simd_make_float3(cmd.modelViewMatrix.columns[1].x, cmd.modelViewMatrix.columns[1].y, cmd.modelViewMatrix.columns[1].z),
+        simd_make_float3(cmd.modelViewMatrix.columns[2].x, cmd.modelViewMatrix.columns[2].y, cmd.modelViewMatrix.columns[2].z)
+    );
+
+    cmd.depthTestEnabled = state.depthTestEnabled;
+    cmd.depthWriteEnabled = state.depthWriteEnabled;
+    cmd.cullBackFace = state.cullingEnabled;
+
+    drawList.addCommand(cmd);
+}
+
 void ofDrawSphere(float x, float y, float z, float radius) {
     auto& state = getGraphicsState();
     uint32_t resolution = state.sphereResolution;
+    if (resolution < 4) resolution = 4;
 
-    // TODO: Implement 3D sphere rendering using DrawList
-    // UV sphere tessellation:
-    // - Latitude rings: resolution
-    // - Longitude segments: resolution * 2
-    // - Generate vertices with normals for lighting
-    // - Use triangle strips or indexed triangles for efficiency
+    simd_float4 color = colorToFloat4(state.currentColor[0], state.currentColor[1],
+                                       state.currentColor[2], state.currentColor[3]);
 
-    (void)x; (void)y; (void)z;
-    (void)radius; (void)resolution;
+    std::vector<render::Vertex3D> vertices;
+    std::vector<uint32_t> indices;
+
+    // UV sphere: latitude rings × longitude segments
+    uint32_t latSegments = resolution;
+    uint32_t lonSegments = resolution * 2;
+
+    // Generate vertices
+    for (uint32_t lat = 0; lat <= latSegments; ++lat) {
+        float theta = lat * M_PI / latSegments;  // 0 to PI
+        float sinTheta = std::sin(theta);
+        float cosTheta = std::cos(theta);
+
+        for (uint32_t lon = 0; lon <= lonSegments; ++lon) {
+            float phi = lon * 2.0f * M_PI / lonSegments;  // 0 to 2*PI
+            float sinPhi = std::sin(phi);
+            float cosPhi = std::cos(phi);
+
+            // Normal (unit sphere)
+            float nx = sinTheta * cosPhi;
+            float ny = cosTheta;
+            float nz = sinTheta * sinPhi;
+
+            // Position
+            float px = x + radius * nx;
+            float py = y + radius * ny;
+            float pz = z + radius * nz;
+
+            // UV coordinates
+            float u = (float)lon / lonSegments;
+            float v = (float)lat / latSegments;
+
+            vertices.push_back(render::Vertex3D(px, py, pz, nx, ny, nz, u, v,
+                                                 color.x, color.y, color.z, color.w));
+        }
+    }
+
+    // Generate indices
+    for (uint32_t lat = 0; lat < latSegments; ++lat) {
+        for (uint32_t lon = 0; lon < lonSegments; ++lon) {
+            uint32_t first = lat * (lonSegments + 1) + lon;
+            uint32_t second = first + lonSegments + 1;
+
+            // Two triangles per quad
+            indices.push_back(first);
+            indices.push_back(second);
+            indices.push_back(first + 1);
+
+            indices.push_back(second);
+            indices.push_back(second + 1);
+            indices.push_back(first + 1);
+        }
+    }
+
+    if (state.fillEnabled) {
+        submit3DGeometry(vertices, indices);
+    } else {
+        // Wireframe: draw latitude and longitude lines
+        for (uint32_t lat = 0; lat <= latSegments; ++lat) {
+            float theta = lat * M_PI / latSegments;
+            float r = radius * std::sin(theta);
+            float py = y + radius * std::cos(theta);
+
+            for (uint32_t lon = 0; lon < lonSegments; ++lon) {
+                float phi1 = lon * 2.0f * M_PI / lonSegments;
+                float phi2 = (lon + 1) * 2.0f * M_PI / lonSegments;
+
+                float x1 = x + r * std::cos(phi1);
+                float z1 = z + r * std::sin(phi1);
+                float x2 = x + r * std::cos(phi2);
+                float z2 = z + r * std::sin(phi2);
+
+                ofDrawLine(x1, py, z1, x2, py, z2);
+            }
+        }
+
+        for (uint32_t lon = 0; lon < lonSegments; ++lon) {
+            float phi = lon * 2.0f * M_PI / lonSegments;
+            float cosPhi = std::cos(phi);
+            float sinPhi = std::sin(phi);
+
+            for (uint32_t lat = 0; lat < latSegments; ++lat) {
+                float theta1 = lat * M_PI / latSegments;
+                float theta2 = (lat + 1) * M_PI / latSegments;
+
+                float x1 = x + radius * std::sin(theta1) * cosPhi;
+                float y1 = y + radius * std::cos(theta1);
+                float z1 = z + radius * std::sin(theta1) * sinPhi;
+
+                float x2 = x + radius * std::sin(theta2) * cosPhi;
+                float y2 = y + radius * std::cos(theta2);
+                float z2 = z + radius * std::sin(theta2) * sinPhi;
+
+                ofDrawLine(x1, y1, z1, x2, y2, z2);
+            }
+        }
+    }
 }
 
 void ofDrawSphere(float radius) {
@@ -1327,16 +1467,104 @@ void ofDrawSphere(float radius) {
 void ofDrawCone(float x, float y, float z, float radius, float height) {
     auto& state = getGraphicsState();
     uint32_t resolution = state.circleResolution;
+    if (resolution < 3) resolution = 3;
 
-    // TODO: Implement 3D cone rendering using DrawList
-    // Cone structure:
-    // - Base: circle at y position with given radius
-    // - Apex: point at y + height
-    // - Side: triangle fan from apex to base circle
-    // - Bottom: optional filled circle (if fillEnabled)
+    simd_float4 color = colorToFloat4(state.currentColor[0], state.currentColor[1],
+                                       state.currentColor[2], state.currentColor[3]);
 
-    (void)x; (void)y; (void)z;
-    (void)radius; (void)height; (void)resolution;
+    float halfHeight = height / 2.0f;
+    float apexY = y + halfHeight;
+    float baseY = y - halfHeight;
+
+    std::vector<render::Vertex3D> vertices;
+    std::vector<uint32_t> indices;
+
+    if (state.fillEnabled) {
+        // Apex vertex (index 0)
+        vertices.push_back(render::Vertex3D(x, apexY, z, 0, 1, 0, 0.5f, 0,
+                                             color.x, color.y, color.z, color.w));
+
+        // Side vertices (base circle for cone side)
+        float slopeAngle = std::atan2(radius, height);
+        float normalY = std::cos(slopeAngle);
+        float normalXZScale = std::sin(slopeAngle);
+
+        for (uint32_t i = 0; i <= resolution; ++i) {
+            float angle = i * 2.0f * M_PI / resolution;
+            float cosA = std::cos(angle);
+            float sinA = std::sin(angle);
+
+            float px = x + radius * cosA;
+            float pz = z + radius * sinA;
+
+            // Normal points outward along the cone surface
+            float nx = normalXZScale * cosA;
+            float nz = normalXZScale * sinA;
+
+            float u = (float)i / resolution;
+            vertices.push_back(render::Vertex3D(px, baseY, pz, nx, normalY, nz, u, 1,
+                                                 color.x, color.y, color.z, color.w));
+        }
+
+        // Side triangles (triangle fan from apex)
+        for (uint32_t i = 0; i < resolution; ++i) {
+            indices.push_back(0);           // Apex
+            indices.push_back(i + 1);       // Current base vertex
+            indices.push_back(i + 2);       // Next base vertex
+        }
+
+        // Base center vertex
+        uint32_t baseCenterIdx = static_cast<uint32_t>(vertices.size());
+        vertices.push_back(render::Vertex3D(x, baseY, z, 0, -1, 0, 0.5f, 0.5f,
+                                             color.x, color.y, color.z, color.w));
+
+        // Base circle vertices
+        uint32_t baseStartIdx = static_cast<uint32_t>(vertices.size());
+        for (uint32_t i = 0; i <= resolution; ++i) {
+            float angle = i * 2.0f * M_PI / resolution;
+            float cosA = std::cos(angle);
+            float sinA = std::sin(angle);
+
+            float px = x + radius * cosA;
+            float pz = z + radius * sinA;
+
+            vertices.push_back(render::Vertex3D(px, baseY, pz, 0, -1, 0,
+                                                 0.5f + 0.5f * cosA, 0.5f + 0.5f * sinA,
+                                                 color.x, color.y, color.z, color.w));
+        }
+
+        // Base triangles (reverse winding for bottom face)
+        for (uint32_t i = 0; i < resolution; ++i) {
+            indices.push_back(baseCenterIdx);
+            indices.push_back(baseStartIdx + i + 1);
+            indices.push_back(baseStartIdx + i);
+        }
+
+        submit3DGeometry(vertices, indices);
+    } else {
+        // Wireframe mode
+        // Draw base circle
+        for (uint32_t i = 0; i < resolution; ++i) {
+            float angle1 = i * 2.0f * M_PI / resolution;
+            float angle2 = (i + 1) * 2.0f * M_PI / resolution;
+
+            float x1 = x + radius * std::cos(angle1);
+            float z1 = z + radius * std::sin(angle1);
+            float x2 = x + radius * std::cos(angle2);
+            float z2 = z + radius * std::sin(angle2);
+
+            ofDrawLine(x1, baseY, z1, x2, baseY, z2);
+        }
+
+        // Draw lines from apex to base
+        for (uint32_t i = 0; i < resolution; ++i) {
+            float angle = i * 2.0f * M_PI / resolution;
+            float bx = x + radius * std::cos(angle);
+            float bz = z + radius * std::sin(angle);
+
+            ofDrawLine(x, apexY, z, bx, baseY, bz);
+        }
+    }
 }
 
 void ofDrawCone(float radius, float height) {
@@ -1346,16 +1574,131 @@ void ofDrawCone(float radius, float height) {
 void ofDrawCylinder(float x, float y, float z, float radius, float height) {
     auto& state = getGraphicsState();
     uint32_t resolution = state.circleResolution;
+    if (resolution < 3) resolution = 3;
 
-    // TODO: Implement 3D cylinder rendering using DrawList
-    // Cylinder structure:
-    // - Top circle: at y + height
-    // - Bottom circle: at y
-    // - Side: quad strip connecting top and bottom circles
-    // - Caps: optional filled circles at top/bottom (if fillEnabled)
+    simd_float4 color = colorToFloat4(state.currentColor[0], state.currentColor[1],
+                                       state.currentColor[2], state.currentColor[3]);
 
-    (void)x; (void)y; (void)z;
-    (void)radius; (void)height; (void)resolution;
+    float halfHeight = height / 2.0f;
+    float topY = y + halfHeight;
+    float bottomY = y - halfHeight;
+
+    std::vector<render::Vertex3D> vertices;
+    std::vector<uint32_t> indices;
+
+    if (state.fillEnabled) {
+        // Side vertices (two rings)
+        for (uint32_t i = 0; i <= resolution; ++i) {
+            float angle = i * 2.0f * M_PI / resolution;
+            float cosA = std::cos(angle);
+            float sinA = std::sin(angle);
+
+            float px = x + radius * cosA;
+            float pz = z + radius * sinA;
+            float u = (float)i / resolution;
+
+            // Top ring vertex (side)
+            vertices.push_back(render::Vertex3D(px, topY, pz, cosA, 0, sinA, u, 0,
+                                                 color.x, color.y, color.z, color.w));
+            // Bottom ring vertex (side)
+            vertices.push_back(render::Vertex3D(px, bottomY, pz, cosA, 0, sinA, u, 1,
+                                                 color.x, color.y, color.z, color.w));
+        }
+
+        // Side quads
+        for (uint32_t i = 0; i < resolution; ++i) {
+            uint32_t topLeft = i * 2;
+            uint32_t bottomLeft = i * 2 + 1;
+            uint32_t topRight = (i + 1) * 2;
+            uint32_t bottomRight = (i + 1) * 2 + 1;
+
+            // First triangle
+            indices.push_back(topLeft);
+            indices.push_back(bottomLeft);
+            indices.push_back(topRight);
+
+            // Second triangle
+            indices.push_back(topRight);
+            indices.push_back(bottomLeft);
+            indices.push_back(bottomRight);
+        }
+
+        // Top cap
+        uint32_t topCenterIdx = static_cast<uint32_t>(vertices.size());
+        vertices.push_back(render::Vertex3D(x, topY, z, 0, 1, 0, 0.5f, 0.5f,
+                                             color.x, color.y, color.z, color.w));
+
+        uint32_t topCapStart = static_cast<uint32_t>(vertices.size());
+        for (uint32_t i = 0; i <= resolution; ++i) {
+            float angle = i * 2.0f * M_PI / resolution;
+            float cosA = std::cos(angle);
+            float sinA = std::sin(angle);
+
+            float px = x + radius * cosA;
+            float pz = z + radius * sinA;
+
+            vertices.push_back(render::Vertex3D(px, topY, pz, 0, 1, 0,
+                                                 0.5f + 0.5f * cosA, 0.5f + 0.5f * sinA,
+                                                 color.x, color.y, color.z, color.w));
+        }
+
+        for (uint32_t i = 0; i < resolution; ++i) {
+            indices.push_back(topCenterIdx);
+            indices.push_back(topCapStart + i);
+            indices.push_back(topCapStart + i + 1);
+        }
+
+        // Bottom cap
+        uint32_t bottomCenterIdx = static_cast<uint32_t>(vertices.size());
+        vertices.push_back(render::Vertex3D(x, bottomY, z, 0, -1, 0, 0.5f, 0.5f,
+                                             color.x, color.y, color.z, color.w));
+
+        uint32_t bottomCapStart = static_cast<uint32_t>(vertices.size());
+        for (uint32_t i = 0; i <= resolution; ++i) {
+            float angle = i * 2.0f * M_PI / resolution;
+            float cosA = std::cos(angle);
+            float sinA = std::sin(angle);
+
+            float px = x + radius * cosA;
+            float pz = z + radius * sinA;
+
+            vertices.push_back(render::Vertex3D(px, bottomY, pz, 0, -1, 0,
+                                                 0.5f + 0.5f * cosA, 0.5f + 0.5f * sinA,
+                                                 color.x, color.y, color.z, color.w));
+        }
+
+        for (uint32_t i = 0; i < resolution; ++i) {
+            indices.push_back(bottomCenterIdx);
+            indices.push_back(bottomCapStart + i + 1);
+            indices.push_back(bottomCapStart + i);
+        }
+
+        submit3DGeometry(vertices, indices);
+    } else {
+        // Wireframe mode
+        // Draw top and bottom circles
+        for (uint32_t i = 0; i < resolution; ++i) {
+            float angle1 = i * 2.0f * M_PI / resolution;
+            float angle2 = (i + 1) * 2.0f * M_PI / resolution;
+
+            float x1 = x + radius * std::cos(angle1);
+            float z1 = z + radius * std::sin(angle1);
+            float x2 = x + radius * std::cos(angle2);
+            float z2 = z + radius * std::sin(angle2);
+
+            ofDrawLine(x1, topY, z1, x2, topY, z2);
+            ofDrawLine(x1, bottomY, z1, x2, bottomY, z2);
+        }
+
+        // Draw vertical lines
+        for (uint32_t i = 0; i < resolution; ++i) {
+            float angle = i * 2.0f * M_PI / resolution;
+            float px = x + radius * std::cos(angle);
+            float pz = z + radius * std::sin(angle);
+
+            ofDrawLine(px, topY, pz, px, bottomY, pz);
+        }
+    }
 }
 
 void ofDrawCylinder(float radius, float height) {
@@ -1363,15 +1706,45 @@ void ofDrawCylinder(float radius, float height) {
 }
 
 void ofDrawPlane(float x, float y, float z, float width, float height) {
-    // TODO: Implement 3D plane rendering using DrawList
-    // Plane structure:
-    // - Two triangles forming a quad on XY plane at z depth
-    // - Centered at (x, y, z)
-    // - Extends ±width/2 along X, ±height/2 along Y
-    // - Normal pointing toward +Z (0, 0, 1)
+    auto& state = getGraphicsState();
 
-    (void)x; (void)y; (void)z;
-    (void)width; (void)height;
+    simd_float4 color = colorToFloat4(state.currentColor[0], state.currentColor[1],
+                                       state.currentColor[2], state.currentColor[3]);
+
+    float hw = width / 2.0f;
+    float hh = height / 2.0f;
+
+    if (state.fillEnabled) {
+        std::vector<render::Vertex3D> vertices;
+        std::vector<uint32_t> indices;
+
+        // Four corners of the plane (XZ plane, Y is up)
+        // Normal pointing up (+Y)
+        vertices.push_back(render::Vertex3D(x - hw, y, z - hh, 0, 1, 0, 0, 0,
+                                             color.x, color.y, color.z, color.w));
+        vertices.push_back(render::Vertex3D(x + hw, y, z - hh, 0, 1, 0, 1, 0,
+                                             color.x, color.y, color.z, color.w));
+        vertices.push_back(render::Vertex3D(x + hw, y, z + hh, 0, 1, 0, 1, 1,
+                                             color.x, color.y, color.z, color.w));
+        vertices.push_back(render::Vertex3D(x - hw, y, z + hh, 0, 1, 0, 0, 1,
+                                             color.x, color.y, color.z, color.w));
+
+        // Two triangles
+        indices.push_back(0);
+        indices.push_back(1);
+        indices.push_back(2);
+        indices.push_back(0);
+        indices.push_back(2);
+        indices.push_back(3);
+
+        submit3DGeometry(vertices, indices);
+    } else {
+        // Wireframe: draw rectangle outline
+        ofDrawLine(x - hw, y, z - hh, x + hw, y, z - hh);
+        ofDrawLine(x + hw, y, z - hh, x + hw, y, z + hh);
+        ofDrawLine(x + hw, y, z + hh, x - hw, y, z + hh);
+        ofDrawLine(x - hw, y, z + hh, x - hw, y, z - hh);
+    }
 }
 
 void ofDrawPlane(float width, float height) {
@@ -1379,16 +1752,114 @@ void ofDrawPlane(float width, float height) {
 }
 
 void ofDrawIcoSphere(float x, float y, float z, float radius, int subdivisions) {
-    // TODO: Implement icosphere rendering using DrawList
-    // Icosphere algorithm:
-    // 1. Start with icosahedron (20 triangular faces, 12 vertices)
-    // 2. Subdivide each triangle into 4 smaller triangles
-    // 3. Project new vertices onto sphere surface (normalize + scale by radius)
-    // 4. Repeat subdivision 'subdivisions' times
-    // Result: more uniform triangle distribution than UV sphere
+    auto& state = getGraphicsState();
 
-    (void)x; (void)y; (void)z;
-    (void)radius; (void)subdivisions;
+    simd_float4 color = colorToFloat4(state.currentColor[0], state.currentColor[1],
+                                       state.currentColor[2], state.currentColor[3]);
+
+    if (subdivisions < 0) subdivisions = 0;
+    if (subdivisions > 5) subdivisions = 5;  // Limit to prevent excessive geometry
+
+    // Golden ratio
+    const float t = (1.0f + std::sqrt(5.0f)) / 2.0f;
+
+    // Icosahedron vertices (normalized)
+    std::vector<simd_float3> icoVertices = {
+        simd_normalize(simd_make_float3(-1,  t,  0)),
+        simd_normalize(simd_make_float3( 1,  t,  0)),
+        simd_normalize(simd_make_float3(-1, -t,  0)),
+        simd_normalize(simd_make_float3( 1, -t,  0)),
+        simd_normalize(simd_make_float3( 0, -1,  t)),
+        simd_normalize(simd_make_float3( 0,  1,  t)),
+        simd_normalize(simd_make_float3( 0, -1, -t)),
+        simd_normalize(simd_make_float3( 0,  1, -t)),
+        simd_normalize(simd_make_float3( t,  0, -1)),
+        simd_normalize(simd_make_float3( t,  0,  1)),
+        simd_normalize(simd_make_float3(-t,  0, -1)),
+        simd_normalize(simd_make_float3(-t,  0,  1))
+    };
+
+    // Icosahedron faces (20 triangles)
+    std::vector<std::array<uint32_t, 3>> faces = {
+        {0, 11, 5}, {0, 5, 1}, {0, 1, 7}, {0, 7, 10}, {0, 10, 11},
+        {1, 5, 9}, {5, 11, 4}, {11, 10, 2}, {10, 7, 6}, {7, 1, 8},
+        {3, 9, 4}, {3, 4, 2}, {3, 2, 6}, {3, 6, 8}, {3, 8, 9},
+        {4, 9, 5}, {2, 4, 11}, {6, 2, 10}, {8, 6, 7}, {9, 8, 1}
+    };
+
+    // Subdivide
+    for (int s = 0; s < subdivisions; ++s) {
+        std::vector<std::array<uint32_t, 3>> newFaces;
+        std::map<std::pair<uint32_t, uint32_t>, uint32_t> midpointCache;
+
+        auto getMidpoint = [&](uint32_t i1, uint32_t i2) -> uint32_t {
+            auto key = std::make_pair(std::min(i1, i2), std::max(i1, i2));
+            auto it = midpointCache.find(key);
+            if (it != midpointCache.end()) {
+                return it->second;
+            }
+
+            simd_float3 mid = simd_normalize((icoVertices[i1] + icoVertices[i2]) * 0.5f);
+            uint32_t idx = static_cast<uint32_t>(icoVertices.size());
+            icoVertices.push_back(mid);
+            midpointCache[key] = idx;
+            return idx;
+        };
+
+        for (const auto& face : faces) {
+            uint32_t a = getMidpoint(face[0], face[1]);
+            uint32_t b = getMidpoint(face[1], face[2]);
+            uint32_t c = getMidpoint(face[2], face[0]);
+
+            newFaces.push_back({face[0], a, c});
+            newFaces.push_back({face[1], b, a});
+            newFaces.push_back({face[2], c, b});
+            newFaces.push_back({a, b, c});
+        }
+
+        faces = std::move(newFaces);
+    }
+
+    // Generate final vertices and indices
+    std::vector<render::Vertex3D> vertices;
+    std::vector<uint32_t> indices;
+
+    for (const auto& v : icoVertices) {
+        float px = x + radius * v.x;
+        float py = y + radius * v.y;
+        float pz = z + radius * v.z;
+
+        // UV mapping (spherical)
+        float u = 0.5f + std::atan2(v.z, v.x) / (2.0f * M_PI);
+        float vCoord = 0.5f - std::asin(v.y) / M_PI;
+
+        vertices.push_back(render::Vertex3D(px, py, pz, v.x, v.y, v.z, u, vCoord,
+                                             color.x, color.y, color.z, color.w));
+    }
+
+    for (const auto& face : faces) {
+        indices.push_back(face[0]);
+        indices.push_back(face[1]);
+        indices.push_back(face[2]);
+    }
+
+    if (state.fillEnabled) {
+        submit3DGeometry(vertices, indices);
+    } else {
+        // Wireframe: draw edges of each triangle
+        for (const auto& face : faces) {
+            const auto& v0 = vertices[face[0]];
+            const auto& v1 = vertices[face[1]];
+            const auto& v2 = vertices[face[2]];
+
+            ofDrawLine(v0.position.x, v0.position.y, v0.position.z,
+                       v1.position.x, v1.position.y, v1.position.z);
+            ofDrawLine(v1.position.x, v1.position.y, v1.position.z,
+                       v2.position.x, v2.position.y, v2.position.z);
+            ofDrawLine(v2.position.x, v2.position.y, v2.position.z,
+                       v0.position.x, v0.position.y, v0.position.z);
+        }
+    }
 }
 
 void ofDrawIcoSphere(float radius, int subdivisions) {

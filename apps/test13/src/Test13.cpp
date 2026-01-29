@@ -26,7 +26,7 @@ void Test13::draw() {
 
     if (show3D) {
         // =====================================================
-        // 3D MODE - Using camera with proper 3D coordinates
+        // 3D MODE - Testing all 3D primitives with camera
         // =====================================================
 
         // Begin camera view
@@ -35,52 +35,81 @@ void Test13::draw() {
         // Enable depth testing for proper 3D rendering
         ofEnableDepthTest();
 
-        // Test 1: Central filled box (rotating)
+        // === Row 1: Box, Sphere, IcoSphere ===
+
+        // Box (center)
         ofFill();
         ofSetColor(100, 100, 255);
         ofPushMatrix();
+        ofTranslate(0, 50, 0);
         ofRotateY(time * 30);
-        ofDrawBox(50);  // Blue box at origin
+        ofDrawBox(40);
         ofPopMatrix();
 
-        // Test 2: Wireframe box to the left
-        ofNoFill();
-        ofSetColor(255, 100, 100);
-        ofSetLineWidth(2.0f);
+        // Sphere (left)
+        ofSetColor(255, 150, 50);
         ofPushMatrix();
-        ofTranslate(-100, 0, 0);
+        ofTranslate(-100, 50, 0);
+        ofRotateY(time * 20);
+        ofDrawSphere(30);
+        ofPopMatrix();
+
+        // IcoSphere (right)
+        ofSetColor(50, 255, 150);
+        ofPushMatrix();
+        ofTranslate(100, 50, 0);
         ofRotateX(time * 25);
-        ofDrawBox(40);  // Red wireframe box
+        ofDrawIcoSphere(0, 0, 0, 30, 2);
         ofPopMatrix();
 
-        // Test 3: Filled box to the right
-        ofFill();
-        ofSetColor(100, 255, 100);
+        // === Row 2: Cylinder, Cone ===
+
+        // Cylinder (left)
+        ofSetColor(255, 100, 200);
         ofPushMatrix();
-        ofTranslate(100, 0, 0);
-        ofRotateZ(time * 20);
-        ofDrawBox(35);  // Green box
+        ofTranslate(-60, -30, 0);
+        ofRotateZ(time * 15);
+        ofDrawCylinder(20, 60);
         ofPopMatrix();
 
-        // Test 4: Small boxes in a circle
-        for (int i = 0; i < 8; i++) {
-            float angle = i * 45.0f * 3.14159f / 180.0f + time * 0.5f;
-            float radius = 120.0f;
-            float x = std::cos(angle) * radius;
-            float z = std::sin(angle) * radius;
+        // Cone (right)
+        ofSetColor(200, 255, 100);
+        ofPushMatrix();
+        ofTranslate(60, -30, 0);
+        ofRotateX(time * 20);
+        ofDrawCone(25, 50);
+        ofPopMatrix();
 
-            ofSetColor(255 - i * 30, 100 + i * 20, 150);
-            ofDrawBox(x, 0, z, 15);
-        }
+        // === Wireframe versions in back ===
 
-        // Test 5: Floor grid (wireframe)
         ofNoFill();
-        ofSetColor(80, 80, 100);
-        ofSetLineWidth(1.0f);
-        for (int i = -5; i <= 5; i++) {
-            ofDrawLine(i * 30, -50, -150, i * 30, -50, 150);
-            ofDrawLine(-150, -50, i * 30, 150, -50, i * 30);
-        }
+        ofSetLineWidth(1.5f);
+
+        // Wireframe sphere
+        ofSetColor(255, 200, 100);
+        ofPushMatrix();
+        ofTranslate(-100, 50, -100);
+        ofDrawSphere(25);
+        ofPopMatrix();
+
+        // Wireframe cylinder
+        ofSetColor(100, 200, 255);
+        ofPushMatrix();
+        ofTranslate(0, 50, -100);
+        ofDrawCylinder(20, 50);
+        ofPopMatrix();
+
+        // Wireframe cone
+        ofSetColor(200, 100, 255);
+        ofPushMatrix();
+        ofTranslate(100, 50, -100);
+        ofDrawCone(20, 45);
+        ofPopMatrix();
+
+        // === Floor plane ===
+        ofFill();
+        ofSetColor(60, 60, 80, 200);
+        ofDrawPlane(0, -80, 0, 300, 300);
 
         ofSetLineWidth(1.0f);
         ofDisableDepthTest();
