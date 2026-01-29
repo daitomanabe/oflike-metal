@@ -119,8 +119,8 @@ src/oflike/
 
 ### Phase 1 Complete When:
 - [ ] ofNode: Parent/child hierarchy with global transforms working
-- [ ] ofCamera: Perspective/ortho projection, coordinate conversion working
-- [ ] ofFbo: Off-screen rendering working
+- [x] ofCamera: Perspective/ortho projection, coordinate conversion working (2026-01-29)
+- [x] ofFbo: Off-screen rendering working (2026-01-29)
 - [ ] ofShader: Custom shader loading and application working
 - [ ] test_phase1 app builds and runs successfully
 
