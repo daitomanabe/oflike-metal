@@ -122,7 +122,9 @@ src/oflike/
 - [x] ofCamera: Perspective/ortho projection, coordinate conversion working (2026-01-29)
 - [x] ofFbo: Off-screen rendering working (2026-01-29)
 - [x] ofShader: Custom shader loading and application working (2026-01-30)
-- [ ] test_phase1 app builds and runs successfully
+- [x] test_phase1 app builds and runs successfully (2026-01-30)
+
+**Phase 1 COMPLETE** (2026-01-30)
 
 ### Phase 2 Complete When:
 - [ ] ofVbo: GPU vertex data management working
