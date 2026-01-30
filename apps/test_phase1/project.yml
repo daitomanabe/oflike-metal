@@ -12,6 +12,7 @@ targets:
       - src
       - ../../shaders/Basic2D.metal
       - ../../shaders/Basic3D.metal
+      - ../../shaders/BlendModes.metal
       - ../../shaders/TestShader.metal
       - path: resources
         type: folder

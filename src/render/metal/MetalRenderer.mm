@@ -175,6 +175,8 @@ struct MetalRenderer::Impl {
     bool createPipelines();
     id<MTLRenderPipelineState> createPipelineVariant(id<MTLLibrary> library, const char* vertexFunc,
                                                        const char* fragmentFunc, BlendMode blendMode);
+    id<MTLRenderPipelineState> createProgrammableBlendPipeline(id<MTLLibrary> library, const char* vertexFunc,
+                                                                 const char* fragmentFunc);
     bool createBuffers();
     bool createDepthStencilStates();
 
@@ -337,6 +339,41 @@ id<MTLRenderPipelineState> MetalRenderer::Impl::createPipelineVariant(id<MTLLibr
     }
 }
 
+id<MTLRenderPipelineState> MetalRenderer::Impl::createProgrammableBlendPipeline(id<MTLLibrary> library,
+                                                                                   const char* vertexFunc,
+                                                                                   const char* fragmentFunc) {
+    @autoreleasepool {
+        NSError* error = nil;
+
+        id<MTLFunction> vertFunc = [library newFunctionWithName:@(vertexFunc)];
+        id<MTLFunction> fragFunc = [library newFunctionWithName:@(fragmentFunc)];
+
+        if (!vertFunc || !fragFunc) {
+            NSLog(@"MetalRenderer: Failed to find programmable blend functions: %s / %s", vertexFunc, fragmentFunc);
+            return nil;
+        }
+
+        MTLRenderPipelineDescriptor* pipelineDesc = [[MTLRenderPipelineDescriptor alloc] init];
+        pipelineDesc.label = [NSString stringWithFormat:@"ProgrammableBlend_%s", fragmentFunc];
+        pipelineDesc.vertexFunction = vertFunc;
+        pipelineDesc.fragmentFunction = fragFunc;
+        pipelineDesc.colorAttachments[0].pixelFormat = MTLPixelFormatBGRA8Unorm;
+        pipelineDesc.depthAttachmentPixelFormat = MTLPixelFormatDepth32Float;
+
+        // Programmable blending: disable hardware blending (shader handles it)
+        pipelineDesc.colorAttachments[0].blendingEnabled = NO;
+
+        id<MTLRenderPipelineState> pipeline = [device newRenderPipelineStateWithDescriptor:pipelineDesc error:&error];
+        if (!pipeline) {
+            NSLog(@"MetalRenderer: Failed to create programmable blend pipeline %s: %@",
+                  fragmentFunc, error.localizedDescription);
+            return nil;
+        }
+
+        return pipeline;
+    }
+}
+
 bool MetalRenderer::Impl::createPipelines() {
     @autoreleasepool {
         NSError* error = nil;
@@ -467,15 +504,39 @@ fragment float4 fragment3D(RasterizerData3D in [[stage_in]]) {
         }
 
         // Create pipeline variants for all blend modes
-        // We create 7 variants (all enum values except PremultipliedAlpha which is less common)
-        // On-demand creation would be more efficient but requires more complex caching logic
+        // Modes 0-6: Standard hardware blending
+        // Modes 7-10: Programmable blending (shader-based) for accurate results
 
         NSLog(@"MetalRenderer: Creating pipeline variants...");
+
+        // Programmable blend shader function names
+        const char* progBlendFragFuncs[] = {
+            "fragment_blend_overlay",      // 7: Overlay
+            "fragment_blend_soft_light",   // 8: SoftLight
+            "fragment_blend_hard_light",   // 9: HardLight
+            "fragment_blend_difference"    // 10: Difference
+        };
+        const char* progBlendFragFuncsTextured[] = {
+            "fragment_blend_overlay_textured",
+            "fragment_blend_soft_light_textured",
+            "fragment_blend_hard_light_textured",
+            "fragment_blend_difference_textured"
+        };
 
         // Create 2D pipeline variants for all blend modes (0-10)
         for (int i = 0; i <= 10; i++) {
             BlendMode mode = (BlendMode)i;
-            pipeline2D[i] = createPipelineVariant(library, "vertex2D", "fragment2D", mode);
+            if (i >= 7 && i <= 10) {
+                // Programmable blending for advanced blend modes
+                pipeline2D[i] = createProgrammableBlendPipeline(library, "vertex_blend", progBlendFragFuncs[i - 7]);
+                if (!pipeline2D[i]) {
+                    // Fallback to hardware approximation
+                    NSLog(@"MetalRenderer: Programmable blend not available for mode %d, using hardware fallback", i);
+                    pipeline2D[i] = createPipelineVariant(library, "vertex2D", "fragment2D", mode);
+                }
+            } else {
+                pipeline2D[i] = createPipelineVariant(library, "vertex2D", "fragment2D", mode);
+            }
             if (!pipeline2D[i]) {
                 NSLog(@"MetalRenderer: Failed to create 2D pipeline variant for blend mode %d", i);
                 return false;
@@ -485,7 +546,17 @@ fragment float4 fragment3D(RasterizerData3D in [[stage_in]]) {
         // Create 2D textured pipeline variants for all blend modes (0-10)
         for (int i = 0; i <= 10; i++) {
             BlendMode mode = (BlendMode)i;
-            pipeline2DTextured[i] = createPipelineVariant(library, "vertex2D", "fragment2DTextured", mode);
+            if (i >= 7 && i <= 10) {
+                // Programmable blending for advanced blend modes
+                pipeline2DTextured[i] = createProgrammableBlendPipeline(library, "vertex_blend", progBlendFragFuncsTextured[i - 7]);
+                if (!pipeline2DTextured[i]) {
+                    // Fallback to hardware approximation
+                    NSLog(@"MetalRenderer: Programmable blend (textured) not available for mode %d, using hardware fallback", i);
+                    pipeline2DTextured[i] = createPipelineVariant(library, "vertex2D", "fragment2DTextured", mode);
+                }
+            } else {
+                pipeline2DTextured[i] = createPipelineVariant(library, "vertex2D", "fragment2DTextured", mode);
+            }
             if (!pipeline2DTextured[i]) {
                 NSLog(@"MetalRenderer: Failed to create 2D textured pipeline variant for blend mode %d", i);
                 return false;
@@ -493,6 +564,7 @@ fragment float4 fragment3D(RasterizerData3D in [[stage_in]]) {
         }
 
         // Create 3D pipeline variants for all blend modes (0-10)
+        // Note: 3D uses hardware blending for now (programmable blend for 3D would need separate shaders)
         for (int i = 0; i <= 10; i++) {
             BlendMode mode = (BlendMode)i;
             pipeline3D[i] = createPipelineVariant(library, "vertex3D", "fragment3D", mode);
