@@ -3,10 +3,24 @@ build/
 cmake-build-*/
 xcode/
 
-# Xcode
+# App build output (openFrameworks style bin/ directories)
+apps/*/bin/
+
+# Xcode generated projects (created by xcodegen)
+*.xcodeproj/
+apps/*/*.xcodeproj/
+examples/*/*.xcodeproj/
+tools/**/*.xcodeproj/
+
+# Xcode user data
 *.xcodeproj/xcuserdata/
 *.xcworkspace/xcuserdata/
 DerivedData/
+
+# Large test media files
+apps/*/data/*.mp4
+apps/*/data/*.mov
+apps/*/data/*.avi
 
 # macOS
 .DS_Store
