@@ -5,6 +5,7 @@
 
 #include "MetalRenderer.h"
 #include "../DrawCommand.h"
+#include "../../core/Context.h"
 #include <vector>
 #include <cstring>
 #include <cstdlib>
@@ -111,6 +112,7 @@ struct MetalRenderer::Impl {
     id<MTLRenderPipelineState> pipeline2D[8] = {nil};  // One per BlendMode
     id<MTLRenderPipelineState> pipeline2DTextured[8] = {nil};  // One per BlendMode (textured)
     id<MTLRenderPipelineState> pipeline3D[8] = {nil};  // One per BlendMode
+    id<MTLRenderPipelineState> pipeline3DLit[8] = {nil};  // 3D with Phong lighting
 
     // Depth/stencil states
     id<MTLDepthStencilState> depthEnabledState = nil;
@@ -269,6 +271,7 @@ void MetalRenderer::Impl::shutdown() {
             pipeline2D[i] = nil;
             pipeline2DTextured[i] = nil;
             pipeline3D[i] = nil;
+            pipeline3DLit[i] = nil;
         }
 
         depthEnabledState = nil;
@@ -490,6 +493,18 @@ fragment float4 fragment3D(RasterizerData3D in [[stage_in]]) {
             if (!pipeline3D[i]) {
                 NSLog(@"MetalRenderer: Failed to create 3D pipeline variant for blend mode %d", i);
                 return false;
+            }
+        }
+
+        // Create 3D lit pipeline variants (with Phong lighting)
+        // These use vertexLighting/fragmentPhongLighting from Lighting.metal
+        for (int i = 0; i <= 6; i++) {
+            BlendMode mode = (BlendMode)i;
+            pipeline3DLit[i] = createPipelineVariant(library, "vertexLighting", "fragmentPhongLighting", mode);
+            if (!pipeline3DLit[i]) {
+                // Lighting shaders may not be available in fallback mode - use basic 3D pipeline
+                NSLog(@"MetalRenderer: Lighting pipeline not available for blend mode %d, using basic 3D", i);
+                pipeline3DLit[i] = pipeline3D[i];
             }
         }
 
@@ -929,35 +944,88 @@ bool MetalRenderer::Impl::executeDraw3D(const DrawCommand3D& cmd, const DrawList
         uint8_t* bufferPtr = (uint8_t*)[currentBuffer contents];
         memcpy(bufferPtr + bufferOffset, vertices + cmd.vertexOffset, vertexDataSize);
 
-        // Set pipeline (select variant based on blend mode)
+        // Check if material/lighting is active
+        Context& ctx = Context::instance();
+        bool useLighting = ctx.hasMaterial() && ctx.isLightingEnabled();
+
+        // Set pipeline (select variant based on blend mode and lighting)
         uint32_t blendIndex = (uint32_t)cmd.blendMode;
         if (blendIndex > 6) blendIndex = 1; // Default to Alpha if out of range
-        [currentEncoder setRenderPipelineState:pipeline3D[blendIndex]];
+
+        if (useLighting) {
+            [currentEncoder setRenderPipelineState:pipeline3DLit[blendIndex]];
+        } else {
+            [currentEncoder setRenderPipelineState:pipeline3D[blendIndex]];
+        }
 
         // Set vertex buffer
         [currentEncoder setVertexBuffer:currentBuffer offset:bufferOffset atIndex:0];
 
-        // Set uniforms (projection + modelView + normal matrices)
-        struct Uniforms3D {
-            simd_float4x4 projectionMatrix;
-            simd_float4x4 modelViewMatrix;
-            simd_float4x4 normalMatrix;
-        };
+        if (useLighting) {
+            // Lighting uniforms (matches LightingUniforms in Lighting.metal)
+            struct LightingUniforms {
+                simd_float4x4 projectionMatrix;
+                simd_float4x4 modelViewMatrix;
+                simd_float4x4 normalMatrix;
+                simd_float3 cameraPosition;
+                int numLights;
+                int lightingEnabled;
+                int smoothShading;
+            };
 
-        Uniforms3D uniforms;
-        uniforms.projectionMatrix = cmd.projectionMatrix;
-        uniforms.modelViewMatrix = cmd.modelViewMatrix;
+            LightingUniforms uniforms;
+            uniforms.projectionMatrix = cmd.projectionMatrix;
+            uniforms.modelViewMatrix = cmd.modelViewMatrix;
 
-        // Convert 3x3 normal matrix to 4x4 for uniform buffer
-        simd_float4x4 normalMatrix4x4 = {
-            simd_make_float4(cmd.normalMatrix.columns[0], 0.0f),
-            simd_make_float4(cmd.normalMatrix.columns[1], 0.0f),
-            simd_make_float4(cmd.normalMatrix.columns[2], 0.0f),
-            simd_make_float4(0.0f, 0.0f, 0.0f, 1.0f)
-        };
-        uniforms.normalMatrix = normalMatrix4x4;
+            // Convert 3x3 normal matrix to 4x4
+            simd_float4x4 normalMatrix4x4 = {
+                simd_make_float4(cmd.normalMatrix.columns[0], 0.0f),
+                simd_make_float4(cmd.normalMatrix.columns[1], 0.0f),
+                simd_make_float4(cmd.normalMatrix.columns[2], 0.0f),
+                simd_make_float4(0.0f, 0.0f, 0.0f, 1.0f)
+            };
+            uniforms.normalMatrix = normalMatrix4x4;
+            uniforms.cameraPosition = simd_make_float3(0, 0, 0);  // Camera at origin in view space
+            uniforms.numLights = ctx.getLightCount();
+            uniforms.lightingEnabled = 1;
+            uniforms.smoothShading = 1;  // Phong (smooth) shading
 
-        [currentEncoder setVertexBytes:&uniforms length:sizeof(Uniforms3D) atIndex:1];
+            [currentEncoder setVertexBytes:&uniforms length:sizeof(LightingUniforms) atIndex:1];
+
+            // Material data (matches MaterialData in Lighting.metal - 13 floats)
+            std::vector<float> materialData = ctx.getMaterialData();
+            if (materialData.size() >= 13) {
+                [currentEncoder setFragmentBytes:materialData.data() length:materialData.size() * sizeof(float) atIndex:2];
+            }
+
+            // Light data (matches LightData in Lighting.metal - 23 floats per light)
+            std::vector<float> lightData = ctx.getAllLightData();
+            if (!lightData.empty()) {
+                [currentEncoder setFragmentBytes:lightData.data() length:lightData.size() * sizeof(float) atIndex:3];
+            }
+        } else {
+            // Standard 3D uniforms (no lighting)
+            struct Uniforms3D {
+                simd_float4x4 projectionMatrix;
+                simd_float4x4 modelViewMatrix;
+                simd_float4x4 normalMatrix;
+            };
+
+            Uniforms3D uniforms;
+            uniforms.projectionMatrix = cmd.projectionMatrix;
+            uniforms.modelViewMatrix = cmd.modelViewMatrix;
+
+            // Convert 3x3 normal matrix to 4x4 for uniform buffer
+            simd_float4x4 normalMatrix4x4 = {
+                simd_make_float4(cmd.normalMatrix.columns[0], 0.0f),
+                simd_make_float4(cmd.normalMatrix.columns[1], 0.0f),
+                simd_make_float4(cmd.normalMatrix.columns[2], 0.0f),
+                simd_make_float4(0.0f, 0.0f, 0.0f, 1.0f)
+            };
+            uniforms.normalMatrix = normalMatrix4x4;
+
+            [currentEncoder setVertexBytes:&uniforms length:sizeof(Uniforms3D) atIndex:1];
+        }
 
         // Apply depth state
         applyDepthState(cmd.depthTestEnabled);

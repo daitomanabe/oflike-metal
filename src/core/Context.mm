@@ -59,6 +59,10 @@ struct Context::Impl {
     std::vector<std::vector<float>> materialStack;
     std::vector<float> currentMaterialData;
 
+    // Light state (Phase 8.5)
+    std::vector<std::vector<float>> registeredLights;  // Each light is 23 floats
+    bool lightingEnabled = false;
+
     // State
     bool initialized = false;
 
@@ -465,6 +469,52 @@ std::vector<float> Context::getMaterialData() const {
         };
     }
     return impl_->currentMaterialData;
+}
+
+bool Context::hasMaterial() const {
+    // Material is active if there's data in the material stack (between begin/end)
+    return !impl_->materialStack.empty();
+}
+
+// MARK: - Light State (Phase 8.5)
+
+void Context::registerLight(const std::vector<float>& lightData) {
+    impl_->registeredLights.push_back(lightData);
+}
+
+void Context::unregisterLight(const std::vector<float>& lightData) {
+    auto& lights = impl_->registeredLights;
+    for (auto it = lights.begin(); it != lights.end(); ++it) {
+        // Compare light data (first few floats should be enough to identify)
+        if (it->size() == lightData.size() && *it == lightData) {
+            lights.erase(it);
+            return;
+        }
+    }
+}
+
+void Context::clearLights() {
+    impl_->registeredLights.clear();
+}
+
+int Context::getLightCount() const {
+    return static_cast<int>(impl_->registeredLights.size());
+}
+
+std::vector<float> Context::getAllLightData() const {
+    std::vector<float> allData;
+    for (const auto& light : impl_->registeredLights) {
+        allData.insert(allData.end(), light.begin(), light.end());
+    }
+    return allData;
+}
+
+void Context::setLightingEnabled(bool enabled) {
+    impl_->lightingEnabled = enabled;
+}
+
+bool Context::isLightingEnabled() const {
+    return impl_->lightingEnabled;
 }
 
 // MARK: - Keyboard State

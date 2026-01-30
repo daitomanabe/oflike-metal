@@ -260,6 +260,12 @@ private:
     // Spotlight parameters
     float spotCutoff_;        // In degrees (0-90)
     float spotConcentration_; // Exponent (0-128)
+
+    // Last registered data (for updating Context when properties change)
+    std::vector<float> lastRegisteredData_;
+
+    // Internal: update registration in Context if enabled
+    void updateRegistration();
 };
 
 } // namespace oflike

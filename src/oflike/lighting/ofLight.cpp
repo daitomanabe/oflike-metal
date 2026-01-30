@@ -1,4 +1,5 @@
 #include "ofLight.h"
+#include "../../core/Context.h"
 #include <vector>
 #include <algorithm>
 
@@ -32,11 +33,39 @@ ofLight::~ofLight() {
 // ============================================================================
 
 void ofLight::enable() {
-    enabled_ = true;
+    if (!enabled_) {
+        enabled_ = true;
+        // Register this light with Context for rendering
+        lastRegisteredData_ = getUniformData();
+        Context::instance().registerLight(lastRegisteredData_);
+        Context::instance().setLightingEnabled(true);
+    }
 }
 
 void ofLight::disable() {
-    enabled_ = false;
+    if (enabled_) {
+        // Unregister this light from Context
+        if (!lastRegisteredData_.empty()) {
+            Context::instance().unregisterLight(lastRegisteredData_);
+            lastRegisteredData_.clear();
+        }
+        enabled_ = false;
+        // Check if any lights remain enabled
+        if (Context::instance().getLightCount() == 0) {
+            Context::instance().setLightingEnabled(false);
+        }
+    }
+}
+
+void ofLight::updateRegistration() {
+    if (enabled_) {
+        // Unregister old data and register new data
+        if (!lastRegisteredData_.empty()) {
+            Context::instance().unregisterLight(lastRegisteredData_);
+        }
+        lastRegisteredData_ = getUniformData();
+        Context::instance().registerLight(lastRegisteredData_);
+    }
 }
 
 bool ofLight::isEnabled() const {
@@ -69,10 +98,12 @@ ofLightType ofLight::getLightType() const {
 
 void ofLight::setPosition(float x, float y, float z) {
     position_.set(x, y, z);
+    updateRegistration();
 }
 
 void ofLight::setPosition(const ofVec3f& p) {
     position_ = p;
+    updateRegistration();
 }
 
 ofVec3f ofLight::getPosition() const {
@@ -82,11 +113,13 @@ ofVec3f ofLight::getPosition() const {
 void ofLight::setDirection(float x, float y, float z) {
     direction_.set(x, y, z);
     direction_.normalize();
+    updateRegistration();
 }
 
 void ofLight::setDirection(const ofVec3f& dir) {
     direction_ = dir;
     direction_.normalize();
+    updateRegistration();
 }
 
 ofVec3f ofLight::getDirection() const {
@@ -99,14 +132,17 @@ ofVec3f ofLight::getDirection() const {
 
 void ofLight::setAmbientColor(int r, int g, int b) {
     ambientColor_.set(r / 255.0f, g / 255.0f, b / 255.0f, 1.0f);
+    updateRegistration();
 }
 
 void ofLight::setAmbientColor(const ofColor& c) {
     ambientColor_.set(c.r / 255.0f, c.g / 255.0f, c.b / 255.0f, c.a / 255.0f);
+    updateRegistration();
 }
 
 void ofLight::setAmbientColor(const ofFloatColor& c) {
     ambientColor_ = c;
+    updateRegistration();
 }
 
 ofFloatColor ofLight::getAmbientColor() const {
@@ -115,14 +151,17 @@ ofFloatColor ofLight::getAmbientColor() const {
 
 void ofLight::setDiffuseColor(int r, int g, int b) {
     diffuseColor_.set(r / 255.0f, g / 255.0f, b / 255.0f, 1.0f);
+    updateRegistration();
 }
 
 void ofLight::setDiffuseColor(const ofColor& c) {
     diffuseColor_.set(c.r / 255.0f, c.g / 255.0f, c.b / 255.0f, c.a / 255.0f);
+    updateRegistration();
 }
 
 void ofLight::setDiffuseColor(const ofFloatColor& c) {
     diffuseColor_ = c;
+    updateRegistration();
 }
 
 ofFloatColor ofLight::getDiffuseColor() const {
@@ -131,14 +170,17 @@ ofFloatColor ofLight::getDiffuseColor() const {
 
 void ofLight::setSpecularColor(int r, int g, int b) {
     specularColor_.set(r / 255.0f, g / 255.0f, b / 255.0f, 1.0f);
+    updateRegistration();
 }
 
 void ofLight::setSpecularColor(const ofColor& c) {
     specularColor_.set(c.r / 255.0f, c.g / 255.0f, c.b / 255.0f, c.a / 255.0f);
+    updateRegistration();
 }
 
 void ofLight::setSpecularColor(const ofFloatColor& c) {
     specularColor_ = c;
+    updateRegistration();
 }
 
 ofFloatColor ofLight::getSpecularColor() const {
@@ -153,6 +195,7 @@ void ofLight::setAttenuation(float constant, float linear, float quadratic) {
     attenuationConstant_ = constant;
     attenuationLinear_ = linear;
     attenuationQuadratic_ = quadratic;
+    updateRegistration();
 }
 
 float ofLight::getAttenuationConstant() const {
@@ -173,6 +216,7 @@ float ofLight::getAttenuationQuadratic() const {
 
 void ofLight::setSpotlightCutOff(float cutoff) {
     spotCutoff_ = std::clamp(cutoff, 0.0f, 90.0f);
+    updateRegistration();
 }
 
 float ofLight::getSpotlightCutOff() const {
@@ -181,6 +225,7 @@ float ofLight::getSpotlightCutOff() const {
 
 void ofLight::setSpotConcentration(float concentration) {
     spotConcentration_ = std::clamp(concentration, 0.0f, 128.0f);
+    updateRegistration();
 }
 
 float ofLight::getSpotConcentration() const {

@@ -207,6 +207,39 @@ public:
     /// @return Current material uniform data (13 floats)
     std::vector<float> getMaterialData() const;
 
+    /// Check if a material is currently active (between begin/end)
+    /// @return true if material is active
+    bool hasMaterial() const;
+
+    // MARK: - Light State (Phase 8.5)
+
+    /// Register a light for rendering
+    /// @param lightData Light uniform data (23 floats per light)
+    void registerLight(const std::vector<float>& lightData);
+
+    /// Unregister a light
+    /// @param lightData Light uniform data to remove
+    void unregisterLight(const std::vector<float>& lightData);
+
+    /// Clear all registered lights
+    void clearLights();
+
+    /// Get number of registered lights
+    /// @return Number of lights
+    int getLightCount() const;
+
+    /// Get all light data combined (for shader uniform upload)
+    /// @return Vector of all light data (23 floats per light)
+    std::vector<float> getAllLightData() const;
+
+    /// Set lighting enabled state
+    /// @param enabled true to enable lighting calculations
+    void setLightingEnabled(bool enabled);
+
+    /// Check if lighting is enabled
+    /// @return true if lighting is enabled
+    bool isLightingEnabled() const;
+
     // MARK: - Keyboard State
 
     /// Set key state (pressed or released)
