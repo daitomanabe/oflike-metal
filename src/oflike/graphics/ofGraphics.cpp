@@ -1283,6 +1283,23 @@ void ofDrawBox(float x, float y, float z, float width, float height, float depth
         cmd.depthWriteEnabled = state.depthWriteEnabled;
         cmd.cullBackFace = state.cullingEnabled;
 
+        // Capture lighting state at command creation time
+        Context& ctx = Context::instance();
+        cmd.useLighting = ctx.hasMaterial() && ctx.isLightingEnabled();
+        if (cmd.useLighting) {
+            cmd.lightCount = ctx.getLightCount();
+            auto matData = ctx.getMaterialData();
+            size_t matSize = std::min(matData.size(), size_t(16));
+            for (size_t i = 0; i < matSize; ++i) {
+                cmd.materialData[i] = matData[i];
+            }
+            auto lightData = ctx.getAllLightData();
+            size_t lightSize = std::min(lightData.size(), size_t(256));
+            for (size_t i = 0; i < lightSize; ++i) {
+                cmd.lightData[i] = lightData[i];
+            }
+        }
+
         drawList.addCommand(cmd);
     } else {
         // Wireframe mode: draw 12 edges
@@ -1349,6 +1366,25 @@ static void submit3DGeometry(const std::vector<render::Vertex3D>& vertices,
     cmd.depthTestEnabled = state.depthTestEnabled;
     cmd.depthWriteEnabled = state.depthWriteEnabled;
     cmd.cullBackFace = state.cullingEnabled;
+
+    // Capture lighting state at command creation time
+    Context& ctx = Context::instance();
+    cmd.useLighting = ctx.hasMaterial() && ctx.isLightingEnabled();
+    if (cmd.useLighting) {
+        cmd.lightCount = ctx.getLightCount();
+        // Copy material data
+        auto matData = ctx.getMaterialData();
+        size_t matSize = std::min(matData.size(), size_t(16));
+        for (size_t i = 0; i < matSize; ++i) {
+            cmd.materialData[i] = matData[i];
+        }
+        // Copy light data
+        auto lightData = ctx.getAllLightData();
+        size_t lightSize = std::min(lightData.size(), size_t(256));
+        for (size_t i = 0; i < lightSize; ++i) {
+            cmd.lightData[i] = lightData[i];
+        }
+    }
 
     drawList.addCommand(cmd);
 }

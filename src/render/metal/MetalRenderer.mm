@@ -944,9 +944,9 @@ bool MetalRenderer::Impl::executeDraw3D(const DrawCommand3D& cmd, const DrawList
         uint8_t* bufferPtr = (uint8_t*)[currentBuffer contents];
         memcpy(bufferPtr + bufferOffset, vertices + cmd.vertexOffset, vertexDataSize);
 
-        // Check if material/lighting is active
-        Context& ctx = Context::instance();
-        bool useLighting = ctx.hasMaterial() && ctx.isLightingEnabled();
+        // Use lighting state captured at command creation time
+        bool useLighting = cmd.useLighting;
+        int lightCount = cmd.lightCount;
 
         // Set pipeline (select variant based on blend mode and lighting)
         uint32_t blendIndex = (uint32_t)cmd.blendMode;
@@ -986,22 +986,23 @@ bool MetalRenderer::Impl::executeDraw3D(const DrawCommand3D& cmd, const DrawList
             };
             uniforms.normalMatrix = normalMatrix4x4;
             uniforms.cameraPosition = simd_make_float3(0, 0, 0);  // Camera at origin in view space
-            uniforms.numLights = ctx.getLightCount();
+            uniforms.numLights = lightCount;
             uniforms.lightingEnabled = 1;
             uniforms.smoothShading = 1;  // Phong (smooth) shading
 
             [currentEncoder setVertexBytes:&uniforms length:sizeof(LightingUniforms) atIndex:1];
 
-            // Material data (matches MaterialData in Lighting.metal - 13 floats)
-            std::vector<float> materialData = ctx.getMaterialData();
-            if (materialData.size() >= 13) {
-                [currentEncoder setFragmentBytes:materialData.data() length:materialData.size() * sizeof(float) atIndex:2];
-            }
+            // Fragment shader also needs uniforms at buffer(1)
+            [currentEncoder setFragmentBytes:&uniforms length:sizeof(LightingUniforms) atIndex:1];
 
-            // Light data (matches LightData in Lighting.metal - 23 floats per light)
-            std::vector<float> lightData = ctx.getAllLightData();
-            if (!lightData.empty()) {
-                [currentEncoder setFragmentBytes:lightData.data() length:lightData.size() * sizeof(float) atIndex:3];
+            // Material data from command (captured at draw time) at buffer(2)
+            [currentEncoder setFragmentBytes:cmd.materialData length:13 * sizeof(float) atIndex:2];
+
+            // Light data from command (captured at draw time) at buffer(3)
+            // Each light is 22 floats (packed format)
+            if (lightCount > 0) {
+                size_t lightDataSize = lightCount * 22 * sizeof(float);
+                [currentEncoder setFragmentBytes:cmd.lightData length:lightDataSize atIndex:3];
             }
         } else {
             // Standard 3D uniforms (no lighting)

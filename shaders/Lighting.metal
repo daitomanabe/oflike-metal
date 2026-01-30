@@ -11,28 +11,28 @@ constant int LIGHT_TYPE_DIRECTIONAL = 1;
 constant int LIGHT_TYPE_SPOT = 2;
 
 /// Light data structure for shader uniform buffer
-/// Layout matches ofLight::getUniformData() format (23 floats per light)
+/// Layout matches ofLight::getUniformData() format (22 floats per light, tightly packed)
 struct LightData {
     float type;              // Light type (0=Point, 1=Directional, 2=Spot)
-    float3 position;         // Light position (world space)
-    float3 direction;        // Light direction (normalized)
-    float3 ambientColor;     // Ambient color (RGB)
-    float3 diffuseColor;     // Diffuse color (RGB)
-    float3 specularColor;    // Specular color (RGB)
-    float3 attenuation;      // Attenuation (constant, linear, quadratic)
+    packed_float3 position;  // Light position (world space) - packed to avoid alignment padding
+    packed_float3 direction; // Light direction (normalized)
+    packed_float3 ambientColor;  // Ambient color (RGB)
+    packed_float3 diffuseColor;  // Diffuse color (RGB)
+    packed_float3 specularColor; // Specular color (RGB)
+    packed_float3 attenuation;   // Attenuation (constant, linear, quadratic)
     float spotCutoff;        // Spotlight cutoff angle (degrees)
     float spotConcentration; // Spotlight concentration exponent
     float enabled;           // 1.0 if enabled, 0.0 if disabled
 };
 
 /// Material data structure for shader uniform buffer
-/// Layout matches ofMaterial::getUniformData() format (13 floats)
+/// Layout matches ofMaterial::getUniformData() format (13 floats, tightly packed)
 struct MaterialData {
-    float3 ambientColor;     // Ambient color (RGB)
-    float3 diffuseColor;     // Diffuse color (RGB)
-    float3 specularColor;    // Specular color (RGB)
-    float3 emissiveColor;    // Emissive color (RGB)
-    float shininess;         // Shininess exponent (0-128)
+    packed_float3 ambientColor;  // Ambient color (RGB)
+    packed_float3 diffuseColor;  // Diffuse color (RGB)
+    packed_float3 specularColor; // Specular color (RGB)
+    packed_float3 emissiveColor; // Emissive color (RGB)
+    float shininess;             // Shininess exponent (0-128)
 };
 
 /// Lighting uniforms

@@ -3,6 +3,7 @@
 #include "RenderTypes.h"
 #include <simd/simd.h>
 #include <cstdint>
+#include <cstring>
 #include <vector>
 
 namespace render {
@@ -134,6 +135,12 @@ struct DrawCommand3D {
     bool depthWriteEnabled;
     bool cullBackFace;
 
+    // Lighting state (captured at command creation time)
+    bool useLighting;                   // Whether to use lighting pipeline
+    int lightCount;                     // Number of lights
+    float materialData[16];             // Material uniform data (13 floats + padding)
+    float lightData[256];               // Light uniform data (up to 8 lights, 23 floats each)
+
     DrawCommand3D()
         : vertexOffset(0)
         , vertexCount(0)
@@ -147,7 +154,12 @@ struct DrawCommand3D {
         , normalMatrix(matrix_identity_float3x3)
         , depthTestEnabled(false)
         , depthWriteEnabled(false)
-        , cullBackFace(false) {}
+        , cullBackFace(false)
+        , useLighting(false)
+        , lightCount(0) {
+        std::memset(materialData, 0, sizeof(materialData));
+        std::memset(lightData, 0, sizeof(lightData));
+    }
 };
 
 // ============================================================================

@@ -9,27 +9,48 @@ import QuartzCore
 struct MetalView: View {
     @StateObject private var coordinator = MetalViewCoordinator()
 
-    var body: some View {
-        ZStack(alignment: .topLeading) {
-            // Metal rendering view
-            MetalViewRepresentable(coordinator: coordinator)
+    // Position for draggable debug overlay
+    @State private var debugOverlayPosition: CGPoint = CGPoint(x: 100, y: 60)
+    @State private var isDragging: Bool = false
 
-            // FPS overlay (Phase 1.5)
-            VStack(alignment: .leading, spacing: 4) {
-                Text("FPS: \(Int(coordinator.currentFPS))")
-                    .font(.system(size: 14, weight: .medium, design: .monospaced))
-                    .foregroundColor(.white)
-                Text("Frame: \(coordinator.frameCount)")
-                    .font(.system(size: 12, design: .monospaced))
-                    .foregroundColor(.white.opacity(0.8))
-                Text("Elapsed: \(Int(coordinator.getElapsedTime()))s")
-                    .font(.system(size: 12, design: .monospaced))
-                    .foregroundColor(.white.opacity(0.8))
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .topLeading) {
+                // Metal rendering view
+                MetalViewRepresentable(coordinator: coordinator)
+
+                // FPS overlay (Phase 1.5) - Draggable
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("FPS: \(Int(coordinator.currentFPS))")
+                        .font(.system(size: 14, weight: .medium, design: .monospaced))
+                        .foregroundColor(.white)
+                    Text("Frame: \(coordinator.frameCount)")
+                        .font(.system(size: 12, design: .monospaced))
+                        .foregroundColor(.white.opacity(0.8))
+                    Text("Elapsed: \(Int(coordinator.getElapsedTime()))s")
+                        .font(.system(size: 12, design: .monospaced))
+                        .foregroundColor(.white.opacity(0.8))
+                }
+                .padding(12)
+                .background(Color.black.opacity(isDragging ? 0.8 : 0.6))
+                .cornerRadius(8)
+                .position(debugOverlayPosition)
+                .gesture(
+                    DragGesture()
+                        .onChanged { value in
+                            isDragging = true
+                            debugOverlayPosition = value.location
+                        }
+                        .onEnded { _ in
+                            isDragging = false
+                            // Clamp to view bounds
+                            let padding: CGFloat = 60
+                            debugOverlayPosition.x = max(padding, min(geometry.size.width - padding, debugOverlayPosition.x))
+                            debugOverlayPosition.y = max(padding, min(geometry.size.height - padding, debugOverlayPosition.y))
+                        }
+                )
+                .animation(.easeOut(duration: 0.1), value: isDragging)
             }
-            .padding(12)
-            .background(Color.black.opacity(0.6))
-            .cornerRadius(8)
-            .padding(12)
         }
     }
 }
