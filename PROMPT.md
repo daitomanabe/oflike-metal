@@ -143,6 +143,20 @@ src/oflike/
 
 **Phase 3 COMPLETE** (2026-01-30)
 
+### Phase 4: Advanced Features (高度な機能)
+
+| Feature | Description | Dependencies |
+|---------|-------------|--------------|
+| ofSoundPlayer | Audio playback with AVAudioPlayer | AVFoundation |
+| of3dPrimitive | 3D primitive classes (Box, Sphere, etc.) | ofNode, ofMesh |
+| ofModelLoader | 3D model loading (OBJ, GLTF) | ModelI/O |
+
+### Phase 4 Complete When:
+- [ ] ofSoundPlayer: Audio playback working
+- [ ] of3dPrimitive: BoxPrimitive, SpherePrimitive, etc. working
+- [ ] ofModelLoader: OBJ/GLTF loading working
+- [ ] test_phase4 app builds and runs successfully
+
 ### Final Criteria:
 - [x] All changes pushed to remote (2026-01-30)
 - [x] .agent/iteration.log up to date (2026-01-30)

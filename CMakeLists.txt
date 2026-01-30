@@ -38,6 +38,7 @@ find_library(CORETEXT_LIBRARY CoreText REQUIRED)
 find_library(COREGRAPHICS_LIBRARY CoreGraphics REQUIRED)
 find_library(IMAGEIO_LIBRARY ImageIO REQUIRED)
 find_library(ACCELERATE_LIBRARY Accelerate REQUIRED)
+find_library(AVFOUNDATION_LIBRARY AVFoundation REQUIRED)
 
 if(OFLIKE_ENABLE_VISIONKIT)
     find_library(VISIONKIT_LIBRARY VisionKit)
@@ -137,6 +138,7 @@ target_link_libraries(oflike-metal PUBLIC
     ${COREGRAPHICS_LIBRARY}
     ${IMAGEIO_LIBRARY}
     ${ACCELERATE_LIBRARY}
+    ${AVFOUNDATION_LIBRARY}
     tess2
     utf8
 )
