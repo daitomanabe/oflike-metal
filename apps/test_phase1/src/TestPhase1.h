@@ -6,6 +6,7 @@
 #include <oflike/3d/ofNode.h>
 #include <oflike/3d/ofCamera.h>
 #include <oflike/graphics/ofFbo.h>
+#include <oflike/graphics/ofShader.h>
 #include <oflike/graphics/ofCoreText.h>
 
 class TestPhase1 : public ofBaseApp {
@@ -37,10 +38,18 @@ private:
     oflike::ofFbo fbo;
     bool fboAllocated = false;
 
+    // Phase 1 Feature: ofShader
+    oflike::ofShader shaderGradient;
+    oflike::ofShader shaderWave;
+    oflike::ofShader shaderCircles;
+    oflike::ofShader shaderNoise;
+    int currentShader = 0;  // 0: gradient, 1: wave, 2: circles, 3: noise
+    bool shadersLoaded = false;
+
     // UI
     ofCoreText font;
-    int testMode = 0;  // 0: ofNode, 1: ofCamera, 2: ofFbo
-    static constexpr int NUM_TEST_MODES = 3;
+    int testMode = 0;  // 0: ofNode, 1: ofCamera, 2: ofFbo, 3: ofShader
+    static constexpr int NUM_TEST_MODES = 4;
 
     // Animation
     float time = 0.0f;
@@ -57,6 +66,7 @@ private:
     void drawNodeTest();
     void drawCameraTest();
     void drawFboTest();
+    void drawShaderTest();
     void drawNodeHierarchy(oflike::ofNode& node, int depth);
     void updateCameraPosition();
 };

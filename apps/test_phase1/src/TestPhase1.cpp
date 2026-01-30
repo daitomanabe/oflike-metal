@@ -3,7 +3,7 @@
 #include <string>
 
 void TestPhase1::setup() {
-    ofSetWindowTitle("test_phase1 - Phase 1 Feature Test (1-3: switch test, SPACE: info)");
+    ofSetWindowTitle("test_phase1 - Phase 1 Feature Test (1-4: switch test)");
     ofSetCircleResolution(64);
 
     // Load font
@@ -43,6 +43,16 @@ void TestPhase1::setup() {
     // =========================================
     fbo.allocate(512, 512, oflike::OF_IMAGE_COLOR_ALPHA, 0);
     fboAllocated = fbo.isAllocated();
+
+    // =========================================
+    // Setup ofShader test
+    // =========================================
+    // Load different shader variants from the same source file
+    bool loaded1 = shaderGradient.load("TestShader", "vertex_test", "fragment_gradient");
+    bool loaded2 = shaderWave.load("TestShader", "vertex_test", "fragment_wave");
+    bool loaded3 = shaderCircles.load("TestShader", "vertex_test", "fragment_circles");
+    bool loaded4 = shaderNoise.load("TestShader", "vertex_test", "fragment_noise");
+    shadersLoaded = loaded1 && loaded2 && loaded3 && loaded4;
 }
 
 void TestPhase1::update() {
@@ -67,14 +77,17 @@ void TestPhase1::draw() {
         case 2:
             drawFboTest();
             break;
+        case 3:
+            drawShaderTest();
+            break;
     }
 
     // Draw test mode indicator
     ofSetColor(255);
     float y = ofGetHeight() - 30;
     if (font.isLoaded()) {
-        std::string modeNames[] = {"ofNode", "ofCamera", "ofFbo"};
-        std::string text = "Test " + std::to_string(testMode + 1) + "/" + std::to_string(NUM_TEST_MODES) + ": " + modeNames[testMode] + " (Press 1-3 to switch)";
+        std::string modeNames[] = {"ofNode", "ofCamera", "ofFbo", "ofShader"};
+        std::string text = "Test " + std::to_string(testMode + 1) + "/" + std::to_string(NUM_TEST_MODES) + ": " + modeNames[testMode] + " (Press 1-4 to switch)";
         font.drawString(text, 20, y);
     }
 }
@@ -303,14 +316,106 @@ void TestPhase1::updateCameraPosition() {
     camera.lookAt(oflike::ofVec3f(0, 0, 0));
 }
 
+void TestPhase1::drawShaderTest() {
+    // Draw title
+    ofSetColor(255, 255, 100);
+    if (font.isLoaded()) {
+        font.drawString("ofShader Test - Custom Metal Shaders", 20, 40);
+    }
+
+    if (!shadersLoaded) {
+        ofSetColor(255, 100, 100);
+        if (font.isLoaded()) {
+            font.drawString("Shader loading failed! Check console for errors.", 20, 80);
+        }
+        return;
+    }
+
+    // Get current shader
+    oflike::ofShader* shader = nullptr;
+    std::string shaderName;
+    switch (currentShader) {
+        case 0:
+            shader = &shaderGradient;
+            shaderName = "Gradient";
+            break;
+        case 1:
+            shader = &shaderWave;
+            shaderName = "Wave";
+            break;
+        case 2:
+            shader = &shaderCircles;
+            shaderName = "Circles";
+            break;
+        case 3:
+            shader = &shaderNoise;
+            shaderName = "Noise";
+            break;
+    }
+
+    // Draw shader preview rectangle
+    float rectX = 100;
+    float rectY = 100;
+    float rectW = 400;
+    float rectH = 400;
+
+    if (shader && shader->isLoaded()) {
+        shader->begin();
+
+        // Set time uniform (shader reads it as first float in buffer)
+        shader->setUniform1f("time", time);
+
+        // Draw rectangle with shader
+        ofSetColor(255);
+        ofDrawRectangle(rectX, rectY, rectW, rectH);
+
+        shader->end();
+    }
+
+    // Draw non-shaded elements for comparison
+    ofSetColor(255);
+    ofDrawRectangle(550, 100, 200, 200);
+    ofSetColor(200, 200, 200);
+    if (font.isLoaded()) {
+        font.drawString("No shader", 600, 320);
+    }
+
+    // Draw shader info
+    ofSetColor(200, 200, 200);
+    float infoY = ofGetHeight() - 150;
+    if (font.isLoaded()) {
+        font.drawString("Current Shader: " + shaderName + " (" + std::to_string(currentShader + 1) + "/4)", 20, infoY);
+        infoY += 25;
+        font.drawString("Press Q/W to change shader", 20, infoY);
+        infoY += 25;
+        font.drawString("Loaded: " + std::string(shadersLoaded ? "Yes" : "No"), 20, infoY);
+        infoY += 25;
+        if (shader) {
+            font.drawString("Vertex: " + shader->getVertexFunctionName(), 20, infoY);
+            infoY += 25;
+            font.drawString("Fragment: " + shader->getFragmentFunctionName(), 20, infoY);
+        }
+    }
+}
+
 void TestPhase1::keyPressed(int key) {
-    // Number keys 1-3 to switch test modes
-    if (key >= '1' && key <= '3') {
+    // Number keys 1-4 to switch test modes
+    if (key >= '1' && key <= '4') {
         testMode = key - '1';
     }
-    // Also handle keycode 18-20 for 1-3 on some keyboards
-    if (key >= 18 && key <= 20) {
+    // Also handle keycode 18-21 for 1-4 on some keyboards
+    if (key >= 18 && key <= 21) {
         testMode = key - 18;
+    }
+
+    // Shader switching with Q/W in shader test mode
+    if (testMode == 3) {
+        if (key == 'q' || key == 'Q') {
+            currentShader = (currentShader + 3) % 4;  // Previous
+        }
+        if (key == 'w' || key == 'W') {
+            currentShader = (currentShader + 1) % 4;  // Next
+        }
     }
 }
 

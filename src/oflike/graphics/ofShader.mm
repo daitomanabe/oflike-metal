@@ -89,15 +89,31 @@ struct ofShader::Impl {
             fragmentFunctionName = fragName;
             shaderPath = path;
 
+            // Try the default library first (shaders compiled into the app bundle)
+            library = [device newDefaultLibrary];
+            if (library) {
+                // Check if the functions exist in the default library
+                id<MTLFunction> testVert = [library newFunctionWithName:
+                    [NSString stringWithUTF8String:vertName.c_str()]];
+                id<MTLFunction> testFrag = [library newFunctionWithName:
+                    [NSString stringWithUTF8String:fragName.c_str()]];
+                if (!testVert || !testFrag) {
+                    // Functions not in default library, try other sources
+                    library = nil;
+                }
+            }
+
             // Try to load pre-compiled metallib first
-            NSString* metallibPath = [NSString stringWithFormat:@"%s.metallib",
-                                       path.c_str()];
-            if ([[NSFileManager defaultManager] fileExistsAtPath:metallibPath]) {
-                NSError* error = nil;
-                library = [device newLibraryWithFile:metallibPath error:&error];
-                if (!library) {
-                    NSLog(@"ofShader: Failed to load metallib: %@",
-                          error.localizedDescription);
+            if (!library) {
+                NSString* metallibPath = [NSString stringWithFormat:@"%s.metallib",
+                                           path.c_str()];
+                if ([[NSFileManager defaultManager] fileExistsAtPath:metallibPath]) {
+                    NSError* error = nil;
+                    library = [device newLibraryWithFile:metallibPath error:&error];
+                    if (!library) {
+                        NSLog(@"ofShader: Failed to load metallib: %@",
+                              error.localizedDescription);
+                    }
                 }
             }
 

@@ -146,6 +146,11 @@ struct MetalRenderer::Impl {
     id<MTLTexture> currentRenderTarget = nil;  // nil = render to view (default)
     id<MTLTexture> depthTarget = nil;          // Depth buffer for current render target
 
+    // Custom shader state
+    id<MTLRenderPipelineState> customPipelineState = nil;  // nil = use default pipeline
+    std::vector<uint8_t> customUniformBuffer;
+    id<MTLTexture> customTextures[16] = {nil};
+
     // Statistics
     uint32_t frameDrawCalls = 0;
     uint32_t frameVertices = 0;
@@ -185,6 +190,7 @@ struct MetalRenderer::Impl {
     bool executeSetScissor(const SetScissorCommand& cmd);
     bool executeClear(const SetClearCommand& cmd);
     bool executeSetRenderTarget(const SetRenderTargetCommand& cmd);
+    bool executeSetCustomShader(const SetCustomShaderCommand& cmd);
 
     // State management
     void applyBlendMode(BlendMode mode);
@@ -728,6 +734,9 @@ bool MetalRenderer::Impl::executeCommand(const DrawCommand& cmd, const DrawList&
         case CommandType::SetRenderTarget:
             return executeSetRenderTarget(cmd.renderTarget);
 
+        case CommandType::SetCustomShader:
+            return executeSetCustomShader(cmd.customShader);
+
         default:
             NSLog(@"MetalRenderer: Unknown command type %u", (uint32_t)cmd.type);
             return false;
@@ -779,13 +788,17 @@ bool MetalRenderer::Impl::executeDraw2D(const DrawCommand2D& cmd, const DrawList
         uint8_t* bufferPtr = (uint8_t*)[currentBuffer contents];
         memcpy(bufferPtr + bufferOffset, vertices + cmd.vertexOffset, vertexDataSize);
 
-        // Set pipeline (select variant based on blend mode and texture presence)
-        uint32_t blendIndex = (uint32_t)cmd.blendMode;
-        if (blendIndex > 6) blendIndex = 1; // Default to Alpha if out of range
-        if (cmd.texture) {
-            [currentEncoder setRenderPipelineState:pipeline2DTextured[blendIndex]];
+        // Set pipeline (use custom if set, otherwise select variant based on blend mode)
+        if (customPipelineState) {
+            [currentEncoder setRenderPipelineState:customPipelineState];
         } else {
-            [currentEncoder setRenderPipelineState:pipeline2D[blendIndex]];
+            uint32_t blendIndex = (uint32_t)cmd.blendMode;
+            if (blendIndex > 6) blendIndex = 1; // Default to Alpha if out of range
+            if (cmd.texture) {
+                [currentEncoder setRenderPipelineState:pipeline2DTextured[blendIndex]];
+            } else {
+                [currentEncoder setRenderPipelineState:pipeline2D[blendIndex]];
+            }
         }
 
         // Set vertex buffer
@@ -816,6 +829,20 @@ bool MetalRenderer::Impl::executeDraw2D(const DrawCommand2D& cmd, const DrawList
         uniforms.modelViewMatrix = cmd.transform;
 
         [currentEncoder setVertexBytes:&uniforms length:sizeof(Uniforms2D) atIndex:1];
+
+        // If custom shader, pass custom uniforms to fragment shader at buffer(2)
+        if (customPipelineState && !customUniformBuffer.empty()) {
+            [currentEncoder setFragmentBytes:customUniformBuffer.data()
+                                      length:customUniformBuffer.size()
+                                     atIndex:2];
+
+            // Bind custom textures
+            for (int i = 0; i < 16; i++) {
+                if (customTextures[i]) {
+                    [currentEncoder setFragmentTexture:customTextures[i] atIndex:i];
+                }
+            }
+        }
 
         // Set texture if present
         if (cmd.texture) {
@@ -1245,6 +1272,39 @@ bool MetalRenderer::Impl::executeSetRenderTarget(const SetRenderTargetCommand& c
             depthTarget = nil;  // View provides its own depth buffer
 
             NSLog(@"MetalRenderer: Switched to screen render target");
+        }
+
+        return true;
+    }
+}
+
+bool MetalRenderer::Impl::executeSetCustomShader(const SetCustomShaderCommand& cmd) {
+    @autoreleasepool {
+        if (cmd.pipelineState) {
+            // Set custom pipeline state
+            customPipelineState = (__bridge id<MTLRenderPipelineState>)cmd.pipelineState;
+
+            // Copy uniform data if provided
+            if (cmd.uniformData && cmd.uniformSize > 0) {
+                customUniformBuffer.resize(cmd.uniformSize);
+                std::memcpy(customUniformBuffer.data(), cmd.uniformData, cmd.uniformSize);
+            }
+
+            // Copy texture bindings
+            for (int i = 0; i < 16; i++) {
+                if (cmd.textures[i]) {
+                    customTextures[i] = (__bridge id<MTLTexture>)cmd.textures[i];
+                } else {
+                    customTextures[i] = nil;
+                }
+            }
+        } else {
+            // Restore default pipeline
+            customPipelineState = nil;
+            customUniformBuffer.clear();
+            for (int i = 0; i < 16; i++) {
+                customTextures[i] = nil;
+            }
         }
 
         return true;
