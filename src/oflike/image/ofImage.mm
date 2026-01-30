@@ -395,7 +395,11 @@ void ofImage::setFromPixels(const unsigned char* pixels, int w, int h, ofImageTy
 }
 
 void ofImage::update() {
-    if (impl_->pixelsDirty) {
+    // Always sync to GPU when explicitly called.
+    // This allows users to modify pixels directly via getPixels() and
+    // then call update() to upload changes to texture.
+    ensureImpl();
+    if (impl_->pixels.isAllocated()) {
         syncTextureFromPixels();
     }
 }

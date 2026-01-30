@@ -10,10 +10,12 @@ void TestPhase3::setup() {
     // Load font
     font.load("Helvetica", 18.0f);
 
-    // Try to load a test video (if available)
-    // Users should provide their own video file
-    // videoLoaded = videoPlayer.load("test.mp4");
-    videoLoaded = false;
+    // Try to load a test video (if available in data folder)
+    // Users should provide their own video file at data/test.mp4
+    videoLoaded = videoPlayer.load("data/test.mp4");
+    if (videoLoaded) {
+        videoPlayer.setLoopState(oflike::OF_LOOP_NORMAL);
+    }
 
     // Setup video grabber (camera)
     // Request camera permission first
