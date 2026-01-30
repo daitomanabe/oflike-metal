@@ -102,12 +102,26 @@ if [ "$DO_BUILD" -eq 1 ]; then
     "$ROOT_DIR/scripts/build_app.sh" "$APP_NAME" --project-dir "$PROJECT_DIR" --configuration "$CONFIGURATION"
 fi
 
-APP_PATH="$ROOT_DIR/build/DerivedData/$APP_NAME/Build/Products/$CONFIGURATION/$APP_NAME.app"
+# Look for app in bin/ directory first (openFrameworks style), then DerivedData
+BIN_APP_PATH="$PROJECT_DIR/bin/$APP_NAME.app"
+DERIVED_APP_PATH="$ROOT_DIR/build/DerivedData/$APP_NAME/Build/Products/$CONFIGURATION/$APP_NAME.app"
+
+if [ -d "$BIN_APP_PATH" ]; then
+    APP_PATH="$BIN_APP_PATH"
+elif [ -d "$DERIVED_APP_PATH" ]; then
+    APP_PATH="$DERIVED_APP_PATH"
+else
+    echo "Error: Built app not found."
+    echo "  Checked: $BIN_APP_PATH"
+    echo "  Checked: $DERIVED_APP_PATH"
+    echo "Build first with: $ROOT_DIR/scripts/build_app.sh $APP_NAME"
+    exit 1
+fi
+
 EXECUTABLE="$APP_PATH/Contents/MacOS/$APP_NAME"
 
 if [ ! -x "$EXECUTABLE" ]; then
-    echo "Error: Built app not found: $EXECUTABLE"
-    echo "Build first with: $ROOT_DIR/scripts/build_app.sh $APP_NAME"
+    echo "Error: Executable not found: $EXECUTABLE"
     exit 1
 fi
 

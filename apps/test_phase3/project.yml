@@ -12,12 +12,11 @@ targets:
       - src
       - ../../shaders/Basic2D.metal
       - ../../shaders/Basic3D.metal
-      - path: data
-        type: folder
-        buildPhase: resources
       - path: resources
         type: folder
         buildPhase: resources
+      # Note: Assets go in bin/data/ (openFrameworks style)
+      # build_app.sh will copy bin/data to app bundle
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: com.oflike.test_phase3
       INFOPLIST_FILE: resources/Info.plist

@@ -10,26 +10,26 @@ struct MetalView: View {
     @StateObject private var coordinator = MetalViewCoordinator()
 
     var body: some View {
-        ZStack(alignment: .topLeading) {
+        ZStack(alignment: .topTrailing) {
             // Metal rendering view
             MetalViewRepresentable(coordinator: coordinator)
 
-            // FPS overlay (Phase 1.5)
-            VStack(alignment: .leading, spacing: 4) {
+            // FPS overlay (top-right)
+            VStack(alignment: .trailing, spacing: 4) {
                 Text("FPS: \(Int(coordinator.currentFPS))")
-                    .font(.system(size: 14, weight: .medium, design: .monospaced))
-                    .foregroundColor(.white)
+                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                    .foregroundColor(.white.opacity(0.7))
                 Text("Frame: \(coordinator.frameCount)")
-                    .font(.system(size: 12, design: .monospaced))
-                    .foregroundColor(.white.opacity(0.8))
+                    .font(.system(size: 10, design: .monospaced))
+                    .foregroundColor(.white.opacity(0.5))
                 Text("Elapsed: \(Int(coordinator.getElapsedTime()))s")
-                    .font(.system(size: 12, design: .monospaced))
-                    .foregroundColor(.white.opacity(0.8))
+                    .font(.system(size: 10, design: .monospaced))
+                    .foregroundColor(.white.opacity(0.5))
             }
-            .padding(12)
-            .background(Color.black.opacity(0.6))
-            .cornerRadius(8)
-            .padding(12)
+            .padding(8)
+            .background(Color.black.opacity(0.4))
+            .cornerRadius(6)
+            .padding(8)
         }
     }
 }

@@ -127,9 +127,9 @@ struct ofSoundPlayer::Impl {
                     newPlayer.volume = volume * globalVolume;
                     newPlayer.pan = pan;
                     newPlayer.enableRate = YES;
-                    newPlayer.rate = speed;
                     newPlayer.numberOfLoops = 0;  // Multi-play sounds don't loop
                     [newPlayer prepareToPlay];
+                    newPlayer.rate = speed;  // Set rate after prepareToPlay
                     [newPlayer play];
                     [multiPlayers addObject:newPlayer];
 
@@ -145,6 +145,7 @@ struct ofSoundPlayer::Impl {
             } else {
                 // Normal single-play mode
                 player.currentTime = 0;
+                player.rate = speed;  // Ensure rate is applied
                 [player play];
             }
         }

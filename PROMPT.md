@@ -181,17 +181,29 @@ cd build && cmake .. && make -j8
 ./scripts/run_app.sh <AppName> --build
 ```
 
-### Build Output Location
-ビルド成果物はプロジェクト内の以下の場所に出力される:
+### Build Output Location (openFrameworks Style)
+ビルド成果物はopenFrameworksと同様のディレクトリ構造で出力される:
+
+```
+apps/<AppName>/
+├── project.yml          # XcodeGen設定
+├── src/                  # ソースコード
+├── resources/            # Info.plist等
+└── bin/                  # ビルド成果物
+    ├── <AppName>.app     # ビルドされたアプリ
+    └── data/             # アセット（画像、音声、動画等）
+```
+
 - ライブラリ: `build/liboflike-metal.a`
-- アプリ（シンボリックリンク）: `build/apps/<AppName>.app`
-- アプリ（実体）: `build/DerivedData/<AppName>/Build/Products/Debug/<AppName>.app`
+- アプリ: `apps/<AppName>/bin/<AppName>.app`
+- アセット: `apps/<AppName>/bin/data/`
 
 ### New App Setup
 新しいアプリを作成する際は以下のファイルが必要:
 1. `apps/<AppName>/project.yml` - XcodeGen設定
 2. `apps/<AppName>/resources/Info.plist` - アプリ情報
-3. `apps/<AppName>/src/` - ソースコード
+3. `apps/<AppName>/src/` - ソースコード（App.swift, MetalView.swift含む）
+4. `apps/<AppName>/bin/data/` - アセットフォルダ（任意）
 
 ---
 

@@ -211,6 +211,10 @@ void TestPhase4::keyPressed(int key) {
     if (key >= '1' && key <= '2') {
         testMode = key - '1';
     }
+    // macOS number key codes
+    if (key >= 18 && key <= 19) {
+        testMode = key - 18;
+    }
 
     // Sound controls (mode 0)
     if (testMode == 0 && soundLoaded) {
@@ -257,10 +261,12 @@ void TestPhase4::keyPressed(int key) {
 
     // 3D primitive controls (mode 1)
     if (testMode == 1) {
-        if (key == 'p' || key == 'P') {
+        // P key (ASCII 'p'/'P' or macOS keycode 35)
+        if (key == 'p' || key == 'P' || key == 35) {
             currentPrimitive = (currentPrimitive + 1) % NUM_PRIMITIVES;
         }
-        if (key == 'w' || key == 'W') {
+        // W key (ASCII 'w'/'W' or macOS keycode 13)
+        if (key == 'w' || key == 'W' || key == 13) {
             wireframe = !wireframe;
         }
     }
