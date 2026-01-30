@@ -1,5 +1,5 @@
 #import "ofVbo.h"
-#import "ofMesh.h"
+#import "../3d/ofMesh.h"
 #import "ofGraphics.h"
 #import "../../core/Context.h"
 #import "../../render/DrawList.h"
@@ -358,7 +358,9 @@ void ofVbo::draw(int drawMode, int first, int total) const {
     std::vector<render::Vertex3D> vertices;
     vertices.reserve(total);
 
-    ofFloatColor currentColor = ofGetStyle().color;
+    uint8_t r, g, b, a;
+    ::ofGetColor(r, g, b, a);
+    ofFloatColor currentColor(r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f);
 
     for (int i = first; i < first + total; ++i) {
         render::Vertex3D v;
@@ -406,10 +408,10 @@ void ofVbo::draw(int drawMode, int first, int total) const {
     }
 
     // Get current matrices
-    cmd.modelViewMatrix = ctx.getModelViewMatrix().mat;
-    cmd.projectionMatrix = ctx.getProjectionMatrix().mat;
-    cmd.depthTestEnabled = ctx.isDepthTestEnabled();
-    cmd.depthWriteEnabled = ctx.isDepthWriteEnabled();
+    cmd.modelViewMatrix = ctx.getViewMatrix();
+    cmd.projectionMatrix = ctx.getProjectionMatrix();
+    cmd.depthTestEnabled = true;  // Default to enabled
+    cmd.depthWriteEnabled = true; // Default to enabled
 
     drawList.addCommand(cmd);
 }
@@ -439,7 +441,9 @@ void ofVbo::drawElements(int drawMode, int first, int total) const {
     std::vector<render::Vertex3D> vertices;
     vertices.reserve(total);
 
-    ofFloatColor currentColor = ofGetStyle().color;
+    uint8_t r, g, b, a;
+    ::ofGetColor(r, g, b, a);
+    ofFloatColor currentColor(r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f);
 
     for (int i = first; i < first + total; ++i) {
         unsigned int idx = indices[i];
@@ -486,10 +490,10 @@ void ofVbo::drawElements(int drawMode, int first, int total) const {
             break;
     }
 
-    cmd.modelViewMatrix = ctx.getModelViewMatrix().mat;
-    cmd.projectionMatrix = ctx.getProjectionMatrix().mat;
-    cmd.depthTestEnabled = ctx.isDepthTestEnabled();
-    cmd.depthWriteEnabled = ctx.isDepthWriteEnabled();
+    cmd.modelViewMatrix = ctx.getViewMatrix();
+    cmd.projectionMatrix = ctx.getProjectionMatrix();
+    cmd.depthTestEnabled = true;  // Default to enabled
+    cmd.depthWriteEnabled = true; // Default to enabled
 
     drawList.addCommand(cmd);
 }
@@ -508,7 +512,7 @@ void ofVbo::drawInstanced(int drawMode, int first, int total, int instanceCount)
 
 void ofVbo::setMesh(const ofMesh& mesh, int usage) {
     // Set vertices
-    if (mesh.hasVertices()) {
+    if (mesh.getNumVertices() > 0) {
         setVertexData(mesh.getVertices(), usage);
     }
 
@@ -517,9 +521,17 @@ void ofVbo::setMesh(const ofMesh& mesh, int usage) {
         setNormalData(mesh.getNormals(), usage);
     }
 
-    // Set colors
+    // Set colors - convert ofColor to ofFloatColor
     if (mesh.hasColors()) {
-        setColorData(mesh.getColors(), usage);
+        const auto& colors = mesh.getColors();
+        std::vector<ofFloatColor> floatColors;
+        floatColors.reserve(colors.size());
+        for (const auto& c : colors) {
+            floatColors.push_back(ofFloatColor(
+                c.r / 255.0f, c.g / 255.0f, c.b / 255.0f, c.a / 255.0f
+            ));
+        }
+        setColorData(floatColors, usage);
     }
 
     // Set texture coordinates

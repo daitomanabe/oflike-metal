@@ -6,6 +6,8 @@
 #import "../../core/Context.h"
 #import "../graphics/ofGraphics.h"
 #import "../math/ofMatrix4x4.h"
+#import <Metal/Metal.h>
+#import <Foundation/Foundation.h>
 #include <vector>
 
 namespace oflike {

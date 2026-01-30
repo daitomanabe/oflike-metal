@@ -139,13 +139,45 @@ src/oflike/
 - [x] ofVideoPlayer: Video playback with AVFoundation implemented (2026-01-30)
 - [x] ofVideoGrabber: Camera input with AVCaptureSession implemented (2026-01-30)
 - [x] Image Filters: blur, sharpen, contrast, etc. with Accelerate implemented (2026-01-30)
-- [ ] test_phase3 app builds and runs successfully
+- [x] test_phase3 app builds and runs successfully (2026-01-30)
+
+**Phase 3 COMPLETE** (2026-01-30)
 
 ### Final Criteria:
 - [ ] All changes pushed to remote
 - [ ] .agent/iteration.log up to date
 - [ ] COMPLETION_REPORT.md generated
 - [ ] LOOP_COMPLETE issued
+
+---
+
+## Build Conventions
+
+### Command-Line Build (Required)
+Xcodeを直接使わず、コマンドラインツールでビルドする:
+
+```bash
+# ライブラリのビルド（初回のみ）
+cd build && cmake .. && make -j8
+
+# アプリのビルド
+./scripts/build_app.sh <AppName>
+
+# アプリのビルド＆実行
+./scripts/run_app.sh <AppName> --build
+```
+
+### Build Output Location
+ビルド成果物はプロジェクト内の以下の場所に出力される:
+- ライブラリ: `build/liboflike-metal.a`
+- アプリ（シンボリックリンク）: `build/apps/<AppName>.app`
+- アプリ（実体）: `build/DerivedData/<AppName>/Build/Products/Debug/<AppName>.app`
+
+### New App Setup
+新しいアプリを作成する際は以下のファイルが必要:
+1. `apps/<AppName>/project.yml` - XcodeGen設定
+2. `apps/<AppName>/resources/Info.plist` - アプリ情報
+3. `apps/<AppName>/src/` - ソースコード
 
 ---
 
