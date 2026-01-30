@@ -109,10 +109,10 @@ struct MetalRenderer::Impl {
     MTKTextureLoader* textureLoader = nil;
 
     // Pipeline states (cached by blend mode)
-    id<MTLRenderPipelineState> pipeline2D[8] = {nil};  // One per BlendMode
-    id<MTLRenderPipelineState> pipeline2DTextured[8] = {nil};  // One per BlendMode (textured)
-    id<MTLRenderPipelineState> pipeline3D[8] = {nil};  // One per BlendMode
-    id<MTLRenderPipelineState> pipeline3DLit[8] = {nil};  // 3D with Phong lighting
+    id<MTLRenderPipelineState> pipeline2D[11] = {nil};  // One per BlendMode (0-10)
+    id<MTLRenderPipelineState> pipeline2DTextured[11] = {nil};  // One per BlendMode (textured)
+    id<MTLRenderPipelineState> pipeline3D[11] = {nil};  // One per BlendMode
+    id<MTLRenderPipelineState> pipeline3DLit[11] = {nil};  // 3D with Phong lighting
 
     // Depth/stencil states
     id<MTLDepthStencilState> depthEnabledState = nil;
@@ -273,7 +273,7 @@ void MetalRenderer::Impl::shutdown() {
         }
 
         // Release pipeline variants
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < 11; i++) {
             pipeline2D[i] = nil;
             pipeline2DTextured[i] = nil;
             pipeline3D[i] = nil;
@@ -472,8 +472,8 @@ fragment float4 fragment3D(RasterizerData3D in [[stage_in]]) {
 
         NSLog(@"MetalRenderer: Creating pipeline variants...");
 
-        // Create 2D pipeline variants for common blend modes
-        for (int i = 0; i <= 6; i++) {
+        // Create 2D pipeline variants for all blend modes (0-10)
+        for (int i = 0; i <= 10; i++) {
             BlendMode mode = (BlendMode)i;
             pipeline2D[i] = createPipelineVariant(library, "vertex2D", "fragment2D", mode);
             if (!pipeline2D[i]) {
@@ -482,8 +482,8 @@ fragment float4 fragment3D(RasterizerData3D in [[stage_in]]) {
             }
         }
 
-        // Create 2D textured pipeline variants for common blend modes
-        for (int i = 0; i <= 6; i++) {
+        // Create 2D textured pipeline variants for all blend modes (0-10)
+        for (int i = 0; i <= 10; i++) {
             BlendMode mode = (BlendMode)i;
             pipeline2DTextured[i] = createPipelineVariant(library, "vertex2D", "fragment2DTextured", mode);
             if (!pipeline2DTextured[i]) {
@@ -492,8 +492,8 @@ fragment float4 fragment3D(RasterizerData3D in [[stage_in]]) {
             }
         }
 
-        // Create 3D pipeline variants for common blend modes
-        for (int i = 0; i <= 6; i++) {
+        // Create 3D pipeline variants for all blend modes (0-10)
+        for (int i = 0; i <= 10; i++) {
             BlendMode mode = (BlendMode)i;
             pipeline3D[i] = createPipelineVariant(library, "vertex3D", "fragment3D", mode);
             if (!pipeline3D[i]) {
@@ -504,7 +504,7 @@ fragment float4 fragment3D(RasterizerData3D in [[stage_in]]) {
 
         // Create 3D lit pipeline variants (with Phong lighting)
         // These use vertexLighting/fragmentPhongLighting from Lighting.metal
-        for (int i = 0; i <= 6; i++) {
+        for (int i = 0; i <= 10; i++) {
             BlendMode mode = (BlendMode)i;
             pipeline3DLit[i] = createPipelineVariant(library, "vertexLighting", "fragmentPhongLighting", mode);
             if (!pipeline3DLit[i]) {
@@ -793,7 +793,7 @@ bool MetalRenderer::Impl::executeDraw2D(const DrawCommand2D& cmd, const DrawList
             [currentEncoder setRenderPipelineState:customPipelineState];
         } else {
             uint32_t blendIndex = (uint32_t)cmd.blendMode;
-            if (blendIndex > 6) blendIndex = 1; // Default to Alpha if out of range
+            if (blendIndex > 10) blendIndex = 1; // Default to Alpha if out of range
             if (cmd.texture) {
                 [currentEncoder setRenderPipelineState:pipeline2DTextured[blendIndex]];
             } else {
@@ -977,7 +977,7 @@ bool MetalRenderer::Impl::executeDraw3D(const DrawCommand3D& cmd, const DrawList
 
         // Set pipeline (select variant based on blend mode and lighting)
         uint32_t blendIndex = (uint32_t)cmd.blendMode;
-        if (blendIndex > 6) blendIndex = 1; // Default to Alpha if out of range
+        if (blendIndex > 10) blendIndex = 1; // Default to Alpha if out of range
 
         if (useLighting) {
             [currentEncoder setRenderPipelineState:pipeline3DLit[blendIndex]];

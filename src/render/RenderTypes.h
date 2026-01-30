@@ -100,6 +100,22 @@ enum class BlendMode : uint32_t {
     // Premultiplied alpha: src.rgb + dst.rgb * (1 - src.a)
     // (assumes source RGB is already multiplied by alpha)
     PremultipliedAlpha = 6,
+
+    // Overlay blending: combines multiply and screen
+    // Note: Hardware approximation using screen blend
+    Overlay         = 7,
+
+    // Soft light blending: subtle lightening/darkening
+    // Note: Hardware approximation
+    SoftLight       = 8,
+
+    // Hard light blending: similar to overlay with swapped src/dst roles
+    // Note: Hardware approximation using multiply blend
+    HardLight       = 9,
+
+    // Difference blending: abs(src - dst)
+    // Note: Hardware approximation using max blend operation
+    Difference      = 10,
 };
 
 // ============================================================================

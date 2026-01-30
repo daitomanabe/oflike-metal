@@ -20,6 +20,10 @@ enum {
     OF_BLENDMODE_SUBTRACT = 3,      ///< Subtractive blending
     OF_BLENDMODE_MULTIPLY = 4,      ///< Multiply blending
     OF_BLENDMODE_SCREEN = 5,        ///< Screen blending
+    OF_BLENDMODE_OVERLAY = 7,       ///< Overlay blending
+    OF_BLENDMODE_SOFT_LIGHT = 8,    ///< Soft light blending
+    OF_BLENDMODE_HARD_LIGHT = 9,    ///< Hard light blending
+    OF_BLENDMODE_DIFFERENCE = 10,   ///< Difference blending
 };
 
 // ============================================================================
