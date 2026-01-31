@@ -24,7 +24,7 @@ void TestVboMesh::setup() {
     staticCone = oflike::VboMesh::createCone(80, 200, 32);
 
     // Create dynamic mesh (updated every frame)
-    sourceMesh = oflike::ofMesh::sphere(80, 16);
+    sourceMesh = oflike::ofMesh::sphere(100, 16);
     dynamicMesh.allocate(sourceMesh.getNumVertices(),
                          sourceMesh.getNumIndices(),
                          oflike::VboUsageHint::Stream);
@@ -63,16 +63,16 @@ void TestVboMesh::update() {
             oflike::ofVec3f& v = vertices[i];
             float len = sqrtf(v.x * v.x + v.y * v.y + v.z * v.z);
             if (len > 0) {
-                // Pulse effect
+                // Pulse effect - scale vertices by pulse factor
                 float pulse = 1.0f + 0.2f * sinf(time * 3.0f + len * 0.1f);
-                float scale = 80.0f * pulse / len;
-                v.x *= scale / 80.0f;
-                v.y *= scale / 80.0f;
-                v.z *= scale / 80.0f;
+                v.x *= pulse;
+                v.y *= pulse;
+                v.z *= pulse;
             }
         }
 
         dynamicMesh.updateVertices(vertices.data(), vertices.size());
+        dynamicMesh.updateNormals(sourceMesh.getNormals().data(), sourceMesh.getNormals().size());
         dynamicMesh.updateIndices(sourceMesh.getIndices().data(), sourceMesh.getNumIndices());
         dynamicMesh.setVertexCount(vertices.size());
         dynamicMesh.setIndexCount(sourceMesh.getNumIndices());
@@ -96,21 +96,73 @@ void TestVboMesh::draw() {
         case 3: drawComparisonTest(); break;
     }
 
-    // UI
+    // === LEFT PANEL: General Info ===
+    int y = 25;
+    int lineHeight = 18;
+
     ofSetColor(255, 255, 255);
-    font.drawString("VboMesh Test - Build " __DATE__ " " __TIME__, 20, 30);
+    font.drawString("=== VboMesh Test ===", 20, y); y += lineHeight;
 
-    // Mode indicator
-    ofSetColor(255, 255, 0);
-    font.drawString("MODE " + std::to_string(testMode + 1) + ": " + std::string(modeNames[testMode]), 20, 55);
-
-    // Status
-    ofSetColor(200, 200, 200);
-    font.drawString("Wireframe: " + std::string(wireframe ? "ON" : "OFF"), 20, 80);
-
-    // Instructions
     ofSetColor(150, 150, 150);
-    font.drawString("Keys: 1-4 switch mode, W toggle wireframe", 20, 105);
+    font.drawString("Build: " __DATE__ " " __TIME__, 20, y); y += lineHeight;
+
+    y += 5;
+    ofSetColor(255, 255, 0);
+    font.drawString("MODE " + std::to_string(testMode + 1) + ": " + std::string(modeNames[testMode]), 20, y); y += lineHeight;
+
+    ofSetColor(200, 200, 200);
+    font.drawString("Wireframe: " + std::string(wireframe ? "ON" : "OFF"), 20, y); y += lineHeight;
+    font.drawString("Rotation: " + std::to_string((int)rotationAngle) + " deg", 20, y); y += lineHeight;
+
+    y += 5;
+    ofSetColor(100, 255, 100);
+    font.drawString("Frame: " + std::to_string(avgFrameTime).substr(0, 5) + " ms", 20, y); y += lineHeight;
+    font.drawString("FPS: " + std::to_string((int)(1000.0f / avgFrameTime)), 20, y); y += lineHeight;
+
+    // === MODE SPECIFIC INFO ===
+    y += 10;
+    ofSetColor(255, 200, 100);
+    font.drawString("--- Mode Details ---", 20, y); y += lineHeight;
+
+    ofSetColor(200, 200, 200);
+    switch (testMode) {
+        case 0: // Static
+            font.drawString("Sphere: " + std::to_string(staticSphere.getNumVertices()) + " verts, " +
+                           std::to_string(staticSphere.getNumIndices()) + " indices", 20, y); y += lineHeight;
+            font.drawString("Box: " + std::to_string(staticBox.getNumVertices()) + " verts, " +
+                           std::to_string(staticBox.getNumIndices()) + " indices", 20, y); y += lineHeight;
+            font.drawString("Cone: " + std::to_string(staticCone.getNumVertices()) + " verts, " +
+                           std::to_string(staticCone.getNumIndices()) + " indices", 20, y); y += lineHeight;
+            font.drawString("Storage: Dynamic (Shared)", 20, y); y += lineHeight;
+            break;
+
+        case 1: // Dynamic
+            font.drawString("Dynamic Mesh:", 20, y); y += lineHeight;
+            font.drawString("  Vertices: " + std::to_string(dynamicMesh.getNumVertices()), 20, y); y += lineHeight;
+            font.drawString("  Indices: " + std::to_string(dynamicMesh.getNumIndices()), 20, y); y += lineHeight;
+            font.drawString("  Storage: Stream (Shared)", 20, y); y += lineHeight;
+            font.drawString("  Updated: Every frame", 20, y); y += lineHeight;
+            break;
+
+        case 2: // Instanced
+            font.drawString("Instanced Test:", 20, y); y += lineHeight;
+            font.drawString("  Base mesh: Sphere", 20, y); y += lineHeight;
+            font.drawString("  Instances: 3 (simplified)", 20, y); y += lineHeight;
+            font.drawString("  Positions: -150, 0, +150", 20, y); y += lineHeight;
+            break;
+
+        case 3: // Comparison
+            font.drawString("VboMesh (left):", 20, y); y += lineHeight;
+            font.drawString("  " + std::to_string(staticSphere.getNumVertices()) + " verts", 20, y); y += lineHeight;
+            font.drawString("ofMesh (right):", 20, y); y += lineHeight;
+            font.drawString("  " + std::to_string(sourceMesh.getNumVertices()) + " verts", 20, y); y += lineHeight;
+            break;
+    }
+
+    // === BOTTOM: Instructions ===
+    int windowHeight = ofGetWindowHeight();
+    ofSetColor(100, 100, 100);
+    font.drawString("Keys: 1-4 mode, W wireframe, Mouse drag rotate", 20, windowHeight - 15);
 }
 
 void TestVboMesh::drawStaticMeshTest() {

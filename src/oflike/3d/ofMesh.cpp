@@ -1,5 +1,6 @@
 #include "ofMesh.h"
 #include "../graphics/ofGraphics.h"
+#include "../math/ofMatrix4x4.h"
 #include "../../render/DrawList.h"
 #include "../../core/Context.h"
 #include <cmath>
@@ -160,28 +161,45 @@ void ofMesh::draw() const {
     auto& drawList = Context::instance().getDrawList();
     auto& ctx = Context::instance();
 
+    // Check fill mode
+    bool fillEnabled = ofGetFill();
+
+    // Determine if we need wireframe rendering
+    bool needsWireframe = !fillEnabled && (mode_ == OF_PRIMITIVE_TRIANGLES ||
+                                            mode_ == OF_PRIMITIVE_TRIANGLE_STRIP ||
+                                            mode_ == OF_PRIMITIVE_TRIANGLE_FAN);
+
     // Map ofPrimitiveMode to render::PrimitiveType
     render::PrimitiveType primType;
-    switch (mode_) {
-        case OF_PRIMITIVE_TRIANGLES:
-            primType = render::PrimitiveType::Triangle;
-            break;
-        case OF_PRIMITIVE_TRIANGLE_STRIP:
-            primType = render::PrimitiveType::TriangleStrip;
-            break;
-        case OF_PRIMITIVE_LINES:
-            primType = render::PrimitiveType::Line;
-            break;
-        case OF_PRIMITIVE_LINE_STRIP:
-            primType = render::PrimitiveType::LineStrip;
-            break;
-        case OF_PRIMITIVE_POINTS:
-            primType = render::PrimitiveType::Point;
-            break;
-        default:
-            primType = render::PrimitiveType::Triangle;
-            break;
+    if (needsWireframe) {
+        primType = render::PrimitiveType::Line;
+    } else {
+        switch (mode_) {
+            case OF_PRIMITIVE_TRIANGLES:
+                primType = render::PrimitiveType::Triangle;
+                break;
+            case OF_PRIMITIVE_TRIANGLE_STRIP:
+                primType = render::PrimitiveType::TriangleStrip;
+                break;
+            case OF_PRIMITIVE_LINES:
+                primType = render::PrimitiveType::Line;
+                break;
+            case OF_PRIMITIVE_LINE_STRIP:
+                primType = render::PrimitiveType::LineStrip;
+                break;
+            case OF_PRIMITIVE_POINTS:
+                primType = render::PrimitiveType::Point;
+                break;
+            default:
+                primType = render::PrimitiveType::Triangle;
+                break;
+        }
     }
+
+    // Get current color from graphics state
+    uint8_t r, g, b, a;
+    ofGetColor(r, g, b, a);
+    simd_float4 currentColor = simd_make_float4(r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f);
 
     // Build vertex data
     const size_t numVerts = vertices_.size();
@@ -203,21 +221,54 @@ void ofMesh::draw() const {
         const ofVec2f& tc = hasTexCoords ? texCoords_[i] : defaultTexCoord;
         const ofColor& c = hasColors ? colors_[i] : defaultColor;
 
+        // Convert vertex color to float and tint with current color
+        simd_float4 vertColor = simd_make_float4(c.r / 255.0f, c.g / 255.0f, c.b / 255.0f, c.a / 255.0f);
+
         renderVerts.emplace_back(
             simd_make_float3(v.x, v.y, v.z),
             simd_make_float3(n.x, n.y, n.z),
             simd_make_float2(tc.x, tc.y),
-            simd_make_float4(c.r / 255.0f, c.g / 255.0f, c.b / 255.0f, c.a / 255.0f)
+            simd_make_float4(
+                vertColor.x * currentColor.x,
+                vertColor.y * currentColor.y,
+                vertColor.z * currentColor.z,
+                vertColor.w * currentColor.w
+            )
         );
     }
 
     // Add vertices to draw list
     uint32_t vertexOffset = drawList.addVertices3D(renderVerts);
 
-    // Add indices to draw list (if present)
+    // Generate indices - for wireframe, convert triangle indices to edge indices
     uint32_t indexOffset = 0;
     uint32_t indexCount = 0;
-    if (!indices_.empty()) {
+
+    if (needsWireframe && !indices_.empty()) {
+        // Convert triangle indices to line indices (edges)
+        // For each triangle [a,b,c], create edges [a,b], [b,c], [c,a]
+        std::vector<uint32_t> lineIndices;
+        lineIndices.reserve(indices_.size() * 2);  // Each triangle has 3 edges = 6 indices
+
+        for (size_t i = 0; i + 2 < indices_.size(); i += 3) {
+            uint32_t a = indices_[i];
+            uint32_t b = indices_[i + 1];
+            uint32_t c = indices_[i + 2];
+
+            // Edge a-b
+            lineIndices.push_back(a);
+            lineIndices.push_back(b);
+            // Edge b-c
+            lineIndices.push_back(b);
+            lineIndices.push_back(c);
+            // Edge c-a
+            lineIndices.push_back(c);
+            lineIndices.push_back(a);
+        }
+
+        indexOffset = drawList.addIndices(lineIndices);
+        indexCount = static_cast<uint32_t>(lineIndices.size());
+    } else if (!indices_.empty()) {
         indexOffset = drawList.addIndices(indices_);
         indexCount = static_cast<uint32_t>(indices_.size());
     }
@@ -232,9 +283,20 @@ void ofMesh::draw() const {
     cmd.blendMode = render::BlendMode::Alpha;
     cmd.texture = nullptr;  // TODO: Support textured meshes in future
 
-    // Get current model-view and projection matrices from Context
-    // These are set by ofCamera::begin() or default to identity
-    cmd.modelViewMatrix = ctx.getViewMatrix();
+    // Get view matrix from Context (set by camera)
+    simd_float4x4 viewMatrix = ctx.getViewMatrix();
+
+    // Get model matrix from current transform stack (ofPushMatrix/ofTranslate/etc.)
+    ofMatrix4x4 m = ofGetCurrentMatrix();
+    simd_float4x4 modelMatrix = simd_matrix(
+        simd_make_float4(m(0,0), m(1,0), m(2,0), m(3,0)),
+        simd_make_float4(m(0,1), m(1,1), m(2,1), m(3,1)),
+        simd_make_float4(m(0,2), m(1,2), m(2,2), m(3,2)),
+        simd_make_float4(m(0,3), m(1,3), m(2,3), m(3,3))
+    );
+
+    // ModelView = View * Model
+    cmd.modelViewMatrix = simd_mul(viewMatrix, modelMatrix);
     cmd.projectionMatrix = ctx.getProjectionMatrix();
 
     // Calculate normal matrix from model-view matrix
@@ -260,6 +322,22 @@ void ofMesh::draw() const {
     cmd.depthTestEnabled = true;
     cmd.depthWriteEnabled = true;
     cmd.cullBackFace = false;  // TODO: Make this configurable via render state
+
+    // Capture lighting state at command creation time
+    cmd.useLighting = ctx.hasMaterial() && ctx.isLightingEnabled();
+    if (cmd.useLighting) {
+        cmd.lightCount = ctx.getLightCount();
+        auto matData = ctx.getMaterialData();
+        size_t matSize = std::min(matData.size(), size_t(16));
+        for (size_t i = 0; i < matSize; ++i) {
+            cmd.materialData[i] = matData[i];
+        }
+        auto lightData = ctx.getAllLightData();
+        size_t lightSize = std::min(lightData.size(), size_t(256));
+        for (size_t i = 0; i < lightSize; ++i) {
+            cmd.lightData[i] = lightData[i];
+        }
+    }
 
     // Add command to draw list
     drawList.addCommand(cmd);
@@ -843,56 +921,47 @@ ofMesh ofMesh::cone(float radius, float height, int radiusSegments, int heightSe
 
     const float halfH = height * 0.5f;
 
-    // Top vertex (apex)
+    // Apex vertex at top
+    uint32_t apexIndex = 0;
     mesh.addVertex(ofVec3f(0, halfH, 0));
     mesh.addNormal(ofVec3f(0, 1, 0));
     mesh.addTexCoord(ofVec2f(0.5f, 0));
 
-    // Side vertices
-    for (int h = 0; h <= heightSegments; ++h) {
-        float t = static_cast<float>(h) / heightSegments;
-        float y = halfH - t * height;
-        float r = (1.0f - t) * radius;
+    // Base ring vertices (at bottom)
+    uint32_t baseRingStart = static_cast<uint32_t>(mesh.getNumVertices());
+    for (int seg = 0; seg <= radiusSegments; ++seg) {
+        float angle = static_cast<float>(seg) * 2.0f * M_PI / radiusSegments;
+        float x = std::cos(angle) * radius;
+        float z = std::sin(angle) * radius;
 
-        for (int seg = 0; seg <= radiusSegments; ++seg) {
-            float angle = static_cast<float>(seg) * 2.0f * M_PI / radiusSegments;
-            float x = std::cos(angle) * r;
-            float z = std::sin(angle) * r;
+        mesh.addVertex(ofVec3f(x, -halfH, z));
 
-            mesh.addVertex(ofVec3f(x, y, z));
+        // Normal for cone side (pointing outward and up)
+        float nx = std::cos(angle);
+        float ny = radius / height;
+        float nz = std::sin(angle);
+        ofVec3f normal(nx, ny, nz);
+        normal.normalize();
+        mesh.addNormal(normal);
 
-            // Normal for cone side
-            float nx = std::cos(angle);
-            float ny = radius / height;
-            float nz = std::sin(angle);
-            ofVec3f normal(nx, ny, nz);
-            normal.normalize();
-            mesh.addNormal(normal);
-
-            mesh.addTexCoord(ofVec2f(static_cast<float>(seg) / radiusSegments, t));
-        }
+        mesh.addTexCoord(ofVec2f(static_cast<float>(seg) / radiusSegments, 1.0f));
     }
 
-    // Generate side indices
-    uint32_t topVertex = 0;
-    for (int h = 0; h < heightSegments; ++h) {
-        for (int seg = 0; seg < radiusSegments; ++seg) {
-            uint32_t i0 = 1 + h * (radiusSegments + 1) + seg;
-            uint32_t i1 = i0 + 1;
-            uint32_t i2 = i0 + (radiusSegments + 1);
-            uint32_t i3 = i2 + 1;
-
-            mesh.addTriangle(i0, i2, i1);
-            mesh.addTriangle(i1, i2, i3);
-        }
+    // Side triangles (apex to base ring)
+    for (int seg = 0; seg < radiusSegments; ++seg) {
+        uint32_t i0 = baseRingStart + seg;
+        uint32_t i1 = baseRingStart + seg + 1;
+        mesh.addTriangle(apexIndex, i1, i0);
     }
 
-    // Base cap
+    // Base cap center
     uint32_t baseCenter = static_cast<uint32_t>(mesh.getNumVertices());
     mesh.addVertex(ofVec3f(0, -halfH, 0));
     mesh.addNormal(ofVec3f(0, -1, 0));
-    mesh.addTexCoord(ofVec2f(0.5f, 1.0f));
+    mesh.addTexCoord(ofVec2f(0.5f, 0.5f));
 
+    // Base cap ring vertices (separate from side vertices for different normals)
+    uint32_t baseCapRingStart = static_cast<uint32_t>(mesh.getNumVertices());
     for (int seg = 0; seg <= radiusSegments; ++seg) {
         float angle = static_cast<float>(seg) * 2.0f * M_PI / radiusSegments;
         float x = std::cos(angle) * radius;
@@ -904,8 +973,9 @@ ofMesh ofMesh::cone(float radius, float height, int radiusSegments, int heightSe
                                  0.5f + 0.5f * std::sin(angle)));
     }
 
+    // Base cap triangles
     for (int seg = 0; seg < radiusSegments; ++seg) {
-        mesh.addTriangle(baseCenter, baseCenter + seg + 1, baseCenter + seg + 2);
+        mesh.addTriangle(baseCenter, baseCapRingStart + seg + 1, baseCapRingStart + seg);
     }
 
     return mesh;

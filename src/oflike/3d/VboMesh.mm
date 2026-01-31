@@ -8,6 +8,8 @@
 #include "../../core/Context.h"
 #include "../../render/metal/MetalRenderer.h"
 #include "../../render/DrawList.h"
+#include "../graphics/ofGraphics.h"  // For ofGetCurrentMatrix, ofGetColor, ofGetFill
+#include "../math/ofMatrix4x4.h"     // Full definition for ofMatrix4x4
 
 namespace oflike {
 
@@ -551,8 +553,15 @@ void VboMesh::updateMesh(const ofMesh& mesh) {
 }
 
 void VboMesh::updateVertices(const ofVec3f* data, size_t count, size_t offset) {
-    if (offset + count > impl_->cpuVertices.size()) {
+    size_t oldSize = impl_->cpuVertices.size();
+    if (offset + count > oldSize) {
         impl_->cpuVertices.resize(offset + count);
+        // Initialize new vertices with default values (white color, forward normal)
+        for (size_t i = oldSize; i < impl_->cpuVertices.size(); i++) {
+            impl_->cpuVertices[i].normal = simd_make_float3(0, 0, 1);
+            impl_->cpuVertices[i].texCoord = simd_make_float2(0, 0);
+            impl_->cpuVertices[i].color = simd_make_float4(1, 1, 1, 1);  // White, opaque
+        }
     }
 
     for (size_t i = 0; i < count; i++) {
@@ -674,47 +683,97 @@ void VboMesh::draw(ofPrimitiveMode mode) const {
     auto renderer = ctx.renderer();
     if (!renderer) return;
 
+    // Check fill mode
+    bool fillEnabled = ofGetFill();
+
+    // Determine if we need wireframe rendering
+    bool needsWireframe = !fillEnabled && (mode == OF_PRIMITIVE_TRIANGLES ||
+                                            mode == OF_PRIMITIVE_TRIANGLE_STRIP ||
+                                            mode == OF_PRIMITIVE_TRIANGLE_FAN);
+
     // Convert primitive mode
     render::PrimitiveType primType;
-    switch (mode) {
-        case OF_PRIMITIVE_POINTS:
-            primType = render::PrimitiveType::Point;
-            break;
-        case OF_PRIMITIVE_LINES:
-        case OF_PRIMITIVE_LINE_LOOP:
-            primType = render::PrimitiveType::Line;
-            break;
-        case OF_PRIMITIVE_LINE_STRIP:
-            primType = render::PrimitiveType::LineStrip;
-            break;
-        case OF_PRIMITIVE_TRIANGLE_STRIP:
-        case OF_PRIMITIVE_TRIANGLE_FAN:
-            primType = render::PrimitiveType::TriangleStrip;
-            break;
-        default:
-            primType = render::PrimitiveType::Triangle;
-            break;
+    if (needsWireframe) {
+        primType = render::PrimitiveType::Line;
+    } else {
+        switch (mode) {
+            case OF_PRIMITIVE_POINTS:
+                primType = render::PrimitiveType::Point;
+                break;
+            case OF_PRIMITIVE_LINES:
+            case OF_PRIMITIVE_LINE_LOOP:
+                primType = render::PrimitiveType::Line;
+                break;
+            case OF_PRIMITIVE_LINE_STRIP:
+                primType = render::PrimitiveType::LineStrip;
+                break;
+            case OF_PRIMITIVE_TRIANGLE_STRIP:
+            case OF_PRIMITIVE_TRIANGLE_FAN:
+                primType = render::PrimitiveType::TriangleStrip;
+                break;
+            default:
+                primType = render::PrimitiveType::Triangle;
+                break;
+        }
     }
 
+    // Get current color from graphics state
+    uint8_t r, g, b, a;
+    ofGetColor(r, g, b, a);
+    simd_float4 currentColor = simd_make_float4(r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f);
+
     // Convert interleaved vertices to Vertex3D for DrawList
+    // Tint vertex colors with current color
     std::vector<render::Vertex3D> vertices(impl_->numVertices);
     for (size_t i = 0; i < impl_->numVertices; i++) {
         const InterleavedVertex& v = impl_->cpuVertices[i];
         vertices[i].position = v.position;
         vertices[i].normal = v.normal;
         vertices[i].texCoord = v.texCoord;
-        vertices[i].color = v.color;
+        // Tint vertex color with current color (multiply)
+        vertices[i].color = simd_make_float4(
+            v.color.x * currentColor.x,
+            v.color.y * currentColor.y,
+            v.color.z * currentColor.z,
+            v.color.w * currentColor.w
+        );
     }
 
     // Get the current draw list from Context
     render::DrawList& drawList = ctx.getDrawList();
 
-    // Add vertices and indices to draw list
+    // Add vertices to draw list
     uint32_t vertexOffset = drawList.addVertices3D(vertices);
+
+    // Generate indices - for wireframe, convert triangle indices to edge indices
     uint32_t indexOffset = 0;
     uint32_t indexCount = 0;
 
-    if (impl_->numIndices > 0) {
+    if (needsWireframe && impl_->numIndices > 0) {
+        // Convert triangle indices to line indices (edges)
+        // For each triangle [a,b,c], create edges [a,b], [b,c], [c,a]
+        std::vector<uint32_t> lineIndices;
+        lineIndices.reserve(impl_->numIndices * 2);
+
+        for (size_t i = 0; i + 2 < impl_->numIndices; i += 3) {
+            uint32_t a = impl_->cpuIndices[i];
+            uint32_t b = impl_->cpuIndices[i + 1];
+            uint32_t c = impl_->cpuIndices[i + 2];
+
+            // Edge a-b
+            lineIndices.push_back(a);
+            lineIndices.push_back(b);
+            // Edge b-c
+            lineIndices.push_back(b);
+            lineIndices.push_back(c);
+            // Edge c-a
+            lineIndices.push_back(c);
+            lineIndices.push_back(a);
+        }
+
+        indexOffset = drawList.addIndices(lineIndices);
+        indexCount = static_cast<uint32_t>(lineIndices.size());
+    } else if (impl_->numIndices > 0) {
         indexOffset = drawList.addIndices(impl_->cpuIndices);
         indexCount = static_cast<uint32_t>(impl_->numIndices);
     }
@@ -729,8 +788,20 @@ void VboMesh::draw(ofPrimitiveMode mode) const {
     cmd.blendMode = render::BlendMode::Alpha;
     cmd.texture = nullptr;
 
-    // Get current model-view and projection matrices from Context
-    cmd.modelViewMatrix = ctx.getViewMatrix();
+    // Get view matrix from Context (set by camera)
+    simd_float4x4 viewMatrix = ctx.getViewMatrix();
+
+    // Get model matrix from current transform stack (ofPushMatrix/ofTranslate/etc.)
+    ofMatrix4x4 m = ofGetCurrentMatrix();
+    simd_float4x4 modelMatrix = simd_matrix(
+        simd_make_float4(m(0,0), m(1,0), m(2,0), m(3,0)),
+        simd_make_float4(m(0,1), m(1,1), m(2,1), m(3,1)),
+        simd_make_float4(m(0,2), m(1,2), m(2,2), m(3,2)),
+        simd_make_float4(m(0,3), m(1,3), m(2,3), m(3,3))
+    );
+
+    // ModelView = View * Model
+    cmd.modelViewMatrix = simd_mul(viewMatrix, modelMatrix);
     cmd.projectionMatrix = ctx.getProjectionMatrix();
 
     // Calculate normal matrix from model-view matrix
@@ -750,6 +821,22 @@ void VboMesh::draw(ofPrimitiveMode mode) const {
     cmd.depthTestEnabled = true;
     cmd.depthWriteEnabled = true;
     cmd.cullBackFace = false;
+
+    // Capture lighting state at command creation time
+    cmd.useLighting = ctx.hasMaterial() && ctx.isLightingEnabled();
+    if (cmd.useLighting) {
+        cmd.lightCount = ctx.getLightCount();
+        auto matData = ctx.getMaterialData();
+        size_t matSize = std::min(matData.size(), size_t(16));
+        for (size_t i = 0; i < matSize; ++i) {
+            cmd.materialData[i] = matData[i];
+        }
+        auto lightData = ctx.getAllLightData();
+        size_t lightSize = std::min(lightData.size(), size_t(256));
+        for (size_t i = 0; i < lightSize; ++i) {
+            cmd.lightData[i] = lightData[i];
+        }
+    }
 
     // Add command to draw list
     drawList.addCommand(cmd);
