@@ -171,6 +171,109 @@ Note: Legacy ofMain-based examples are being migrated to the SwiftUI-only entry 
 
 ---
 
+### Feature Test Examples
+
+#### [28_vbo_mesh](28_vbo_mesh/)
+**VBO Mesh Rendering**: Modern Metal GPU mesh with VboMesh
+- VboMesh creation (sphere, box, cone primitives)
+- Dynamic mesh updates (vertex animation)
+- Static vs dynamic usage hints
+- Transform matrix integration (ofPushMatrix/ofTranslate)
+- Color tinting with ofSetColor
+- Wireframe mode support
+- Lighting integration
+
+**Concepts**: GPU buffers, vertex buffer objects, dynamic mesh updates, Metal storage modes
+
+---
+
+#### [29_graphics_primitives](29_graphics_primitives/)
+**Graphics API Test**: Comprehensive 2D/3D primitive rendering
+- 2D shapes (circle, rectangle, ellipse, triangle)
+- 3D primitives (box, sphere, cone, cylinder)
+- Toggle between 2D and 3D modes
+
+**Concepts**: ofGraphics API, primitive rendering, coordinate systems
+
+---
+
+#### [30_image_handling](30_image_handling/)
+**Image API Test**: Image loading, manipulation, and rendering
+- ofImage loading and display
+- Pixel manipulation
+- Image generation
+- Mode switching
+
+**Concepts**: ofImage, ofPixels, texture mapping
+
+---
+
+#### [31_math_operations](31_math_operations/)
+**Math API Test**: Vector, matrix, and quaternion operations
+- ofVec3f operations
+- ofMatrix4x4 transformations
+- ofQuaternion rotations
+- Mathematical visualization
+
+**Concepts**: Linear algebra, transformations, quaternions
+
+---
+
+#### [32_lighting_systems](32_lighting_systems/)
+**Lighting API Test**: Multiple light types and properties
+- Point lights
+- Directional lights
+- Spot lights
+- Material properties
+
+**Concepts**: Phong lighting model, light attenuation, material system
+
+---
+
+#### [33_phase1_features](33_phase1_features/)
+**Phase 1 Features**: Core framework feature demonstration
+- ofNode hierarchy
+- ofCamera setup
+- ofFbo usage
+- ofShader integration
+
+**Concepts**: Scene graph, render targets, shader pipeline
+
+---
+
+#### [34_phase2_rendering](34_phase2_rendering/)
+**Phase 2 Rendering**: Advanced rendering pipeline
+- VBO rendering
+- Texture mapping
+- Multiple lights
+- Mipmap generation
+
+**Concepts**: GPU pipeline, texture filtering, multi-pass rendering
+
+---
+
+#### [35_phase3_media](35_phase3_media/)
+**Phase 3 Media**: Video and image processing
+- Video playback
+- Camera input
+- Image filters
+- Pixel effects
+
+**Concepts**: Media handling, real-time video, image processing
+
+---
+
+#### [36_phase4_advanced](36_phase4_advanced/)
+**Phase 4 Advanced**: Complete 3D scene with audio
+- 3D primitives
+- Material properties
+- Sound loading and playback
+- Wireframe toggle
+
+**Concepts**: Audio integration, complete 3D scenes, material system
+
+---
+
 ## Learning Path
 
 ### Path 1: 2D Creative Coding
@@ -264,15 +367,19 @@ Most examples use inline classes in `main.cpp` for simplicity.
 
 | Feature | Examples |
 |---------|----------|
-| **2D Drawing** | 01, 02, 03 |
-| **3D Graphics** | 06, 07, 08, 09 |
-| **Camera Control** | 07, 12 |
-| **Lighting** | 08 |
-| **Textures** | 04, 10 |
+| **2D Drawing** | 01, 02, 03, 29 |
+| **3D Graphics** | 06, 07, 08, 09, 28, 29, 36 |
+| **Camera Control** | 07, 12, 33 |
+| **Lighting** | 08, 32, 34 |
+| **Textures** | 04, 10, 30, 34 |
 | **Text Rendering** | 05 |
-| **Custom Geometry** | 09 |
-| **Render-to-Texture** | 10 |
+| **Custom Geometry** | 09, 28 |
+| **Render-to-Texture** | 10, 33 |
 | **User Input** | 11, 12 |
+| **VBO Mesh** | 28, 34 |
+| **Media/Video** | 35 |
+| **Audio** | 36 |
+| **Shaders** | 33 |
 | **Transformations** | All |
 | **Animation** | All |
 
